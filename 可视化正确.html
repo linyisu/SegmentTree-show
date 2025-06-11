@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>线段树全方位介绍</title>
+  <style>
+    :root {
+      --primary-color: #6c5ce7;
+      --secondary-color: #a29bfe;
+      --accent-color: #fd79a8;
+      --success-bg: linear-gradient(135deg, #00b894, #00cec9);
+      --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
+      --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
+      --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      --text-primary: #2d3436;
+      --text-secondary: #636e72;
+      --border-radius: 20px;
+      --font-size-base: 14px;
+      --line-height-base: 1.6;
+    }    
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-width: 800px;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+      z-index: -1;
+    }    
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: var(--header-bg);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      letter-spacing: 1px;
+      background-attachment: fixed;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }    
+    nav {
+      margin-top: 85px;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      flex-shrink: 0;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      padding: 25px;
+      box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+      overflow-y: auto;
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+      box-sizing: border-box;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+    }    
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      text-transform: none;
+      letter-spacing: 0.5px;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    .btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+    }
+    .btn:hover::before {
+      left: 100%;
+    }
+    .btn:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    nav button {
+      display: block;
+      width: 100%;
+      min-width: 220px;
+      margin: 15px 0;
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-radius: 15px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+      border: 2px solid transparent;
+    }
+    nav button::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: var(--primary-color);
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+      border-radius: 0 2px 2px 0;
+    }
+    nav button:hover {
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+      transform: translateX(5px);
+      border-color: rgba(108, 92, 231, 0.3);
+    }
+    nav button:hover::before {
+      transform: scaleY(1);
+    }
+    nav button.active {
+      background: var(--success-bg);
+      color: white;
+      box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    nav button.active::before {
+      background: rgba(255, 255, 255, 0.8);
+      transform: scaleY(1);
+    }   
+    main {
+      flex-grow: 1;
+      margin-top: 85px;
+      padding: 30px;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+    main::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    main > * {
+      position: relative;
+      z-index: 1;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      padding: 35px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color));
+    }
+    .card h2 {
+      color: var(--text-primary);
+      margin-bottom: 25px;
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    .card h3 {
+      color: var(--text-secondary);
+      margin: 25px 0 18px 0;
+      font-size: 20px;
+      font-weight: 600;
+      position: relative;
+      padding-left: 20px;
+    }
+    .card h3::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+    .card p {
+      line-height: 1.9;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .code-block {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: #e2e8f0;
+      padding: 25px;
+      border-radius: 16px;
+      margin: 25px 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .code-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+      border-radius: 16px 16px 0 0;
+    }
+    .code-block::after {
+      content: '{ }';
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .code-block .keyword { color: #63b3ed; font-weight: bold; }
+    .code-block .type { color: #68d391; font-weight: bold; }
+    .code-block .function { color: #fbb6ce; }
+    .code-block .number { color: #f6ad55; }
+    .code-block .comment { color: #a0aec0; font-style: italic; }
+    .code-block .string { color: #9ae6b4; }
+    .code-block .operator { color: #fbb6ce; font-weight: bold; }
+
+    .code-block.light { background: #f8f9fa; color: #212529; }
+    .code-block.light .keyword { color: #d73a49; }
+    .code-block.light .type { color: #005cc5; }
+    .code-block.light .function { color: #6f42c1; }
+    .code-block.light .number { color: #032f62; }
+    .code-block.light .comment { color: #6a737d; }
+    .code-block.light .operator { color: #d73a49; font-weight: bold; }
+
+    .code-block.monokai { background: #272822; color: #f8f8f2; }
+    .code-block.monokai .keyword { color: #f92672; }
+    .code-block.monokai .type { color: #66d9ef; }
+    .code-block.monokai .function { color: #a6e22e; }
+    .code-block.monokai .number { color: #ae81ff; }
+    .code-block.monokai .comment { color: #75715e; }
+    .code-block.monokai .operator { color: #f92672; font-weight: bold; }
+
+    .code-block.github { background: #ffffff; color: #24292e; border: 1px solid #e1e4e8; }
+    .code-block.github .keyword { color: #d73a49; }
+    .code-block.github .type { color: #005cc5; }
+    .code-block.github .function { color: #6f42c1; }
+    .code-block.github .number { color: #032f62; }
+    .code-block.github .comment { color: #6a737d; }
+    .code-block.github .operator { color: #d73a49; font-weight: bold; }    
+    
+    .settings-panel {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 18px;
+      margin-bottom: 25px;
+      border: 2px solid rgba(108, 92, 231, 0.2);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .settings-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      margin: 18px 0;
+      gap: 18px;
+    }
+    .settings-row label {
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 140px;
+      font-size: 15px;
+    }
+    .settings-row input, .settings-row select {
+      padding: 12px 16px;
+      border: 2px solid rgba(108, 92, 231, 0.2);
+      border-radius: 12px;
+      background: white;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    .settings-row input:focus, .settings-row select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+      transform: translateY(-1px);
+    }    #tree-container {
+      margin-top: 30px;
+      padding: 25px;
+      background: var(--card-bg);
+      border-radius: 18px;
+      border-left: 5px solid var(--primary-color);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: visible; /* 允许内容可见，但通过其他方式控制边界 */
+      min-height: 500px; /* 增加最小高度 */
+    }
+    #tree-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    #tree-container h4 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #tree-container p {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 10px;
+      background: rgba(108, 92, 231, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid var(--primary-color);
+    }    /* 真正的树形可视化样式 */    
+    .tree-visual {
+      width: 100%; /* 改为100%自适应宽度 */
+      overflow: hidden; /* 确保内容不溢出 */
+      padding: 30px 25px; /* 增加上下内边距，左右保持25px */
+      position: relative;
+      box-sizing: border-box; /* 包含padding在宽度计算内 */
+      min-height: 400px; /* 增加最小高度 */
+    }
+    .tree-level {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0;
+      position: relative;
+      width: 100%;
+      padding: 0;
+      min-height: 50px;
+    }
+    
+    .tree-level-0, .tree-level-1, .tree-level-2, .tree-level-3 {
+      margin: 18px 0;
+      display: flex;
+      width: 100%;
+    }
+
+    .tree-node {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 35px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: absolute;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      word-wrap: break-word;
+      font-size: 10px;
+      line-height: 1.2;
+      z-index: 2;
+      backdrop-filter: blur(3px);
+      white-space: pre-line;
+      box-sizing: border-box;
+    }
+    .tree-node.depth-0 {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      height: 40px;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 6px 16px rgba(108, 92, 231, 0.4);
+    }
+    
+    .tree-node.depth-1 {
+      background: linear-gradient(135deg, #fd79a8, #e84393);
+      height: 35px;
+      font-size: 10px;
+      box-shadow: 0 5px 14px rgba(253, 121, 168, 0.3);
+    }
+    
+    .tree-node.depth-2 {
+      background: linear-gradient(135deg, #00b894, #00cec9);
+      height: 35px;
+      font-size: 10px;
+      box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+    }
+    
+    .tree-node.depth-3 {
+      background: linear-gradient(135deg, #fdcb6e, #e17055);
+      height: 35px;
+      font-size: 9px;
+      box-shadow: 0 3px 10px rgba(253, 203, 110, 0.3);
+    }
+    /* 连接线样式 */
+    .tree-connection {
+      position: absolute;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      z-index: 1;
+    }
+    
+    .tree-connection.vertical {
+      width: 2px;
+      top: -25px;
+      height: 25px;
+    }
+    
+    .tree-connection.horizontal {
+      height: 2px;
+      top: -25px;
+    }
+    
+    .tree-connection-line {
+      opacity: 0;
+      animation: fadeInLine 0.5s ease-in-out 0.3s forwards;
+    }
+    @keyframes fadeInLine {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    .tree-node::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .tree-node:hover::before {
+      left: 100%;
+    }
+    .tree-node:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+    
+    /* 简化的节点出现动画 - 只改变透明度和轻微位移 */
+    .tree-node {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .quiz-question {
+      margin: 25px 0;
+      padding: 25px;
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.05));
+      border-radius: 16px;
+      border-left: 5px solid var(--primary-color);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .quiz-question::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .quiz-options label {
+      display: block;
+      margin: 6px 0;
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .quiz-options label::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: var(--primary-color);
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    .quiz-options label:hover {
+      background: rgba(108, 92, 231, 0.1);
+      border-color: rgba(108, 92, 231, 0.3);
+      transform: translateX(5px);
+    }
+    .quiz-options label:hover::before {
+      transform: scaleY(1);
+    }
+    .quiz-result {
+      margin-top: 25px;
+      padding: 20px;
+      border-radius: 16px;
+      display: none;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    footer {
+      margin-top: 50px;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      padding: 25px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    /* 添加滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    }
+    /* 添加焦点样式 */
+    .btn:focus,
+    nav button:focus,
+    input:focus,
+    select:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+    /* 添加响应式优化 */
+    @media (max-width: 1200px) {
+      nav {
+        width: 250px;
+        min-width: 250px;
+        max-width: 250px;
+      }
+      nav button {
+        min-width: 200px;
+        font-size: 14px;
+        padding: 14px 18px;
+      }
+      .card h2 {
+        font-size: 24px;
+      }
+      .card h3 {
+        font-size: 18px;
+      }
+      .tree-visual {
+        width: 100%; /* 响应式调整 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>🌲 线段树全方位介绍（从入门到入土）</header>
+
+  <nav>
+    <button class="nav-btn active" onclick="showSection('intro')" aria-label="线段树简介">📚 线段树简介</button>
+    <button class="nav-btn" onclick="showSection('basic')" aria-label="基本操作">🔧 基本操作</button>
+    <button class="nav-btn" onclick="showSection('advanced')" aria-label="高级技巧">🚀 高级技巧</button>
+    <button class="nav-btn" onclick="showSection('quiz')" aria-label="互动测试">🎯 互动测试</button>
+    <button class="nav-btn" onclick="showSection('settings')" aria-label="自定义设置">⚙️ 自定义设置</button>
+  </nav>
+
+  <main>
+    <section id="intro" class="active">
+      <div class="card">
+        <h2>🌳 什么是线段树？</h2>
+        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为<strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
+        <h3>📊 线段树可维护的区间信息</h3>
+        <p>• <strong>区间和</strong>：计算区间内所有元素的总和</p>
+        <p>• <strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</p>
+        <p>• <strong>区间GCD</strong>：计算区间内所有数的最大公约数</p>
+        <p>• <strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</p>
+        <p>• <strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</p>
+        <p>• <strong>区间最长递增/递减段</strong>：寻找最长的单调序列</p>
+        <h3>⚡ 线段树支持的区间修改操作</h3>
+        <p>• <strong>区间加法</strong>：给区间内所有元素加上某个值</p>
+        <p>• <strong>区间乘法</strong>：给区间内所有元素乘以某个值</p>
+        <p>• <strong>区间赋值</strong>：将区间内所有元素设为某个值</p>
+        <p>• <strong>区间异或</strong>：对区间内所有元素进行异或操作</p>
+        <p>• <strong>区间取反</strong>：对区间内所有元素取反</p>
+        <p>• <strong>区间拼接</strong>：连接多个区间</p>
+      </div>
+    </section>
+
+    <section id="basic">
+      <div class="card">
+        <h2>🔧 线段树的构建与操作</h2>
+        <p>线段树的构建通常采用递归方式，根据区间不断对半划分，每个节点编号 <code>u</code> 表示当前处理的区间 <code>[l, r]</code>。</p>
+        <h3>📝 构建函数详解</h3>
+        <div class="code-block" id="build-code">void build(int l, int r, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</div>
+        <h3>🎯 构建过程可视化</h3>
+        <div class="settings-row">
+          <label>数组长度 n:</label>
+          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+        </div>
+        <div id="tree-container">
+          <p>点击"开始构建"按钮查看线段树构建过程...</p>
+        </div>
+        <h3>📚 其他核心操作</h3>
+        <div class="code-block">// 区间查询
+Info query(int l, int r, int ql, int qr, int u)
+{
+    if (ql <= l && r <= qr)
+        return info[u];
+    
+    int mid = (l + r) >> 1;
+    Info res;
+    if (ql <= mid)
+        res = res + query(l, mid, ql, qr, u << 1);
+    if (qr > mid)
+        res = res + query(mid + 1, r, ql, qr, u << 1 | 1);
+    return res;
+}
+
+// 单点更新
+void update(int l, int r, int pos, int val, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(val);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    if (pos <= mid)
+        update(l, mid, pos, val, u << 1);
+    else
+        update(mid + 1, r, pos, val, u << 1 | 1);
+    push_up(u);
+}</div>
+      </div>
+    </section>
+
+    <section id="advanced">
+      <div class="card">
+        <h2>🚀 进阶技巧</h2>
+        <h3>⏰ 懒惰标记 (Lazy Propagation)</h3>
+        <p>懒惰标记是线段树的重要优化技术，用于处理区间修改操作，避免每次都递归到叶子节点。</p>
+        <div class="code-block">void push_down(int u, int l, int r)
+{
+    if (lazy[u] != 0)
+    {
+        int mid = (l + r) >> 1;
+        lazy[u << 1] += lazy[u];
+        lazy[u << 1 | 1] += lazy[u];
+        info[u << 1].sum += lazy[u] * (mid - l + 1);
+        info[u << 1 | 1].sum += lazy[u] * (r - mid);
+        lazy[u] = 0;
+    }
+}
+
+// 区间修改
+void modify(int l, int r, int ql, int qr, int val, int u)
+{
+    if (ql <= l && r <= qr)
+    {
+        lazy[u] += val;
+        info[u].sum += val * (r - l + 1);
+        return;
+    }
+    
+    push_down(u, l, r);
+    int mid = (l + r) >> 1;
+    if (ql <= mid)
+        modify(l, mid, ql, qr, val, u << 1);
+    if (qr > mid)
+        modify(mid + 1, r, ql, qr, val, u << 1 | 1);
+    push_up(u);
+}</div>
+        <h3>🌍 可持久化线段树</h3>
+        <p>可持久化线段树能够保存数据结构的历史版本，支持查询任意历史时刻的状态。</p>
+        <div class="code-block">struct Node
+{
+    int sum, lc, rc;
+} tree[MAXN];
+
+int tot = 0;
+
+int build(int l, int r)
+{
+    int u = ++tot;
+    if (l == r)
+    {
+        tree[u].sum = a[l];
+        return u;
+    }
+    
+    int mid = (l + r) >> 1;
+    tree[u].lc = build(l, mid);
+    tree[u].rc = build(mid + 1, r);
+    tree[u].sum = tree[tree[u].lc].sum + tree[tree[u].rc].sum;
+    return u;
+}
+
+int update(int pre, int l, int r, int pos, int val)
+{
+    int u = ++tot;
+    tree[u] = tree[pre];
+    if (l == r)
+    {
+        tree[u].sum += val;
+        return u;
+    }
+    
+    int mid = (l + r) >> 1;
+    if (pos <= mid)
+        tree[u].lc = update(tree[pre].lc, l, mid, pos, val);
+    else
+        tree[u].rc = update(tree[pre].rc, mid + 1, r, pos, val);
+    tree[u].sum = tree[tree[u].lc].sum + tree[tree[u].rc].sum;
+    return u;
+}
+        </div>
+        <h3>⚖️ 权值线段树</h3>
+        <p>权值线段树以值域作为下标建树，常用于处理第k小数、数值统计等问题。</p>
+        <div class="code-block">
+// 插入一个数值
+void insert(int l, int r, int val, int u)
+{
+    tree[u]++;
+    if (l == r)
+        return;
+        
+    int mid = (l + r) >> 1;
+    if (val <= mid)
+        insert(l, mid, val, u << 1);
+    else
+        insert(mid + 1, r, val, u << 1 | 1);
+}
+
+// 查询第k小的数
+int kth(int l, int r, int k, int u)
+{
+    if (l == r)
+        return l;
+        
+    int mid = (l + r) >> 1;
+    if (tree[u << 1] >= k)
+        return kth(l, mid, k, u << 1);
+    else
+        return kth(mid + 1, r, k - tree[u << 1], u << 1 | 1);
+}</div>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <div class="card">
+        <h2>🎯 互动小测</h2>
+        <p>通过以下选择题测试你对线段树的理解程度！</p>
+        <div id="quiz-container">
+          <div class="quiz-question">
+            <h3>问题 1: 线段树的单次区间操作的时间复杂度是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q1" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
+              <label><input type="radio" name="q1" value="b" aria-label="选项B: O(log n)"> B. O(log n)</label><br>
+              <label><input type="radio" name="q1" value="c" aria-label="选项C: O(n log n)"> C. O(n log n)</label><br>
+              <label><input type="radio" name="q1" value="d" aria-label="选项D: O(n²)"> D. O(n²)</label>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 2: 线段树的空间复杂度通常是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q2" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
+              <label><input type="radio" name="q2" value="b" aria-label="选项B: O(2n)"> B. O(2n)</label><br>
+              <label><input type="radio" name="q2" value="c" aria-label="选项C: O(4n)"> C. O(4n)</label><br>
+              <label><input type="radio" name="q2" value="d" aria-label="选项D: O(n log n)"> D. O(n log n)</label>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 3: 懒惰标记的主要作用是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q3" value="a" aria-label="选项A: 减少内存使用"> A. 减少内存使用</label><br>
+              <label><input type="radio" name="q3" value="b" aria-label="选项B: 优化区间修改操作"> B. 优化区间修改操作</label><br>
+              <label><input type="radio" name="q3" value="c" aria-label="选项C: 简化代码实现"> C. 简化代码实现</label><br>
+              <label><input type="radio" name="q3" value="d" aria-label="选项D: 提高查询速度"> D. 提高查询速度</label>
+            </div>
+          </div>
+          <button class="btn" onclick="checkQuiz()" aria-label="提交测试答案">📊 提交答案</button>
+          <div id="quiz-result" class="quiz-result"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings">
+      <div class="card">
+        <h2>⚙️ 自定义设置</h2>
+        <div class="settings-panel">
+          <h3>🎨 代码高亮主题</h3>
+          <div class="settings-row">
+            <label>选择主题:</label>
+            <select id="theme-select" aria-label="选择代码高亮主题">
+              <option value="dark">🌙 深色主题</option>
+              <option value="light">☀️ 浅色主题</option>
+              <option value="monokai">🔥 Monokai</option>
+              <option value="github">📝 GitHub</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label>字体大小:</label>
+            <input type="range" id="font-size-slider" min="12" max="20" value="14" aria-label="调整代码字体大小">
+            <span id="font-size-display">14px</span>
+          </div>
+          <div class="settings-row">
+            <label>行高:</label>
+            <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6" aria-label="调整代码行高">
+            <span id="line-height-display">1.6</span>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>🌲 可视化设置</h3>
+          <div class="settings-row">
+            <label>动画速度:</label>
+            <select id="animation-speed" aria-label="选择动画速度">
+              <option value="slow">🐌 慢速 (2秒)</option>
+              <option value="normal">🚀 正常 (1秒)</option>
+              <option value="fast" selected>⚡ 快速 (0.5秒)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label>节点颜色:</label>
+            <input type="color" id="node-color" value="#74b9ff" aria-label="选择节点颜色">
+            <button class="btn" onclick="applyNodeColor()" aria-label="应用节点颜色">应用颜色</button>
+          </div>
+          <div class="settings-row">
+            <label>显示节点值:</label>
+            <input type="checkbox" id="show-values" checked aria-label="切换节点值显示">
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>💾 导出设置</h3>
+          <div class="settings-row">
+            <button class="btn" onclick="exportSettings()" aria-label="导出配置">📤 导出配置</button>
+            <button class="btn" onclick="resetSettings()" aria-label="重置设置">🔄 重置设置</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
+    </footer>
+  </main>
+
+  <script>
+    // 全局变量
+    let currentTheme = 'dark';
+    let currentFontSize = 14;
+    let currentLineHeight = 1.6;
+    let animationSpeed = 'fast';
+    let nodeColor = '#74b9ff';
+    let showValues = true;
+    // 缓存 DOM 元素
+    const DOM = {
+      themeSelect: document.getElementById('theme-select'),
+      fontSizeSlider: document.getElementById('font-size-slider'),
+      fontSizeDisplay: document.getElementById('font-size-display'),
+      lineHeightSlider: document.getElementById('line-height-slider'),
+      lineHeightDisplay: document.getElementById('line-height-display'),
+      animationSpeed: document.getElementById('animation-speed'),
+      nodeColor: document.getElementById('node-color'),
+      showValues: document.getElementById('show-values'),
+      treeContainer: document.getElementById('tree-container'),
+      quizResult: document.getElementById('quiz-result'),
+      inputN: document.getElementById('input-n'),
+      btnBuild: document.getElementById('btn-build')
+    };
+
+    // 语法高亮规则
+    const highlightRules = {
+      keywords: ['void', 'int', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class', 'public', 'private', 'protected', 'const', 'static', 'bool', 'char', 'double', 'float', 'long', 'short', 'unsigned', 'signed', 'auto', 'break', 'continue', 'switch', 'case', 'default', 'namespace', 'using', 'include', 'define', 'ifdef', 'ifndef', 'endif'],
+      types: ['Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue'],
+      commentSingle: /(\/\/.*?)(\n|$)/g,
+      commentMulti: /(\/\*[\s\S]*?\*\/)/g,
+      strings: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g,
+      numbers: /\b(\d+)\b/g,
+      operators: /\b(<<|>>|<=|>=|==|!=|&&|\|\||[+\-*%=!&|^~<>/])\b/g,
+      functions: /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g
+    };
+
+    // C++ 语法高亮函数
+    function highlightCode(code) {
+      // 缓存正则表达式
+      const regexCache = {
+        escape: /[&<>]/g,
+        commentSingle: highlightRules.commentSingle,
+        commentMulti: highlightRules.commentMulti,
+        strings: highlightRules.strings,
+        numbers: highlightRules.numbers,
+        operators: highlightRules.operators
+      };
+
+      // HTML 转义映射
+      const escapeMap = {
+        '&': '&',
+        '<': '<',
+        '>': '>'
+      };
+
+      // 转义 HTML 特殊字符
+      code = code.replace(regexCache.escape, match => escapeMap[match]);
+
+      let commentIndex = 0;
+      const protectedComments = {};
+
+      // 保护单行注释
+      code = code.replace(regexCache.commentSingle, (match, comment, ending) => {
+        const placeholder = `__COMMENT_${commentIndex}__`;
+        protectedComments[commentIndex++] = `<span class="comment">${comment}</span>`;
+        return placeholder + ending;
+      });
+
+      // 保护多行注释
+      code = code.replace(regexCache.commentMulti, (match) => {
+        const placeholder = `__COMMENT_${commentIndex}__`;
+        protectedComments[commentIndex++] = `<span class="comment">${match}</span>`;
+        return placeholder;
+      });
+
+      // 高亮字符串
+      code = code.replace(regexCache.strings, '<span class="string">$1</span>');
+
+      // 高亮数字
+      code = code.replace(regexCache.numbers, '<span class="number">$1</span>');
+
+      // 高亮关键字
+      highlightRules.keywords.forEach(keyword => {
+        code = code.replace(new RegExp(`\\b${keyword}\\b(?![^<]*</span>)`, 'g'), `<span class="keyword">${keyword}</span>`);
+      });
+
+      // 高亮类型
+      highlightRules.types.forEach(type => {
+        code = code.replace(new RegExp(`\\b${type}\\b(?![^<]*</span>)`, 'g'), `<span class="type">${type}</span>`);
+      });
+
+      // 高亮函数名
+      code = code.replace(highlightRules.functions, '<span class="function">$1</span>');
+
+      // 高亮运算符
+      code = code.replace(regexCache.operators, '<span class="operator">$1</span>');
+
+      // 恢复注释
+      for (const [index, comment] of Object.entries(protectedComments)) {
+        code = code.replace(`__COMMENT_${index}__`, comment);
+      }
+
+      return code;
+    }
+    // 立即应用语法高亮
+    function applyHighlighting() {
+      document.querySelectorAll('.code-block').forEach(block => {
+        if (!block.dataset.originalCode) {
+          block.dataset.originalCode = block.textContent;
+        }
+        if (!block.dataset.highlighted) {
+          // 确保主题类被正确应用
+          if (!block.classList.contains('dark') && !block.classList.contains('light') && 
+              !block.classList.contains('monokai') && !block.classList.contains('github')) {
+            block.classList.add(currentTheme);
+          }
+          block.innerHTML = highlightCode(block.dataset.originalCode);
+          block.dataset.highlighted = true;
+        }
+      });
+    }
+
+    // 延迟加载语法高亮（用于动态添加的代码块）
+    function setupLazyHighlighting() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const block = entry.target;
+            if (!block.dataset.highlighted) {
+              block.innerHTML = highlightCode(block.dataset.originalCode || block.textContent);
+              block.dataset.highlighted = true;
+            }
+          }
+        });
+      }, { threshold: 0.1 });
+
+      // 监听新添加的代码块
+      const newBlocks = document.querySelectorAll('.code-block:not([data-observed])');
+      newBlocks.forEach(block => {
+        if (!block.dataset.originalCode) {
+          block.dataset.originalCode = block.textContent;
+        }
+        block.dataset.observed = 'true';
+        observer.observe(block);
+      });
+    }
+
+    // 导航切换
+    function showSection(id) {
+      document.querySelectorAll('main section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        const targetBtn = document.querySelector(`button[onclick="showSection('${id}')"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+      }
+    }
+    // 切换代码高亮主题
+    function changeTheme() {
+      currentTheme = DOM.themeSelect.value;
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.className = `code-block ${currentTheme}`;
+        // 确保主题切换时重新应用高亮
+        if (block.dataset.originalCode && !block.dataset.highlighted) {
+          block.innerHTML = highlightCode(block.dataset.originalCode);
+          block.dataset.highlighted = true;
+        }
+      });
+      Settings.save();
+    }
+
+    // 调整字体大小
+    function changeFontSize(size) {
+      currentFontSize = parseInt(size);
+      DOM.fontSizeDisplay.textContent = size + 'px';
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.style.fontSize = size + 'px';
+      });
+      Settings.save();
+    }
+
+    // 调整行高
+    function changeLineHeight(height) {
+      currentLineHeight = parseFloat(height);
+      DOM.lineHeightDisplay.textContent = height;
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.style.lineHeight = height;
+      });
+      Settings.save();
+    }
+    // 应用节点颜色
+    function applyNodeColor() {
+      nodeColor = DOM.nodeColor.value;
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .tree-node { background: ${nodeColor} !important; }
+        .tree-node.depth-0 { background: ${nodeColor} !important; }
+        .tree-node.depth-1 { background: ${nodeColor} !important; }
+        .tree-node.depth-2 { background: ${nodeColor} !important; }
+        .tree-node.depth-3 { background: ${nodeColor} !important; }
+      `;
+      document.head.appendChild(style);
+      Settings.save();
+    }
+
+    // 切换节点值显示
+    function toggleNodeValues() {
+      showValues = DOM.showValues.checked;
+      document.querySelectorAll('.tree-node').forEach(node => {
+        node.style.display = showValues ? 'inline-block' : 'none';
+      });
+      Settings.save();
+    }
+
+    // 获取动画延迟
+    function getAnimationDelay() {
+      const speeds = { slow: 2000, normal: 1000, fast: 500 };
+      return speeds[animationSpeed] || 1000;
+    }
+    // 线段树可视化 - 基于边界的智能布局算法
+    function buildTreeVisualization(n, container) {
+      if (n < 1 || n > 8) {
+        alert('请输入1-8');
+        return;
+      }
+
+      container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
+      container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
+      container.innerHTML += `<p><em>💡 使用智能边界算法精确定位每个节点，确保每层填满容器宽度。</em></p>`;      // 创建树形容器 - 自适应宽度
+      const treeVisual = document.createElement('div');
+      treeVisual.className = 'tree-visual';
+      treeVisual.style.position = 'relative';
+      treeVisual.style.width = '100%'; // 改为100%自适应      treeVisual.style.minHeight = '500px';
+      treeVisual.style.padding = '25px';
+      treeVisual.style.background = 'var(--card-bg)';
+      treeVisual.style.borderRadius = '18px';
+      treeVisual.style.borderLeft = '5px solid var(--primary-color)';
+      treeVisual.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
+      treeVisual.style.overflow = 'visible'; // 改为visible，确保内容不被裁剪
+      container.appendChild(treeVisual);      // 获取实际容器宽度，考虑padding
+      const containerWidth = treeVisual.clientWidth - 50; // 减去padding (25px * 2)
+      const nodeMinWidth = 50; // 进一步减小最小节点宽度，防止溢出
+      const levelHeight = 80;
+      const padding = 25; // 左右边距，与CSS padding保持一致
+
+      // 计算最大深度
+      const maxDepth = Math.ceil(Math.log2(n));      // 首先收集所有层级的节点信息
+      const levels = [];
+      function collectLevels(l, r, u, depth = 0) {
+        if (!levels[depth]) levels[depth] = [];
+        levels[depth].push({ l, r, u, depth });
+        
+        if (l < r) {
+          const mid = Math.floor((l + r) / 2);
+          collectLevels(l, mid, u * 2, depth + 1);
+          collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+        }
+      }      collectLevels(1, n, 1);
+
+      // 动态设置容器高度 - 根据层数计算所需高度
+      const totalLevels = levels.length;
+      const calculatedHeight = totalLevels * levelHeight + 100; // 额外加100px的缓冲
+      treeVisual.style.minHeight = `${Math.max(400, calculatedHeight)}px`;      // 节点位置信息存储
+      const nodePositions = new Map();// 计算每个节点的精确位置 - 父子节点宽度继承关系
+      function calculateNodePositions(l, r, u, depth = 0, leftBound = 0, rightBound = containerWidth, parentWidth = null) {
+        const y = depth * levelHeight + 30;
+        
+        // 检查是否为最底层（叶子节点层）
+        const isLeafLevel = (depth === levels.length - 1);
+        const nodesInLevel = levels[depth].length;
+        const totalNodesInLevel = Math.pow(2, depth);
+        
+        let x, nodeWidth;
+          if (isLeafLevel) {
+          // 叶子节点：宽度为父节点的一半，且与父节点边界对齐
+          if (parentWidth) {
+            nodeWidth = parentWidth / 2;
+          } else {
+            nodeWidth = Math.max(nodeMinWidth, (containerWidth - 2 * padding) / totalNodesInLevel);
+          }
+          
+          // 判断是左子节点还是右子节点
+          const parentU = Math.floor(u / 2);
+          const isLeftChild = (u % 2 === 0);
+          const parentPos = nodePositions.get(parentU) || { x: containerWidth / 2 };
+          
+          if (isLeftChild) {
+            // 左子节点：基于父节点左半部分的中心
+            const leftHalfCenter = parentPos.x - parentWidth / 4;
+            x = Math.max(padding + nodeWidth / 2, leftHalfCenter);
+          } else {
+            // 右子节点：基于父节点右半部分的中心
+            const rightHalfCenter = parentPos.x + parentWidth / 4;
+            x = Math.min(containerWidth - padding - nodeWidth / 2, rightHalfCenter);
+          }        }else {          // 非叶子层：铺满整行或均匀分布，确保不超出边界
+          if (nodesInLevel === 1) {
+            // 只有一个节点时：填满整个可用宽度
+            nodeWidth = containerWidth - 2 * padding;
+            x = containerWidth / 2;
+          } else {
+            // 多个节点时：均分可用宽度
+            const availableWidth = containerWidth - 2 * padding;
+            nodeWidth = availableWidth / nodesInLevel;
+            // 确保节点宽度不小于最小值
+            nodeWidth = Math.max(nodeWidth, nodeMinWidth);
+            
+            const nodeIndex = levels[depth].findIndex(node => node.u === u);
+            x = padding + nodeWidth * (nodeIndex + 0.5);
+          }
+        }
+        
+        nodePositions.set(u, {
+          x: x,
+          y: y,
+          l: l,
+          r: r,
+          depth: depth,
+          nodeWidth: nodeWidth,
+          leftBound: leftBound,
+          rightBound: rightBound
+        });
+
+        if (l < r) {
+          const mid = Math.floor((l + r) / 2);
+          
+          // 为子树分配边界，传递当前节点宽度给子节点
+          const boundWidth = (rightBound - leftBound) / 2;
+          
+          calculateNodePositions(l, mid, u * 2, depth + 1, 
+            leftBound, leftBound + boundWidth, nodeWidth);
+          calculateNodePositions(mid + 1, r, u * 2 + 1, depth + 1, 
+            leftBound + boundWidth, rightBound, nodeWidth);
+        }
+      }      // 计算所有节点位置 - 移除可能导致溢出的居中调整
+      calculateNodePositions(1, n, 1, 0, 0, containerWidth, null);
+      
+      // 边界检查和调整函数，确保所有节点都在容器内
+      function ensureBoundaries() {
+        nodePositions.forEach((pos, u) => {
+          const halfWidth = pos.nodeWidth / 2;
+          // 确保节点不超出左边界
+          if (pos.x - halfWidth < padding) {
+            pos.x = padding + halfWidth;
+          }
+          // 确保节点不超出右边界
+          if (pos.x + halfWidth > containerWidth - padding) {
+            pos.x = containerWidth - padding - halfWidth;
+          }
+        });
+      }
+      
+      ensureBoundaries();
+
+      // 按build递归顺序收集节点
+      const buildOrder = [];
+      
+      function generateBuildOrder(l, r, u, depth = 0) {
+        buildOrder.push({ l, r, u, depth });
+        
+        if (l < r) {
+          const mid = Math.floor((l + r) / 2);
+          generateBuildOrder(l, mid, u * 2, depth + 1);
+          generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+        }
+      }
+
+      generateBuildOrder(1, n, 1);
+
+      // 动画渲染
+      let orderIndex = 0;
+      
+      function renderNextNode() {
+        if (orderIndex >= buildOrder.length) {
+          return;
+        }
+
+        const { l, r, u, depth } = buildOrder[orderIndex];
+        const position = nodePositions.get(u);
+        const nodeInfo = `${u}\n[${l},${r}]`;
+        
+        // 创建节点元素 - 使用绝对定位
+        const nodeDiv = document.createElement('div');
+        nodeDiv.className = `tree-node depth-${depth}`;
+        nodeDiv.textContent = nodeInfo;
+        nodeDiv.setAttribute('data-node-id', u);
+        
+        // 设置绝对定位和动态宽度
+        nodeDiv.style.position = 'absolute';
+        nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+        nodeDiv.style.top = `${position.y}px`;
+        nodeDiv.style.width = `${position.nodeWidth}px`;
+        nodeDiv.style.zIndex = '10';
+        
+        // 应用自定义颜色
+        if (nodeColor !== '#74b9ff') {
+          nodeDiv.style.background = nodeColor;
+        }
+        
+        // 初始状态（仅透明度为0，大小已是最终大小）
+        nodeDiv.style.opacity = '0';
+        nodeDiv.style.transform = 'translateY(-10px)';
+        
+        treeVisual.appendChild(nodeDiv);
+        
+        // 添加连接线（如果不是根节点）
+        if (depth > 0) {
+          addConnectionLine(u, nodePositions);
+        }
+        
+        // 延迟显示动画 - 只改变透明度和位置，不改变大小
+        setTimeout(() => {
+          nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+          nodeDiv.style.opacity = '1';
+          nodeDiv.style.transform = 'translateY(0)';
+        }, 50);
+
+        orderIndex++;
+        setTimeout(renderNextNode, getAnimationDelay() / 6);
+      }
+
+      // 开始渲染
+      setTimeout(renderNextNode, 500);
+    }
+
+    // 添加父子节点间的连接线
+    function addConnectionLine(nodeId, nodePositions) {
+      const parentId = Math.floor(nodeId / 2);
+      const childPos = nodePositions.get(nodeId);
+      const parentPos = nodePositions.get(parentId);
+      
+      if (!childPos || !parentPos) return;
+
+      const treeVisual = document.querySelector('.tree-visual');
+      
+      // 创建连接线
+      const line = document.createElement('div');
+      line.className = 'tree-connection-line';
+      line.style.position = 'absolute';
+      line.style.background = 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))';
+      line.style.zIndex = '5';
+      line.style.opacity = '0';
+      line.style.borderRadius = '1px';
+      
+      // 计算连接线的位置和角度
+      const deltaX = childPos.x - parentPos.x;
+      const deltaY = childPos.y - parentPos.y - 35; // 35是节点高度
+      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+      
+      line.style.width = `${length}px`;
+      line.style.height = '2px';
+      line.style.left = `${parentPos.x}px`;
+      line.style.top = `${parentPos.y + 35}px`; // 从父节点底部开始
+      line.style.transformOrigin = '0 50%';
+      line.style.transform = `rotate(${angle}deg)`;
+      
+      treeVisual.appendChild(line);
+      
+      // 延迟显示连接线
+      setTimeout(() => {
+        line.style.transition = 'opacity 0.4s ease-in-out';
+        line.style.opacity = '0.8';
+      }, 200);
+    }
+    // 测试检查
+    function checkQuiz() {
+      const answers = { q1: 'b', q2: 'c', q3: 'b' };
+      let score = 0;
+      let results = [];
+
+      for (const [question, correct] of Object.entries(answers)) {
+        const selected = document.querySelector(`input[name="${question}"]:checked`);
+        if (!selected) {
+          results.push(`❌ 问题 ${question.slice(1)}: 未选择答案`);
+          continue;
+        }
+        if (selected.value === correct) {
+          score++;
+          results.push(`✅ 问题 ${question.slice(1)}: 正确`);
+        } else {
+          results.push(`❌ 问题 ${question.slice(1)}: 错误`);
+        }
+      }
+
+      const total = Object.keys(answers).length;
+      DOM.quizResult.style.display = 'block';
+      DOM.quizResult.innerHTML = `
+        <h3>🎯 测试结果</h3>
+        <p><strong>得分: ${score}/${total} (${Math.round(score / total * 100)}%)</strong></p>
+        ${results.join('<br>')}
+        <p style="margin-top: 15px;">
+          ${score === total ? '🎉 完美！你已经完全掌握了线段树的基础知识！' :
+            score >= total * 0.7 ? '👍 不错！继续加油学习线段树！' :
+            '💪 还需要更多练习，建议重新阅读相关内容。'}
+        </p>
+      `;
+      DOM.quizResult.style.background = score === total ? 'var(--success-bg)' :
+        score >= total * 0.7 ? 'var(--warning-bg)' : 'var(--error-bg)';
+      DOM.quizResult.style.color = 'white';
+    }
+
+    // 设置管理
+    const Settings = {
+      defaults: {
+        theme: 'dark',
+        fontSize: 14,
+        lineHeight: 1.6,
+        animationSpeed: 'fast',
+        nodeColor: '#74b9ff',
+        showValues: true
+      },
+      save() {
+        localStorage.setItem('segmentTreeSettings', JSON.stringify({
+          theme: currentTheme,
+          fontSize: currentFontSize,
+          lineHeight: currentLineHeight,
+          animationSpeed: animationSpeed,
+          nodeColor: nodeColor,
+          showValues: showValues
+        }));
+      },
+      load() {
+        const saved = localStorage.getItem('segmentTreeSettings');
+        if (saved) {
+          Object.assign(this.defaults, JSON.parse(saved));
+          currentTheme = this.defaults.theme;
+          currentFontSize = this.defaults.fontSize;
+          currentLineHeight = this.defaults.lineHeight;
+          animationSpeed = this.defaults.animationSpeed;
+          nodeColor = this.defaults.nodeColor;
+          showValues = this.defaults.showValues;
+
+          DOM.themeSelect.value = currentTheme;
+          DOM.fontSizeSlider.value = currentFontSize;
+          DOM.lineHeightSlider.value = currentLineHeight;
+          DOM.animationSpeed.value = animationSpeed;
+          DOM.nodeColor.value = nodeColor;
+          DOM.showValues.checked = showValues;
+
+          changeFontSize(currentFontSize);
+          changeLineHeight(currentLineHeight);
+          changeTheme();
+        }
+        // 无论是否有保存的设置，都应用语法高亮
+        setTimeout(() => {
+          applyHighlighting();
+          setupLazyHighlighting();
+        }, 100);
+      },
+      export() {
+        const settings = {
+          theme: currentTheme,
+          fontSize: currentFontSize,
+          lineHeight: currentLineHeight,
+          animationSpeed: animationSpeed,
+          nodeColor: nodeColor,
+          showValues: showValues,
+          exportDate: new Date().toISOString()
+        };
+        dataStr = JSON.stringify(settings, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = 'segment-tree-settings.json';
+        link.click();
+      },
+      reset() {
+        if (confirm('确定要重置所有设置吗？')) {
+          localStorage.removeItem('segmentTreeSettings');
+          location.reload();
+        }
+      }
+    };
+
+    // 节流函数
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+    // 初始化事件监听
+    document.addEventListener('DOMContentLoaded', () => {
+      // 首先立即应用语法高亮
+      applyHighlighting();
+      
+      // 然后加载设置
+      Settings.load();
+      
+      // 设置延迟高亮监听
+      setupLazyHighlighting();
+      
+      // 确保字体大小和行高显示元素存在
+      if (DOM.fontSizeDisplay) {
+        DOM.fontSizeDisplay.textContent = currentFontSize + 'px';
+      }
+      if (DOM.lineHeightDisplay) {
+        DOM.lineHeightDisplay.textContent = currentLineHeight;
+      }
+
+      // 导航事件委托
+      document.querySelector('nav').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          const sectionId = e.target.getAttribute('onclick').match(/'([^']+)'/)[1];
+          showSection(sectionId);
+        }
+      });
+
+      // 设置相关事件
+      DOM.themeSelect.addEventListener('change', changeTheme);
+      DOM.fontSizeSlider.addEventListener('input', debounce(e => changeFontSize(e.target.value), 100));
+      DOM.lineHeightSlider.addEventListener('input', debounce(e => changeLineHeight(e.target.value), 100));
+      DOM.animationSpeed.addEventListener('change', () => {
+        animationSpeed = DOM.animationSpeed.value;
+        Settings.save();
+      });
+      DOM.showValues.addEventListener('change', toggleNodeValues);
+      DOM.btnBuild.addEventListener('click', () => buildTreeVisualization(parseInt(DOM.inputN.value), DOM.treeContainer));
+    });
+
+    // 导出和重置设置
+    function exportSettings() { Settings.export(); }
+    function resetSettings() { Settings.reset(); }
+  </script>
+</html>
