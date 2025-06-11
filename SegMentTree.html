@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>线段树全方位介绍</title>
-  <style>
+  <title>线段树全方位介绍</title>  <style>
+    /* 默认主题 - 白天模式 */
     :root {
       --primary-color: #6c5ce7;
       --secondary-color: #a29bfe;
@@ -17,19 +17,82 @@
       --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       --text-primary: #2d3436;
       --text-secondary: #636e72;
+      --text-white: #ffffff;
+      --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      --nav-bg: rgba(255, 255, 255, 0.98);
+      --input-bg: #ffffff;
+      --input-border: rgba(108, 92, 231, 0.2);
+      --input-text: #2d3436;
+      --focus-shadow: rgba(108, 92, 231, 0.1);
+      --footer-text: rgba(255, 255, 255, 0.9);
+      --footer-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      --code-bg: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      --code-text: #495057;
+      --nav-button-bg: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+      --nav-button-text: #2d3436;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
       --border-radius: 20px;
       --font-size-base: 14px;
       --line-height-base: 1.6;
-    }    
-    body {
+    }
+
+    /* 黑夜模式 */
+    [data-theme="dark"] {
+      --header-bg: linear-gradient(135deg, #1a1a2e, #16213e);
+      --card-bg: rgba(26, 26, 46, 0.95);
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --text-primary: #e2e8f0;
+      --text-secondary: #a0aec0;
+      --text-white: #ffffff;
+      --body-bg: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      --nav-bg: rgba(26, 26, 46, 0.95);
+      --input-bg: rgba(45, 55, 72, 0.9);
+      --input-border: rgba(108, 92, 231, 0.4);
+      --input-text: #e2e8f0;
+      --focus-shadow: rgba(108, 92, 231, 0.2);
+      --footer-text: rgba(226, 232, 240, 0.9);
+      --footer-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.3), rgba(22, 33, 62, 0.2));
+      --code-bg: linear-gradient(135deg, #1a1a2e, #16213e);
+      --code-text: #e2e8f0;
+      --nav-button-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.6));
+      --nav-button-text: #a0aec0;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.8));
+    }
+
+    /* 护眼模式 */
+    [data-theme="eye-care"] {
+      --primary-color: #4a5568;
+      --secondary-color: #718096;
+      --accent-color: #68d391;
+      --header-bg: linear-gradient(135deg, #2d3748, #4a5568);
+      --card-bg: rgba(237, 242, 247, 0.98);
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      --text-primary: #2d3748;
+      --text-secondary: #4a5568;
+      --text-white: #ffffff;
+      --body-bg: linear-gradient(135deg, #e6fffa 0%, #f0fff4 50%, #f7fafc 100%);
+      --nav-bg: rgba(237, 242, 247, 0.98);
+      --input-bg: rgba(255, 255, 255, 0.9);
+      --input-border: rgba(74, 85, 104, 0.3);
+      --input-text: #2d3748;
+      --focus-shadow: rgba(74, 85, 104, 0.15);
+      --footer-text: rgba(45, 55, 72, 0.8);
+      --footer-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.4), rgba(237, 242, 247, 0.2));
+      --code-bg: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      --code-text: #0f172a;
+      --nav-button-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.8), rgba(237, 242, 247, 0.6));
+      --nav-button-text: #4a5568;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.9), rgba(237, 242, 247, 0.8));
+    }    body {
       margin: 0;
       font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       height: 100vh;
       overflow: hidden;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background: var(--body-bg);
       min-width: 800px;
       position: relative;
+      transition: all 0.3s ease;
     }
     body::before {
       content: '';
@@ -43,13 +106,12 @@
         radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
         radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
       z-index: -1;
-    }    
-    header {
+    }      header {
       position: fixed;
       top: 0;
       width: 100%;
       background: var(--header-bg);
-      color: white;
+      color: var(--text-white);
       padding: 20px;
       text-align: center;
       font-size: 32px;
@@ -71,14 +133,13 @@
       height: 3px;
       background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
       border-radius: 2px;
-    }    
-    nav {
+    }      nav {
       margin-top: 85px;
       width: 280px;
       min-width: 280px;
       max-width: 280px;
       flex-shrink: 0;
-      background: var(--card-bg);
+      background: var(--nav-bg);
       backdrop-filter: blur(20px);
       padding: 25px;
       box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
@@ -86,11 +147,11 @@
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
       box-sizing: border-box;
       border-right: 1px solid rgba(255, 255, 255, 0.3);
-    }    
-    .btn {
+      transition: all 0.3s ease;
+    }    .btn {
       padding: 12px 24px;
       background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
+      color: var(--text-white);
       border: none;
       border-radius: 12px;
       cursor: pointer;
@@ -121,8 +182,7 @@
     }
     .btn:active {
       transform: translateY(-1px) scale(0.98);
-    }
-    nav button {
+    }    nav button {
       display: block;
       width: 100%;
       min-width: 220px;
@@ -136,7 +196,8 @@
       border-radius: 15px;
       position: relative;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+      background: var(--nav-button-bg);
+      color: var(--nav-button-text);
       border: 2px solid transparent;
     }
     nav button::before {
@@ -150,18 +211,16 @@
       transform: scaleY(0);
       transition: transform 0.3s ease;
       border-radius: 0 2px 2px 0;
-    }
-    nav button:hover {
-      background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+    }    nav button:hover {
+      background: var(--nav-button-hover-bg);
       transform: translateX(5px);
       border-color: rgba(108, 92, 231, 0.3);
     }
     nav button:hover::before {
       transform: scaleY(1);
-    }
-    nav button.active {
+    }    nav button.active {
       background: var(--success-bg);
-      color: white;
+      color: var(--text-white);
       box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3);
       border-color: rgba(255, 255, 255, 0.3);
     }
@@ -256,10 +315,9 @@
       margin-bottom: 18px;
       font-size: 16px;
       font-weight: 400;
-    }
-    .code-block {
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      color: #e2e8f0;
+    }    .code-block {
+      background: var(--code-bg);
+      color: var(--code-text);
       padding: 25px;
       border-radius: 16px;
       margin: 25px 0;
@@ -293,8 +351,7 @@
       color: rgba(255, 255, 255, 0.3);
       font-size: 18px;
       font-weight: bold;
-    }
-    .code-block .keyword { color: #63b3ed; font-weight: bold; }
+    }    .code-block .keyword { color: #63b3ed; font-weight: bold; }
     .code-block .type { color: #68d391; font-weight: bold; }
     .code-block .function { color: #fbb6ce; }
     .code-block .number { color: #f6ad55; }
@@ -324,7 +381,83 @@
     .code-block.github .function { color: #6f42c1; }
     .code-block.github .number { color: #032f62; }
     .code-block.github .comment { color: #6a737d; }
-    .code-block.github .operator { color: #d73a49; font-weight: bold; }    
+    .code-block.github .operator { color: #d73a49; font-weight: bold; }
+
+    /* 语法高亮样式 - 确保在 pre > code 结构中正常工作 */
+    .code-block .keyword, .code-block code .keyword { color: #63b3ed; font-weight: bold; }
+    .code-block .type, .code-block code .type { color: #68d391; font-weight: bold; }
+    .code-block .function, .code-block code .function { color: #fbb6ce; }
+    .code-block .variable, .code-block code .variable { color: #e6fffa; font-weight: 500; }
+    .code-block .string, .code-block code .string { color: #9ae6b4; }
+    .code-block .comment, .code-block code .comment { color: #a0aec0; font-style: italic; }
+    .code-block .number, .code-block code .number { color: #f6ad55; }
+    .code-block .operator, .code-block code .operator { color: #fbb6ce; font-weight: bold; }
+    .code-block .bracket, .code-block code .bracket { color: #fbb6ce; font-weight: bold; }
+    .code-block .symbol, .code-block code .symbol { color: #63b3ed; font-weight: 500; }
+    .code-block .pointer, .code-block code .pointer { color: #f6ad55; font-weight: bold; }
+    .code-block .preprocessor, .code-block code .preprocessor { color: #ba68c8; font-weight: bold; }
+    .code-block .constant, .code-block code .constant { color: #ffd93d; font-weight: bold; }
+    .code-block .namespace, .code-block code .namespace { color: #a78bfa; font-weight: 600; }
+    
+    /* 白天模式语法高亮 - 使用更柔和的颜色 */
+    [data-theme="light"] .code-block .function,
+    [data-theme="light"] .code-block code .function { color: #5a67d8; }
+    [data-theme="light"] .code-block .variable,
+    [data-theme="light"] .code-block code .variable { color: #c05621; font-weight: 500; }
+    [data-theme="light"] .code-block .keyword,
+    [data-theme="light"] .code-block code .keyword { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block .type,
+    [data-theme="light"] .code-block code .type { color: #38a169; font-weight: bold; }
+    [data-theme="light"] .code-block .string,
+    [data-theme="light"] .code-block code .string { color: #38a169; }
+    [data-theme="light"] .code-block .comment,
+    [data-theme="light"] .code-block code .comment { color: #718096; font-style: italic; }
+    [data-theme="light"] .code-block .number,
+    [data-theme="light"] .code-block code .number { color: #d53f8c; }
+    [data-theme="light"] .code-block .operator,
+    [data-theme="light"] .code-block code .operator { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block .bracket,
+    [data-theme="light"] .code-block code .bracket { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block .symbol,
+    [data-theme="light"] .code-block code .symbol { color: #5a67d8; font-weight: 500; }
+    [data-theme="light"] .code-block .pointer,
+    [data-theme="light"] .code-block code .pointer { color: #c05621; font-weight: bold; }
+    [data-theme="light"] .code-block .preprocessor,
+    [data-theme="light"] .code-block code .preprocessor { color: #5a67d8; font-weight: bold; }
+    [data-theme="light"] .code-block .constant,
+    [data-theme="light"] .code-block code .constant { color: #38a169; font-weight: bold; }
+    [data-theme="light"] .code-block .namespace,
+    [data-theme="light"] .code-block code .namespace { color: #5a67d8; font-weight: 600; }
+
+    /* 护眼模式语法高亮 - 使用更柔和的颜色 */
+    [data-theme="eye-care"] .code-block .function,
+    [data-theme="eye-care"] .code-block code .function { color: #4c51bf; }
+    [data-theme="eye-care"] .code-block .variable,
+    [data-theme="eye-care"] .code-block code .variable { color: #9c4221; font-weight: 500; }
+    [data-theme="eye-care"] .code-block .keyword,
+    [data-theme="eye-care"] .code-block code .keyword { color: #38a169; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .type,
+    [data-theme="eye-care"] .code-block code .type { color: #319795; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .string,
+    [data-theme="eye-care"] .code-block code .string { color: #38a169; }
+    [data-theme="eye-care"] .code-block .comment,
+    [data-theme="eye-care"] .code-block code .comment { color: #718096; font-style: italic; }
+    [data-theme="eye-care"] .code-block .number,
+    [data-theme="eye-care"] .code-block code .number { color: #e53e3e; }
+    [data-theme="eye-care"] .code-block .operator,
+    [data-theme="eye-care"] .code-block code .operator { color: #e53e3e; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .bracket,
+    [data-theme="eye-care"] .code-block code .bracket { color: #e53e3e; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .symbol,
+    [data-theme="eye-care"] .code-block code .symbol { color: #319795; font-weight: 500; }
+    [data-theme="eye-care"] .code-block .pointer,
+    [data-theme="eye-care"] .code-block code .pointer { color: #9c4221; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .preprocessor,
+    [data-theme="eye-care"] .code-block code .preprocessor { color: #4c51bf; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .constant,
+    [data-theme="eye-care"] .code-block code .constant { color: #319795; font-weight: bold; }
+    [data-theme="eye-care"] .code-block .namespace,
+    [data-theme="eye-care"] .code-block code .namespace { color: #4c51bf; font-weight: 600; }
     
     .settings-panel {
       background: var(--card-bg);
@@ -356,21 +489,21 @@
       color: var(--text-primary);
       min-width: 140px;
       font-size: 15px;
-    }
-    .settings-row input, .settings-row select {
+    }    .settings-row input, .settings-row select {
       padding: 12px 16px;
-      border: 2px solid rgba(108, 92, 231, 0.2);
+      border: 2px solid var(--input-border);
       border-radius: 12px;
-      background: white;
+      background: var(--input-bg);
+      color: var(--input-text);
       transition: all 0.3s ease;
       font-size: 14px;
     }
     .settings-row input:focus, .settings-row select:focus {
       outline: none;
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+      box-shadow: 0 0 0 3px var(--focus-shadow);
       transform: translateY(-1px);
-    }    
+    }
     #tree-container {
       margin-top: 30px;
       padding: 25px;
@@ -599,14 +732,13 @@
       display: none;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    footer {
+    }    footer {
       margin-top: 50px;
       font-size: 15px;
-      color: rgba(255, 255, 255, 0.9);
+      color: var(--footer-text);
       text-align: center;
       padding: 25px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      background: var(--footer-bg);
       border-radius: 18px;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -662,9 +794,89 @@
         min-height: 200px; /* 降低最小高度 */
       }
     }
+    
+    /* 三级主题开关样式 */
+    .theme-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 25px;
+      padding: 8px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      transition: all 0.3s ease;
+    }
+
+    .theme-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      position: relative;
+      background: transparent;
+    }
+
+    .theme-option:hover {
+      transform: scale(1.1);
+    }
+
+    .theme-option.active {
+      background: var(--primary-color);
+      color: var(--text-white);
+      transform: scale(1.2);
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+    }
+
+    .theme-option[data-theme="light"] {
+      background: linear-gradient(135deg, #ffd93d, #ff9a56);
+    }
+
+    .theme-option[data-theme="dark"] {
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      color: #e2e8f0;
+    }
+
+    .theme-option[data-theme="eye-care"] {
+      background: linear-gradient(135deg, #68d391, #38b2ac);
+      color: var(--text-white);
+    }
+
+    .theme-option.active[data-theme="light"] {
+      background: linear-gradient(135deg, #ffd93d, #ff9a56);
+      color: #2d3436;
+    }
+
+    .theme-option.active[data-theme="dark"] {
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      color: #e2e8f0;
+    }
+
+    .theme-option.active[data-theme="eye-care"] {
+      background: linear-gradient(135deg, #68d391, #38b2ac);
+      color: #2d3748;
+    }
   </style>
 </head>
 <body>
+  <!-- 三级主题开关 -->
+  <div class="theme-switcher">
+    <button class="theme-option active" data-theme="light" onclick="switchTheme('light')" title="白天模式">☀️</button>
+    <button class="theme-option" data-theme="eye-care" onclick="switchTheme('eye-care')" title="护眼模式">🌿</button>
+    <button class="theme-option" data-theme="dark" onclick="switchTheme('dark')" title="黑夜模式">🌙</button>
+  </div>
+
   <header>🌲 线段树全方位介绍（从入门到入土）</header>
 
   <nav>
@@ -971,10 +1183,27 @@ int kth(int l, int r, int k, int u)
       <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
     </footer>
   </main>
-
   <script>
+    // 主题切换功能
+    function switchTheme(theme) {
+      // 更新data-theme属性
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      // 更新按钮状态
+      document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
+      
+      // 保存到localStorage
+      localStorage.setItem('theme', theme);
+      
+      // 更新currentTheme变量
+      currentTheme = theme;
+    }
+
     // 全局变量
-    let currentTheme = 'dark';
+    let currentTheme = 'light'; // 改为默认light主题
     let currentFontSize = 14;
     let currentLineHeight = 1.6;
     let animationSpeed = 'fast';
@@ -1576,9 +1805,12 @@ int kth(int l, int r, int k, int u)
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
       };
-    }
-    // 初始化事件监听
+    }    // 初始化事件监听
     document.addEventListener('DOMContentLoaded', () => {
+      // 恢复主题
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      switchTheme(savedTheme);
+      
       // 首先立即应用语法高亮
       applyHighlighting();
       
@@ -1620,4 +1852,5 @@ int kth(int l, int r, int k, int u)
     function exportSettings() { Settings.export(); }
     function resetSettings() { Settings.reset(); }
   </script>
+</body>
 </html>
