@@ -3,87 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>线段树全方位介绍</title>  <style>
-    /* 默认主题 - 白天模式 */
+  <title>线段树全方位介绍</title>  
+  <style>    /* 默认主题 - 白天模式 */
     :root {
-      --primary-color: #6c5ce7;
-      --secondary-color: #a29bfe;
-      --accent-color: #fd79a8;
-      --success-bg: linear-gradient(135deg, #00b894, #00cec9);
-      --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
-      --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
-      --header-bg: linear-gradient(135deg, #2d3436, #636e72);
-      --card-bg: rgba(255, 255, 255, 0.98);
-      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-      --text-primary: #2d3436;
-      --text-secondary: #636e72;
+      --primary-color: #6366f1;
+      --secondary-color: #8b5cf6;
+      --accent-color: #ec4899;
+      --success-bg: linear-gradient(135deg, #10b981, #059669);
+      --warning-bg: linear-gradient(135deg, #f59e0b, #d97706);
+      --error-bg: linear-gradient(135deg, #ef4444, #dc2626);
+      --header-bg: linear-gradient(135deg, #1e293b, #334155);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
       --text-white: #ffffff;
-      --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-      --nav-bg: rgba(255, 255, 255, 0.98);
+      --body-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+      --nav-bg: rgba(255, 255, 255, 0.95);
       --input-bg: #ffffff;
-      --input-border: rgba(108, 92, 231, 0.2);
-      --input-text: #2d3436;
-      --focus-shadow: rgba(108, 92, 231, 0.1);
-      --footer-text: rgba(255, 255, 255, 0.9);
-      --footer-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-      --code-bg: linear-gradient(135deg, #f8f9fa, #e9ecef);
-      --code-text: #495057;
-      --nav-button-bg: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
-      --nav-button-text: #2d3436;
-      --nav-button-hover-bg: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+      --input-border: rgba(99, 102, 241, 0.2);
+      --input-text: #0f172a;
+      --focus-shadow: rgba(99, 102, 241, 0.15);
+      --footer-text: rgba(15, 23, 42, 0.8);
+      --footer-bg: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.6));
+      --code-bg: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      --code-text: #334155;
+      --nav-button-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+      --nav-button-text: #0f172a;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
       --border-radius: 20px;
       --font-size-base: 14px;
       --line-height-base: 1.6;
-    }
-
-    /* 黑夜模式 */
+    }    /* 黑夜模式 */
     [data-theme="dark"] {
-      --header-bg: linear-gradient(135deg, #1a1a2e, #16213e);
-      --card-bg: rgba(26, 26, 46, 0.95);
-      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      --text-primary: #e2e8f0;
-      --text-secondary: #a0aec0;
+      --primary-color: #8b5cf6;
+      --secondary-color: #a855f7;
+      --accent-color: #f472b6;
+      --header-bg: linear-gradient(135deg, #0f172a, #1e293b);
+      --card-bg: rgba(15, 23, 42, 0.95);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
       --text-white: #ffffff;
-      --body-bg: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-      --nav-bg: rgba(26, 26, 46, 0.95);
-      --input-bg: rgba(45, 55, 72, 0.9);
-      --input-border: rgba(108, 92, 231, 0.4);
-      --input-text: #e2e8f0;
-      --focus-shadow: rgba(108, 92, 231, 0.2);
-      --footer-text: rgba(226, 232, 240, 0.9);
-      --footer-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.3), rgba(22, 33, 62, 0.2));
-      --code-bg: linear-gradient(135deg, #1a1a2e, #16213e);
+      --body-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      --nav-bg: rgba(15, 23, 42, 0.95);
+      --input-bg: rgba(30, 41, 59, 0.8);
+      --input-border: rgba(139, 92, 246, 0.3);
+      --input-text: #f1f5f9;
+      --focus-shadow: rgba(139, 92, 246, 0.25);
+      --footer-text: rgba(241, 245, 249, 0.9);
+      --footer-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+      --code-bg: linear-gradient(135deg, #0f172a, #1e293b);
       --code-text: #e2e8f0;
-      --nav-button-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.6));
-      --nav-button-text: #a0aec0;
-      --nav-button-hover-bg: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.8));
-    }
-
-    /* 护眼模式 */
+      --nav-button-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+      --nav-button-text: #cbd5e1;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    }    /* 护眼模式 */
     [data-theme="eye-care"] {
-      --primary-color: #4a5568;
-      --secondary-color: #718096;
-      --accent-color: #68d391;
-      --header-bg: linear-gradient(135deg, #2d3748, #4a5568);
-      --card-bg: rgba(237, 242, 247, 0.98);
-      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      --text-primary: #2d3748;
-      --text-secondary: #4a5568;
+      --primary-color: #059669;
+      --secondary-color: #047857;
+      --accent-color: #0891b2;
+      --header-bg: linear-gradient(135deg, #064e3b, #065f46);
+      --card-bg: rgba(240, 253, 244, 0.95);
+      --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+      --text-primary: #064e3b;
+      --text-secondary: #047857;
       --text-white: #ffffff;
-      --body-bg: linear-gradient(135deg, #e6fffa 0%, #f0fff4 50%, #f7fafc 100%);
-      --nav-bg: rgba(237, 242, 247, 0.98);
+      --body-bg: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%);
+      --nav-bg: rgba(240, 253, 244, 0.95);
       --input-bg: rgba(255, 255, 255, 0.9);
-      --input-border: rgba(74, 85, 104, 0.3);
-      --input-text: #2d3748;
-      --focus-shadow: rgba(74, 85, 104, 0.15);
-      --footer-text: rgba(45, 55, 72, 0.8);
-      --footer-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.4), rgba(237, 242, 247, 0.2));
-      --code-bg: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-      --code-text: #0f172a;
-      --nav-button-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.8), rgba(237, 242, 247, 0.6));
-      --nav-button-text: #4a5568;
-      --nav-button-hover-bg: linear-gradient(135deg, rgba(237, 242, 247, 0.9), rgba(237, 242, 247, 0.8));
-    }    body {
+      --input-border: rgba(5, 150, 105, 0.25);
+      --input-text: #064e3b;
+      --focus-shadow: rgba(5, 150, 105, 0.15);
+      --footer-text: rgba(6, 78, 59, 0.85);
+      --footer-bg: linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(236, 253, 245, 0.6));
+      --code-bg: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      --code-text: #065f46;
+      --nav-button-bg: linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(236, 253, 245, 0.6));
+      --nav-button-text: #047857;
+      --nav-button-hover-bg: linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(236, 253, 245, 0.8));
+    }
+    body {
       margin: 0;
       font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
@@ -381,53 +381,51 @@
     .code-block.github .function { color: #6f42c1; }
     .code-block.github .number { color: #032f62; }
     .code-block.github .comment { color: #6a737d; }
-    .code-block.github .operator { color: #d73a49; font-weight: bold; }
-
-    /* 语法高亮样式 - 确保在 pre > code 结构中正常工作 */
-    .code-block .keyword, .code-block code .keyword { color: #63b3ed; font-weight: bold; }
-    .code-block .type, .code-block code .type { color: #68d391; font-weight: bold; }
-    .code-block .function, .code-block code .function { color: #fbb6ce; }
-    .code-block .variable, .code-block code .variable { color: #e6fffa; font-weight: 500; }
-    .code-block .string, .code-block code .string { color: #9ae6b4; }
-    .code-block .comment, .code-block code .comment { color: #a0aec0; font-style: italic; }
-    .code-block .number, .code-block code .number { color: #f6ad55; }
-    .code-block .operator, .code-block code .operator { color: #fbb6ce; font-weight: bold; }
-    .code-block .bracket, .code-block code .bracket { color: #fbb6ce; font-weight: bold; }
-    .code-block .symbol, .code-block code .symbol { color: #63b3ed; font-weight: 500; }
-    .code-block .pointer, .code-block code .pointer { color: #f6ad55; font-weight: bold; }
-    .code-block .preprocessor, .code-block code .preprocessor { color: #ba68c8; font-weight: bold; }
-    .code-block .constant, .code-block code .constant { color: #ffd93d; font-weight: bold; }
+    .code-block.github .operator { color: #d73a49; font-weight: bold; }    /* 语法高亮样式 - 默认暗色主题 */
+    .code-block .keyword, .code-block code .keyword { color: #f472b6; font-weight: bold; }
+    .code-block .type, .code-block code .type { color: #34d399; font-weight: bold; }
+    .code-block .function, .code-block code .function { color: #60a5fa; }
+    .code-block .variable, .code-block code .variable { color: #fbbf24; font-weight: 500; }
+    .code-block .string, .code-block code .string { color: #34d399; }
+    .code-block .comment, .code-block code .comment { color: #94a3b8; font-style: italic; }
+    .code-block .number, .code-block code .number { color: #fbbf24; }
+    .code-block .operator, .code-block code .operator { color: #f472b6; font-weight: bold; }
+    .code-block .bracket, .code-block code .bracket { color: #f472b6; font-weight: bold; }
+    .code-block .symbol, .code-block code .symbol { color: #60a5fa; font-weight: 500; }
+    .code-block .pointer, .code-block code .pointer { color: #fbbf24; font-weight: bold; }
+    .code-block .preprocessor, .code-block code .preprocessor { color: #a78bfa; font-weight: bold; }
+    .code-block .constant, .code-block code .constant { color: #fcd34d; font-weight: bold; }
     .code-block .namespace, .code-block code .namespace { color: #a78bfa; font-weight: 600; }
     
-    /* 白天模式语法高亮 - 使用更柔和的颜色 */
+    /* 白天模式语法高亮 - 高对比度易读配色 */
     [data-theme="light"] .code-block .function,
-    [data-theme="light"] .code-block code .function { color: #5a67d8; }
+    [data-theme="light"] .code-block code .function { color: #3730a3; }
     [data-theme="light"] .code-block .variable,
-    [data-theme="light"] .code-block code .variable { color: #c05621; font-weight: 500; }
+    [data-theme="light"] .code-block code .variable { color: #dc2626; font-weight: 500; }
     [data-theme="light"] .code-block .keyword,
-    [data-theme="light"] .code-block code .keyword { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block code .keyword { color: #be185d; font-weight: bold; }
     [data-theme="light"] .code-block .type,
-    [data-theme="light"] .code-block code .type { color: #38a169; font-weight: bold; }
+    [data-theme="light"] .code-block code .type { color: #059669; font-weight: bold; }
     [data-theme="light"] .code-block .string,
-    [data-theme="light"] .code-block code .string { color: #38a169; }
+    [data-theme="light"] .code-block code .string { color: #047857; }
     [data-theme="light"] .code-block .comment,
-    [data-theme="light"] .code-block code .comment { color: #718096; font-style: italic; }
+    [data-theme="light"] .code-block code .comment { color: #64748b; font-style: italic; }
     [data-theme="light"] .code-block .number,
-    [data-theme="light"] .code-block code .number { color: #d53f8c; }
+    [data-theme="light"] .code-block code .number { color: #dc2626; }
     [data-theme="light"] .code-block .operator,
-    [data-theme="light"] .code-block code .operator { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block code .operator { color: #be185d; font-weight: bold; }
     [data-theme="light"] .code-block .bracket,
-    [data-theme="light"] .code-block code .bracket { color: #d53f8c; font-weight: bold; }
+    [data-theme="light"] .code-block code .bracket { color: #be185d; font-weight: bold; }
     [data-theme="light"] .code-block .symbol,
-    [data-theme="light"] .code-block code .symbol { color: #5a67d8; font-weight: 500; }
+    [data-theme="light"] .code-block code .symbol { color: #3730a3; font-weight: 500; }
     [data-theme="light"] .code-block .pointer,
-    [data-theme="light"] .code-block code .pointer { color: #c05621; font-weight: bold; }
+    [data-theme="light"] .code-block code .pointer { color: #dc2626; font-weight: bold; }
     [data-theme="light"] .code-block .preprocessor,
-    [data-theme="light"] .code-block code .preprocessor { color: #5a67d8; font-weight: bold; }
+    [data-theme="light"] .code-block code .preprocessor { color: #7c3aed; font-weight: bold; }
     [data-theme="light"] .code-block .constant,
-    [data-theme="light"] .code-block code .constant { color: #38a169; font-weight: bold; }
+    [data-theme="light"] .code-block code .constant { color: #059669; font-weight: bold; }
     [data-theme="light"] .code-block .namespace,
-    [data-theme="light"] .code-block code .namespace { color: #5a67d8; font-weight: 600; }
+    [data-theme="light"] .code-block code .namespace { color: #7c3aed; font-weight: 600; }
 
     /* 护眼模式语法高亮 - 使用更柔和的颜色 */
     [data-theme="eye-care"] .code-block .function,
@@ -795,8 +793,7 @@
       }
     }
     
-    /* 三级主题开关样式 */
-    .theme-switcher {
+    /* 三级主题开关样式 */    .theme-switcher {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -806,56 +803,76 @@
       border-radius: 25px;
       padding: 8px;
       box-shadow: var(--card-shadow);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(99, 102, 241, 0.15);
       display: flex;
       align-items: center;
-      gap: 0;
+      gap: 4px;
       transition: all 0.3s ease;
     }
 
+    .theme-switcher:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
     .theme-option {
-      width: 40px;
-      height: 40px;
-      border-radius: 20px;
-      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      border: 2px solid transparent;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       position: relative;
       background: transparent;
+      backdrop-filter: blur(10px);
     }
 
     .theme-option:hover {
       transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .theme-option.active {
-      background: var(--primary-color);
-      color: var(--text-white);
-      transform: scale(1.2);
-      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+      transform: scale(1.15);
+      border-color: var(--primary-color);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
     }
 
     .theme-option[data-theme="light"] {
-      background: linear-gradient(135deg, #ffd93d, #ff9a56);
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #92400e;
     }
 
     .theme-option[data-theme="dark"] {
-      background: linear-gradient(135deg, #2d3748, #4a5568);
-      color: #e2e8f0;
+      background: linear-gradient(135deg, #374151, #1f2937);
+      color: #f3f4f6;
     }
 
     .theme-option[data-theme="eye-care"] {
-      background: linear-gradient(135deg, #68d391, #38b2ac);
-      color: var(--text-white);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
     }
 
     .theme-option.active[data-theme="light"] {
-      background: linear-gradient(135deg, #ffd93d, #ff9a56);
-      color: #2d3436;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #92400e;
+      box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+    }
+
+    .theme-option.active[data-theme="dark"] {
+      background: linear-gradient(135deg, #374151, #1f2937);
+      color: #f3f4f6;
+      box-shadow: 0 6px 20px rgba(55, 65, 81, 0.6);
+    }
+
+    .theme-option.active[data-theme="eye-care"] {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
     }
 
     .theme-option.active[data-theme="dark"] {
