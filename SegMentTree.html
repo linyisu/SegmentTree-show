@@ -53,12 +53,12 @@
       --focus-shadow: rgba(139, 92, 246, 0.25);
       --footer-text: rgba(241, 245, 249, 0.9);
       --footer-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
-      --code-bg: linear-gradient(135deg, #0f172a, #1e293b);
+      --code-bg: linear-gradient(135deg, #0c1222, #0f172a);
       --code-text: #e2e8f0;
       --nav-button-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
       --nav-button-text: #cbd5e1;
       --nav-button-hover-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
-    }    /* 护眼模式 */
+    }/* 护眼模式 */
     [data-theme="eye-care"] {
       --primary-color: #059669;
       --secondary-color: #047857;
@@ -322,16 +322,45 @@
       border-radius: 16px;
       margin: 25px 0;
       overflow-x: auto;
-      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-      font-size: var(--font-size-base);
-      line-height: var(--line-height-base);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 14px;
+      line-height: 1.7;
       box-shadow: 
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        0 10px 30px rgba(0, 0, 0, 0.3);
+        0 10px 30px rgba(0, 0, 0, 0.2);
       white-space: pre-wrap;
       word-wrap: break-word;
       position: relative;
       border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+      /* 黑夜模式下的代码块特殊处理 */
+    [data-theme="dark"] .code-block {
+      background: linear-gradient(135deg, #0a0f1c, #0c1222) !important;
+      color: #f1f5f9 !important;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      box-shadow: 
+        inset 0 1px 0 rgba(139, 92, 246, 0.1),
+        0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* 白天模式下的代码块特殊处理 */
+    [data-theme="light"] .code-block {
+      background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
+      color: #1e293b !important;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      box-shadow: 
+        inset 0 1px 0 rgba(99, 102, 241, 0.05),
+        0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* 护眼模式下的代码块特殊处理 */
+    [data-theme="eye-care"] .code-block {
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5) !important;
+      color: #064e3b !important;
+      border: 1px solid rgba(5, 150, 105, 0.2);
+      box-shadow: 
+        inset 0 1px 0 rgba(5, 150, 105, 0.1),
+        0 10px 25px rgba(0, 0, 0, 0.06);
     }
     .code-block::before {
       content: '';
@@ -350,112 +379,205 @@
       right: 20px;
       color: rgba(255, 255, 255, 0.3);
       font-size: 18px;
-      font-weight: bold;
-    }    .code-block .keyword { color: #63b3ed; font-weight: bold; }
-    .code-block .type { color: #68d391; font-weight: bold; }
-    .code-block .function { color: #fbb6ce; }
-    .code-block .number { color: #f6ad55; }
-    .code-block .comment { color: #a0aec0; font-style: italic; }
-    .code-block .string { color: #9ae6b4; }
-    .code-block .operator { color: #fbb6ce; font-weight: bold; }
+      font-weight: bold;    }
 
-    .code-block.light { background: #f8f9fa; color: #212529; }
-    .code-block.light .keyword { color: #d73a49; }
-    .code-block.light .type { color: #005cc5; }
-    .code-block.light .function { color: #6f42c1; }
-    .code-block.light .number { color: #032f62; }
-    .code-block.light .comment { color: #6a737d; }
-    .code-block.light .operator { color: #d73a49; font-weight: bold; }
-
-    .code-block.monokai { background: #272822; color: #f8f8f2; }
-    .code-block.monokai .keyword { color: #f92672; }
-    .code-block.monokai .type { color: #66d9ef; }
-    .code-block.monokai .function { color: #a6e22e; }
-    .code-block.monokai .number { color: #ae81ff; }
-    .code-block.monokai .comment { color: #75715e; }
-    .code-block.monokai .operator { color: #f92672; font-weight: bold; }
-
-    .code-block.github { background: #ffffff; color: #24292e; border: 1px solid #e1e4e8; }
-    .code-block.github .keyword { color: #d73a49; }
-    .code-block.github .type { color: #005cc5; }
-    .code-block.github .function { color: #6f42c1; }
-    .code-block.github .number { color: #032f62; }
-    .code-block.github .comment { color: #6a737d; }
-    .code-block.github .operator { color: #d73a49; font-weight: bold; }    /* 语法高亮样式 - 默认暗色主题 */
-    .code-block .keyword, .code-block code .keyword { color: #f472b6; font-weight: bold; }
-    .code-block .type, .code-block code .type { color: #34d399; font-weight: bold; }
-    .code-block .function, .code-block code .function { color: #60a5fa; }
-    .code-block .variable, .code-block code .variable { color: #fbbf24; font-weight: 500; }
-    .code-block .string, .code-block code .string { color: #34d399; }
-    .code-block .comment, .code-block code .comment { color: #94a3b8; font-style: italic; }
-    .code-block .number, .code-block code .number { color: #fbbf24; }
-    .code-block .operator, .code-block code .operator { color: #f472b6; font-weight: bold; }
-    .code-block .bracket, .code-block code .bracket { color: #f472b6; font-weight: bold; }
-    .code-block .symbol, .code-block code .symbol { color: #60a5fa; font-weight: 500; }
-    .code-block .pointer, .code-block code .pointer { color: #fbbf24; font-weight: bold; }
-    .code-block .preprocessor, .code-block code .preprocessor { color: #a78bfa; font-weight: bold; }
-    .code-block .constant, .code-block code .constant { color: #fcd34d; font-weight: bold; }
-    .code-block .namespace, .code-block code .namespace { color: #a78bfa; font-weight: 600; }
+    /* ===== 语法高亮样式 - 现代化配色方案 ===== */
     
-    /* 白天模式语法高亮 - 高对比度易读配色 */
+    /* 默认主题（暗色）语法高亮 */
+    .code-block .keyword, .code-block code .keyword { 
+      color: #ff79c6; 
+      font-weight: 600; 
+    }
+    .code-block .type, .code-block code .type { 
+      color: #8be9fd; 
+      font-weight: 600; 
+    }
+    .code-block .function, .code-block code .function { 
+      color: #50fa7b; 
+      font-weight: 500; 
+    }
+    .code-block .variable, .code-block code .variable { 
+      color: #f1fa8c; 
+      font-weight: 400; 
+    }
+    .code-block .string, .code-block code .string { 
+      color: #f1fa8c; 
+    }
+    .code-block .comment, .code-block code .comment { 
+      color: #6272a4; 
+      font-style: italic; 
+      opacity: 0.8;
+    }
+    .code-block .number, .code-block code .number { 
+      color: #bd93f9; 
+    }
+    .code-block .operator, .code-block code .operator { 
+      color: #ff79c6; 
+      font-weight: 600; 
+    }
+    .code-block .bracket, .code-block code .bracket { 
+      color: #f8f8f2; 
+      font-weight: 500; 
+    }
+    .code-block .symbol, .code-block code .symbol { 
+      color: #8be9fd; 
+      font-weight: 500; 
+    }
+    .code-block .pointer, .code-block code .pointer { 
+      color: #ffb86c; 
+      font-weight: 600; 
+    }
+    .code-block .preprocessor, .code-block code .preprocessor { 
+      color: #ff79c6; 
+      font-weight: 600; 
+    }
+    .code-block .constant, .code-block code .constant { 
+      color: #bd93f9; 
+      font-weight: 600; 
+    }
+    .code-block .namespace, .code-block code .namespace { 
+      color: #8be9fd; 
+      font-weight: 600; 
+    }
+      /* 白天模式语法高亮 - 清晰高对比度配色 */
     [data-theme="light"] .code-block .function,
-    [data-theme="light"] .code-block code .function { color: #3730a3; }
+    [data-theme="light"] .code-block code .function { 
+      color: #0969da; 
+      font-weight: 500; 
+    }
     [data-theme="light"] .code-block .variable,
-    [data-theme="light"] .code-block code .variable { color: #dc2626; font-weight: 500; }
+    [data-theme="light"] .code-block code .variable { 
+      color: #953800; 
+      font-weight: 400; 
+    }
     [data-theme="light"] .code-block .keyword,
-    [data-theme="light"] .code-block code .keyword { color: #be185d; font-weight: bold; }
+    [data-theme="light"] .code-block code .keyword { 
+      color: #cf222e; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .type,
-    [data-theme="light"] .code-block code .type { color: #059669; font-weight: bold; }
+    [data-theme="light"] .code-block code .type { 
+      color: #116329; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .string,
-    [data-theme="light"] .code-block code .string { color: #047857; }
+    [data-theme="light"] .code-block code .string { 
+      color: #0a3069; 
+    }
     [data-theme="light"] .code-block .comment,
-    [data-theme="light"] .code-block code .comment { color: #64748b; font-style: italic; }
+    [data-theme="light"] .code-block code .comment { 
+      color: #656d76; 
+      font-style: italic; 
+      opacity: 0.8;
+    }
     [data-theme="light"] .code-block .number,
-    [data-theme="light"] .code-block code .number { color: #dc2626; }
+    [data-theme="light"] .code-block code .number { 
+      color: #8250df; 
+    }
     [data-theme="light"] .code-block .operator,
-    [data-theme="light"] .code-block code .operator { color: #be185d; font-weight: bold; }
+    [data-theme="light"] .code-block code .operator { 
+      color: #cf222e; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .bracket,
-    [data-theme="light"] .code-block code .bracket { color: #be185d; font-weight: bold; }
+    [data-theme="light"] .code-block code .bracket { 
+      color: #24292f; 
+      font-weight: 500; 
+    }
     [data-theme="light"] .code-block .symbol,
-    [data-theme="light"] .code-block code .symbol { color: #3730a3; font-weight: 500; }
+    [data-theme="light"] .code-block code .symbol { 
+      color: #0969da; 
+      font-weight: 500; 
+    }
     [data-theme="light"] .code-block .pointer,
-    [data-theme="light"] .code-block code .pointer { color: #dc2626; font-weight: bold; }
+    [data-theme="light"] .code-block code .pointer { 
+      color: #bc4c00; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .preprocessor,
-    [data-theme="light"] .code-block code .preprocessor { color: #7c3aed; font-weight: bold; }
+    [data-theme="light"] .code-block code .preprocessor { 
+      color: #8250df; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .constant,
-    [data-theme="light"] .code-block code .constant { color: #059669; font-weight: bold; }
+    [data-theme="light"] .code-block code .constant { 
+      color: #116329; 
+      font-weight: 600; 
+    }
     [data-theme="light"] .code-block .namespace,
-    [data-theme="light"] .code-block code .namespace { color: #7c3aed; font-weight: 600; }
-
-    /* 护眼模式语法高亮 - 使用更柔和的颜色 */
+    [data-theme="light"] .code-block code .namespace { 
+      color: #8250df; 
+      font-weight: 600; 
+    }    /* 护眼模式语法高亮 - 温和舒适的护眼配色 */
     [data-theme="eye-care"] .code-block .function,
-    [data-theme="eye-care"] .code-block code .function { color: #4c51bf; }
+    [data-theme="eye-care"] .code-block code .function { 
+      color: #0f5132; 
+      font-weight: 500; 
+    }
     [data-theme="eye-care"] .code-block .variable,
-    [data-theme="eye-care"] .code-block code .variable { color: #9c4221; font-weight: 500; }
+    [data-theme="eye-care"] .code-block code .variable { 
+      color: #6f42c1; 
+      font-weight: 400; 
+    }
     [data-theme="eye-care"] .code-block .keyword,
-    [data-theme="eye-care"] .code-block code .keyword { color: #38a169; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .keyword { 
+      color: #d63384; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .type,
-    [data-theme="eye-care"] .code-block code .type { color: #319795; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .type { 
+      color: #198754; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .string,
-    [data-theme="eye-care"] .code-block code .string { color: #38a169; }
+    [data-theme="eye-care"] .code-block code .string { 
+      color: #20c997; 
+    }
     [data-theme="eye-care"] .code-block .comment,
-    [data-theme="eye-care"] .code-block code .comment { color: #718096; font-style: italic; }
+    [data-theme="eye-care"] .code-block code .comment { 
+      color: #6c757d; 
+      font-style: italic; 
+      opacity: 0.8;
+    }
     [data-theme="eye-care"] .code-block .number,
-    [data-theme="eye-care"] .code-block code .number { color: #e53e3e; }
+    [data-theme="eye-care"] .code-block code .number { 
+      color: #fd7e14; 
+    }
     [data-theme="eye-care"] .code-block .operator,
-    [data-theme="eye-care"] .code-block code .operator { color: #e53e3e; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .operator { 
+      color: #d63384; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .bracket,
-    [data-theme="eye-care"] .code-block code .bracket { color: #e53e3e; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .bracket { 
+      color: #495057; 
+      font-weight: 500; 
+    }
     [data-theme="eye-care"] .code-block .symbol,
-    [data-theme="eye-care"] .code-block code .symbol { color: #319795; font-weight: 500; }
+    [data-theme="eye-care"] .code-block code .symbol { 
+      color: #0f5132; 
+      font-weight: 500; 
+    }
     [data-theme="eye-care"] .code-block .pointer,
-    [data-theme="eye-care"] .code-block code .pointer { color: #9c4221; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .pointer { 
+      color: #fd7e14; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .preprocessor,
-    [data-theme="eye-care"] .code-block code .preprocessor { color: #4c51bf; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .preprocessor { 
+      color: #6f42c1; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .constant,
-    [data-theme="eye-care"] .code-block code .constant { color: #319795; font-weight: bold; }
+    [data-theme="eye-care"] .code-block code .constant { 
+      color: #198754; 
+      font-weight: 600; 
+    }
     [data-theme="eye-care"] .code-block .namespace,
-    [data-theme="eye-care"] .code-block code .namespace { color: #4c51bf; font-weight: 600; }
+    [data-theme="eye-care"] .code-block code .namespace { 
+      color: #6f42c1; 
+      font-weight: 600; 
+    }
     
     .settings-panel {
       background: var(--card-bg);
