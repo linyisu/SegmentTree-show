@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滑块测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        input[type="range"] {
+            flex: 1;
+        }
+        label {
+            font-weight: bold;
+            min-width: 80px;
+        }
+        span {
+            min-width: 60px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2>🧪 滑块功能测试</h2>
+        
+        <div class="settings-row">
+            <label>字体大小:</label>
+            <input type="range" id="font-size-slider" min="12" max="20" value="14">
+            <span id="font-size-display">14px</span>
+        </div>
+        
+        <div class="settings-row">
+            <label>行高:</label>
+            <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6">
+            <span id="line-height-display">1.6</span>
+        </div>
+        
+        <div class="code-block">
+            <code>
+// 测试代码块
+function example() {
+    console.log("Hello World!");
+    return 42;
+}
+            </code>
+        </div>
+        
+        <div class="test-status">
+            <h3>测试状态:</h3>
+            <div id="test-log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 日志函数
+        function log(message) {
+            const logDiv = document.getElementById('test-log');
+            logDiv.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+        }
+
+        // 缓存DOM元素
+        const fontSizeSlider = document.getElementById('font-size-slider');
+        const fontSizeDisplay = document.getElementById('font-size-display');
+        const lineHeightSlider = document.getElementById('line-height-slider');
+        const lineHeightDisplay = document.getElementById('line-height-display');
+
+        // 字体大小函数
+        function changeFontSize(size) {
+            log(`调整字体大小到: ${size}px`);
+            fontSizeDisplay.textContent = size + 'px';
+            document.querySelectorAll('.code-block').forEach(block => {
+                block.style.fontSize = size + 'px';
+                log(`已应用字体大小 ${size}px 到代码块`);
+            });
+        }
+
+        // 行高函数
+        function changeLineHeight(height) {
+            log(`调整行高到: ${height}`);
+            lineHeightDisplay.textContent = height;
+            document.querySelectorAll('.code-block').forEach(block => {
+                block.style.lineHeight = height;
+                log(`已应用行高 ${height} 到代码块`);
+            });
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // 初始化事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM已加载，开始初始化...');
+            
+            if (fontSizeSlider) {
+                fontSizeSlider.addEventListener('input', debounce(e => {
+                    changeFontSize(e.target.value);
+                }, 100));
+                log('字体大小滑块事件监听器已设置');
+            } else {
+                log('错误: 找不到字体大小滑块元素');
+            }
+            
+            if (lineHeightSlider) {
+                lineHeightSlider.addEventListener('input', debounce(e => {
+                    changeLineHeight(e.target.value);
+                }, 100));
+                log('行高滑块事件监听器已设置');
+            } else {
+                log('错误: 找不到行高滑块元素');
+            }
+            
+            log('初始化完成！请尝试拖动滑块...');
+        });
+    </script>
+</body>
+</html>

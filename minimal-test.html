@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小测试</title>
+    <style>
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>最小滑块测试</h1>
+    
+    <div>
+        <label>字体大小:</label>
+        <input type="range" id="font-size-slider" min="12" max="20" value="14">
+        <span id="font-size-display">14px</span>
+    </div>
+    
+    <div>
+        <label>行高:</label>
+        <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6">
+        <span id="line-height-display">1.6</span>
+    </div>
+    
+    <div class="code-block">
+        <code>测试代码块 - 应该会随滑块变化</code>
+    </div>
+    
+    <script>
+        // 直接在页面中定义函数，不使用任何外部依赖
+        function changeFontSize(size) {
+            console.log('changeFontSize called with:', size);
+            document.getElementById('font-size-display').textContent = size + 'px';
+            document.querySelectorAll('.code-block').forEach(block => {
+                block.style.fontSize = size + 'px';
+            });
+        }
+
+        function changeLineHeight(height) {
+            console.log('changeLineHeight called with:', height);
+            document.getElementById('line-height-display').textContent = height;
+            document.querySelectorAll('.code-block').forEach(block => {
+                block.style.lineHeight = height;
+            });
+        }
+
+        // 等待页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up event listeners...');
+            
+            const fontSlider = document.getElementById('font-size-slider');
+            const lineSlider = document.getElementById('line-height-slider');
+            
+            console.log('Font slider found:', !!fontSlider);
+            console.log('Line slider found:', !!lineSlider);
+            
+            if (fontSlider) {
+                fontSlider.addEventListener('input', function(e) {
+                    console.log('Font slider input:', e.target.value);
+                    changeFontSize(e.target.value);
+                });
+                console.log('Font slider event listener added');
+            }
+            
+            if (lineSlider) {
+                lineSlider.addEventListener('input', function(e) {
+                    console.log('Line slider input:', e.target.value);
+                    changeLineHeight(e.target.value);
+                });
+                console.log('Line slider event listener added');
+            }
+            
+            console.log('Setup complete!');
+        });
+    </script>
+</body>
+</html>
