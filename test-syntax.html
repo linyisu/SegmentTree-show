@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语法高亮测试</title>
+    <style>
+        body {
+            background: #1e1e1e;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .code-block {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 16px;
+            margin: 25px 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .code-block code {
+            display: block;
+            width: 100%;
+            height: 100%;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            white-space: inherit;
+            word-wrap: inherit;
+        }
+        .code-block .keyword, .code-block code .keyword { color: #63b3ed; font-weight: bold; }
+        .code-block .type, .code-block code .type { color: #68d391; font-weight: bold; }
+        .code-block .function, .code-block code .function { color: #fbb6ce; }
+        .code-block .number, .code-block code .number { color: #f6ad55; }
+        .code-block .comment, .code-block code .comment { color: #a0aec0; font-style: italic; }
+        .code-block .string, .code-block code .string { color: #9ae6b4; }
+        .code-block .operator, .code-block code .operator { color: #fbb6ce; font-weight: bold; }
+        .code-block .variable, .code-block code .variable { color: #e9c46a; font-weight: 500; }
+        .code-block .bracket, .code-block code .bracket { color: #ff6b6b; font-weight: bold; }
+        .code-block .symbol, .code-block code .symbol { color: #4ecdc4; font-weight: 500; }
+        .code-block .pointer, .code-block code .pointer { color: #ff8a65; font-weight: bold; }
+        .code-block .preprocessor, .code-block code .preprocessor { color: #ba68c8; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🧪 语法高亮测试页面</h1>
+    
+    <h2>测试1: 原始代码块（无高亮）</h2>
+    <pre class="code-block"><code>void build(int l, int r, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</code></pre>
+
+    <h2>测试2: 手动高亮的代码块</h2>
+    <pre class="code-block"><code><span class="keyword">void</span> <span class="function">build</span><span class="bracket">(</span><span class="type">int</span> <span class="variable">l</span><span class="symbol">,</span> <span class="type">int</span> <span class="variable">r</span><span class="symbol">,</span> <span class="type">int</span> <span class="variable">u</span><span class="bracket">)</span>
+<span class="bracket">{</span>
+    <span class="keyword">if</span> <span class="bracket">(</span><span class="variable">l</span> <span class="operator">==</span> <span class="variable">r</span><span class="bracket">)</span>
+    <span class="bracket">{</span>
+        <span class="variable">info</span><span class="bracket">[</span><span class="variable">u</span><span class="bracket">]</span> <span class="operator">=</span> <span class="type">Info</span><span class="bracket">(</span><span class="variable">arr</span><span class="bracket">[</span><span class="variable">l</span><span class="bracket">])</span><span class="symbol">;</span>
+        <span class="keyword">return</span><span class="symbol">;</span>
+    <span class="bracket">}</span>
+    
+    <span class="type">int</span> <span class="variable">mid</span> <span class="operator">=</span> <span class="bracket">(</span><span class="variable">l</span> <span class="operator">+</span> <span class="variable">r</span><span class="bracket">)</span> <span class="operator">>></span> <span class="number">1</span><span class="symbol">;</span>
+    <span class="function">build</span><span class="bracket">(</span><span class="variable">l</span><span class="symbol">,</span> <span class="variable">mid</span><span class="symbol">,</span> <span class="variable">u</span> <span class="operator"><<</span> <span class="number">1</span><span class="bracket">)</span><span class="symbol">;</span>
+    <span class="function">build</span><span class="bracket">(</span><span class="variable">mid</span> <span class="operator">+</span> <span class="number">1</span><span class="symbol">,</span> <span class="variable">r</span><span class="symbol">,</span> <span class="variable">u</span> <span class="operator"><<</span> <span class="number">1</span> <span class="operator">|</span> <span class="number">1</span><span class="bracket">)</span><span class="symbol">;</span>
+    <span class="function">push_up</span><span class="bracket">(</span><span class="variable">u</span><span class="bracket">)</span><span class="symbol">;</span>
+<span class="bracket">}</span></code></pre>
+
+    <h2>测试3: JavaScript 自动高亮</h2>
+    <div id="auto-highlighted">
+        <pre class="code-block"><code>void build(int l, int r, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</code></pre>
+    </div>
+
+    <script>
+        // 简化的语法高亮测试
+        const highlightRules = {
+            keywords: ['void', 'int', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class'],
+            types: ['Info', 'Node', 'vector', 'string'],
+            commonVars: ['info', 'arr', 'l', 'r', 'u', 'mid'],
+            commentSingle: /(\/\/.*?)(\n|$)/g,
+            commentMulti: /(\/\*[\s\S]*?\*\/)/g,
+            strings: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g,
+            numbers: /\b(\d+)\b/g,
+            operators: /(<<|>>|<=|>=|==|!=|&&|\|\||[+\-*%=!&|^~<>])/g,
+            functions: /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g,
+            brackets: /([(){}\[\]])/g,
+            symbols: /([;,.:])/g,
+            pointers: /(\*|&)(?=\s*[a-zA-Z_])/g,
+            preprocessor: /(#\w+)/g
+        };
+
+        function highlightCode(code) {
+            let elementIndex = 0;
+            const protectedElements = {};
+
+            function protect(content, className) {
+                const placeholder = `__ELEMENT_${elementIndex}__`;
+                protectedElements[elementIndex++] = `<span class="${className}">${content}</span>`;
+                return placeholder;
+            }
+
+            // 1. 保护注释
+            code = code.replace(highlightRules.commentSingle, (match, comment, ending) => {
+                return protect(comment, 'comment') + ending;
+            });
+            code = code.replace(highlightRules.commentMulti, (match) => {
+                return protect(match, 'comment');
+            });
+
+            // 2. 保护字符串
+            code = code.replace(highlightRules.strings, (match) => {
+                return protect(match, 'string');
+            });
+
+            // 3. 保护预处理指令
+            code = code.replace(highlightRules.preprocessor, (match) => {
+                return protect(match, 'preprocessor');
+            });
+
+            // 4. 高亮数字
+            code = code.replace(highlightRules.numbers, (match) => {
+                return protect(match, 'number');
+            });
+
+            // 5. 高亮指针符号
+            code = code.replace(highlightRules.pointers, (match) => {
+                return protect(match, 'pointer');
+            });
+
+            // 6. 高亮括号
+            code = code.replace(highlightRules.brackets, (match) => {
+                return protect(match, 'bracket');
+            });
+
+            // 7. 高亮符号
+            code = code.replace(highlightRules.symbols, (match) => {
+                return protect(match, 'symbol');
+            });
+
+            // 8. 高亮运算符
+            code = code.replace(highlightRules.operators, (match) => {
+                return protect(match, 'operator');
+            });
+
+            // 9. 高亮关键字
+            highlightRules.keywords.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b(?![^<]*</span>)`, 'g');
+                code = code.replace(regex, (match) => {
+                    return protect(match, 'keyword');
+                });
+            });
+
+            // 10. 高亮类型
+            highlightRules.types.forEach(type => {
+                const regex = new RegExp(`\\b${type}\\b(?![^<]*</span>)`, 'g');
+                code = code.replace(regex, (match) => {
+                    return protect(match, 'type');
+                });
+            });
+
+            // 11. 高亮函数名
+            code = code.replace(highlightRules.functions, (match, funcName) => {
+                return protect(funcName, 'function') + match.substring(funcName.length);
+            });
+
+            // 12. 高亮常见变量名
+            highlightRules.commonVars.forEach(varName => {
+                const regex = new RegExp(`\\b${varName}\\b(?!\\s*\\()(?![^<]*</span>)`, 'g');
+                code = code.replace(regex, (match) => {
+                    return protect(match, 'variable');
+                });
+            });
+
+            // 恢复所有保护的元素
+            for (const [index, element] of Object.entries(protectedElements)) {
+                code = code.replace(`__ELEMENT_${index}__`, element);
+            }
+
+            return `<code>${code}</code>`;
+        }
+
+        // 应用语法高亮到测试3
+        document.addEventListener('DOMContentLoaded', () => {
+            const testBlock = document.querySelector('#auto-highlighted .code-block');
+            if (testBlock) {
+                const codeTag = testBlock.querySelector('code');
+                if (codeTag) {
+                    const originalCode = codeTag.textContent;
+                    const highlightedCode = highlightCode(originalCode);
+                    codeTag.innerHTML = highlightedCode.replace('<code>', '').replace('</code>', '');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

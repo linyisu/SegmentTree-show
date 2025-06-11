@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>构建功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-container { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>线段树构建功能测试</h1>
+    
+    <div class="test-container">
+        <h3>测试步骤：</h3>
+        <ol>
+            <li>打开主页面 SegMentTree.html</li>
+            <li>点击导航栏中的"基本操作"</li>
+            <li>在"构建过程可视化"部分输入数组长度（1-8）</li>
+            <li>点击"🚀 开始构建"按钮</li>
+            <li>应该能看到线段树的动画构建过程</li>
+        </ol>
+    </div>
+
+    <div class="test-container">
+        <h3>快速访问：</h3>
+        <button onclick="window.open('SegMentTree.html', '_blank')">打开主页面</button>
+        <button onclick="checkMainPage()">检查主页面功能</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        function checkMainPage() {
+            const result = document.getElementById('result');
+            result.innerHTML = `
+                <h4>检查清单：</h4>
+                <ul>
+                    <li>✅ 页面是否能正常加载</li>
+                    <li>✅ 右上角是否有三个主题切换按钮（☀️🌙🌿）</li>
+                    <li>✅ 点击"基本操作"是否能切换到相应页面</li>
+                    <li>✅ 数组长度输入框是否可以输入1-8的数字</li>
+                    <li>✅ "🚀 开始构建"按钮是否可以点击</li>
+                    <li>✅ 点击构建按钮后是否出现线段树动画</li>
+                    <li>✅ 主题切换是否正常工作</li>
+                </ul>
+                <p><strong>如果所有项目都正常，说明修复成功！</strong></p>
+            `;
+        }
+    </script>
+</body>
+</html>
