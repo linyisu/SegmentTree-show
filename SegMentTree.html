@@ -1207,25 +1207,16 @@ int kth(int l, int r, int k, int u)
     const highlightRules = {
       keywords: ['void', 'int', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class', 'public', 'private', 
       'protected', 'const', 'static', 'bool', 'char', 'double', 'float', 'long', 'short', 'unsigned', 'signed', 'auto',
-       'break', 'continue', 'switch', 'case', 'default', 'namespace', 'using', 'include', 'define', 'ifdef', 'ifndef', 'endif'],
-      types: ['Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue'],
+       'break', 'continue', 'switch', 'case', 'default', 'namespace', 'using', 'include', 'define', 'ifdef', 'ifndef', 'endif'],      types: ['Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue'],
       commentSingle: /(\/\/.*?)(\n|$)/g,
       commentMulti: /(\/\*[\s\S]*?\*\/)/g,
       strings: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g,
       numbers: /\b(\d+)\b/g,
       operators: /\b(<<|>>|<=|>=|==|!=|&&|\|\||[+\-*%=!&|^~<>/])\b/g,
       functions: /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g,
-      brackets: /[()\\[\\]]/g, // Modified: Excluded curly braces {}
-      commentMulti: highlightRules.commentMulti,
-      strings: highlightRules.strings,
-      numbers: highlightRules.numbers,
-      operators: highlightRules.operators,
-      brackets: highlightRules.brackets // Added brackets regex
-    };
-
-    // C++ 语法高亮函数
-    function highlightCode(code) {
-      // 缓存正则表达式
+      brackets: /[()\\[\\]]/g // Modified: Excluded curly braces {}
+    };    // C++ 语法高亮函数
+    function highlightCode(code) {      // 缓存正则表达式
       const regexCache = {
         escape: /[&<>]/g,
         commentSingle: highlightRules.commentSingle,
@@ -1277,10 +1268,60 @@ int kth(int l, int r, int k, int u)
       // 高亮类型
       highlightRules.types.forEach(type => {
         code = code.replace(new RegExp(`\\b${type}\\b(?![^<]*</span>)`, 'g'), `<span class="type">${type}</span>`);
-      });
-
-      // 高亮函数名
+      });      // 高亮函数名
       code = code.replace(highlightRules.functions, '<span class="function">$1</span>');
+      
+      // 高亮变量名 - 改进版：识别参数、赋值语句和简单声明中的变量
+      function isKeywordOrType(word) {
+        return highlightRules.keywords.includes(word) || 
+               highlightRules.types.includes(word);
+      }
+      
+      // 先高亮赋值语句中的变量（优先级高）
+      code = code.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, function(match, varName) {
+        // 避免高亮已经被标记的内容
+        if (match.indexOf('</span>') !== -1 || match.indexOf('<span') !== -1) {
+          return match;
+        }
+        // 避免高亮关键字和类型
+        if (isKeywordOrType(varName)) {
+          return match;
+        }
+        return '<span class="variable">' + varName + '</span> =';
+      });
+      
+      // 高亮函数参数（常见模式如：function(a, b) 或 f(x, y)）
+      code = code.replace(/\(([^()]*)\)/g, function(match, content) {
+        // 保留原始内容，在循环中逐步处理替换
+        let result = content;
+        
+        // 按逗号分隔参数
+        const params = content.split(',');
+        for (let param of params) {
+          // 提取变量名（去除前后空格）
+          const varName = param.trim().replace(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*.*$/, '$1');
+          
+          // 确保变量名符合规则且不是关键字/类型
+          if (varName && varName.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/) && !isKeywordOrType(varName)) {
+            // 避免已经被标记的内容
+            if (param.indexOf('</span>') === -1 && param.indexOf('<span') === -1) {
+              // 将原参数中的变量名替换为添加了span标签的版本
+              const replacement = param.replace(
+                new RegExp('\\b' + varName + '\\b'), 
+                '<span class="variable">' + varName + '</span>'
+              );
+              result = result.replace(param, replacement);
+            }
+          }
+        }
+        
+        return '(' + result + ')';
+      });
+      
+      // 高亮函数参数列表中的变量名（function声明中）
+      code = code.replace(/\b(void|int|float|double|bool|char|auto)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, function(match, type, funcName) {
+        return '<span class="keyword">' + type + '</span> ' + funcName + ' ('; 
+      });
 
       // 恢复注释
       for (const [index, comment] of Object.entries(protectedComments)) {
