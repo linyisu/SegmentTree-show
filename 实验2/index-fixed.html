@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>线段树全方位介绍 - 修复版</title>
+  
+  <!-- CSS 样式文件 -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/tree-visualization.css">
+  <link rel="stylesheet" href="css/syntax-highlighting.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- 三级主题开关 -->
+  <div class="theme-switcher">
+    <button class="theme-option active" data-theme="light" title="白天模式">☀️</button>
+    <button class="theme-option" data-theme="dark" title="黑夜模式">🌙</button>
+    <button class="theme-option" data-theme="eye-care" title="护眼模式">🌿</button>
+  </div>
+
+  <header>🌲 线段树全方位介绍（从入门到入土）</header>
+
+  <nav>
+    <button class="nav-btn active" data-section="intro" aria-label="线段树简介">📚 线段树简介</button>
+    <button class="nav-btn" data-section="basic" aria-label="基本操作">🔧 基本操作</button>
+    <button class="nav-btn" data-section="advanced" aria-label="高级技巧">🚀 高级技巧</button>
+    <button class="nav-btn" data-section="quiz" aria-label="互动测试">🎯 互动测试</button>
+    <button class="nav-btn" data-section="settings" aria-label="自定义设置">⚙️ 自定义设置</button>
+  </nav>
+
+  <main>
+    <section id="intro" class="active">
+      <div class="card">
+        <h2>🌳 什么是线段树？</h2>
+        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为<strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
+        <h3>📊 线段树可维护的区间信息</h3>
+        <p>• <strong>区间和</strong>：计算区间内所有元素的总和</p>
+        <p>• <strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</p>
+        <p>• <strong>区间GCD</strong>：计算区间内所有数的最大公约数</p>
+        <p>• <strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</p>
+        <p>• <strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</p>
+        <p>• <strong>区间最长递增/递减段</strong>：寻找最长的单调序列</p>
+        <p>• <strong>……</strong></p>
+        <h3>⚡ 线段树支持的区间修改操作</h3>
+        <p>• <strong>区间加法</strong>：给区间内所有元素加上某个值</p>
+        <p>• <strong>区间乘法</strong>：给区间内所有元素乘以某个值</p>
+        <p>• <strong>区间赋值</strong>：将区间内所有元素设为某个值</p>
+        <p>• <strong>区间异或</strong>：对区间内所有元素进行异或操作</p>
+        <p>• <strong>区间取反</strong>：对区间内所有元素取反</p>
+        <p>• <strong>区间拼接</strong>：连接多个区间</p>
+        <p>• <strong>……</strong></p>
+      </div>
+    </section>
+
+    <section id="basic">
+      <div class="card">
+        <h2>🔧 线段树的构建与操作</h2>
+        <p>线段树的构建通常采用递归方式，根据区间不断对半划分，每个节点编号 <code>u</code> 表示当前处理的区间 <code>[l, r]</code>。</p>
+        <h3>📝 构建函数详解</h3>
+        <pre class="code-block"><code>void build(int l, int r, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</code></pre>
+        <h3>🎯 构建过程可视化</h3>
+        <div class="settings-row">
+          <label>数组长度 n:</label>
+          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+        </div>
+        <div id="tree-container">
+          <p>点击"开始构建"按钮查看线段树构建过程</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="advanced">
+      <div class="card">
+        <h2>🚀 进阶技巧</h2>
+        <h3>⏰ 懒惰标记 (Lazy Propagation)</h3>
+        <p>懒惰标记是线段树的重要优化技术，用于处理区间修改操作，避免每次都递归到叶子节点。</p>
+        <pre class="code-block"><code>void push_down(int u, int l, int r)
+{
+    if (lazy[u] != 0)
+    {
+        int mid = (l + r) >> 1;
+        lazy[u << 1] += lazy[u];
+        lazy[u << 1 | 1] += lazy[u];
+        info[u << 1].sum += lazy[u] * (mid - l + 1);
+        info[u << 1 | 1].sum += lazy[u] * (r - mid);
+        lazy[u] = 0;
+    }
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <div class="card">
+        <h2>🎯 互动小测</h2>
+        <p>通过以下选择题测试你对线段树的理解程度！</p>
+        <div class="quiz-question">
+          <h3>问题 1: 线段树的单次区间操作的时间复杂度是？</h3>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1" value="a"> A. O(n)</label><br>
+            <label><input type="radio" name="q1" value="b"> B. O(log n)</label><br>
+            <label><input type="radio" name="q1" value="c"> C. O(n log n)</label><br>
+            <label><input type="radio" name="q1" value="d"> D. O(n²)</label>
+          </div>
+        </div>
+        <button class="btn" onclick="alert('测验功能正在开发中')">📊 提交答案</button>
+      </div>
+    </section>
+
+    <section id="settings">
+      <div class="card">
+        <h2>⚙️ 自定义设置</h2>
+        <div class="settings-panel">
+          <h3>🎨 主题切换</h3>
+          <p>在页面右上角可以看到三个主题切换按钮：</p>
+          <p>• <strong>☀️ 白天模式</strong>：明亮清晰，适合白天使用</p>
+          <p>• <strong>🌙 黑夜模式</strong>：深色背景，减少眼部疲劳</p>
+          <p>• <strong>🌿 护眼模式</strong>：护眼配色，长时间阅读更舒适</p>
+        </div>
+        
+        <div class="settings-panel">
+          <h3>🎨 代码显示设置</h3>
+          <div class="settings-row">
+            <label>字体大小:</label>
+            <input type="range" id="font-size-slider" min="12" max="20" value="14">
+            <span id="font-size-display">14px</span>
+          </div>
+          <div class="settings-row">
+            <label>行高:</label>
+            <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6">
+            <span id="line-height-display">1.6</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
+    </footer>
+  </main>
+
+  <!-- JavaScript 模块 - 简化版 -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/theme-manager-simple.js"></script>
+  <script src="js/navigation-simple.js"></script>
+  <script src="js/app-simple.js"></script>
+
+  <script>
+    // 额外的初始化代码
+    console.log('页面加载完成，测试功能...');
+    
+    // 测试主题切换
+    setTimeout(() => {
+      console.log('测试主题功能...');
+      if (typeof ThemeManager !== 'undefined') {
+        console.log('主题管理器可用');
+      } else {
+        console.error('主题管理器不可用');
+      }
+    }, 1000);
+    
+    // 测试导航功能
+    setTimeout(() => {
+      console.log('测试导航功能...');
+      if (typeof NavigationManager !== 'undefined') {
+        console.log('导航管理器可用');
+      } else {
+        console.error('导航管理器不可用');
+      }
+    }, 1500);
+  </script>
+</body>
+</html>

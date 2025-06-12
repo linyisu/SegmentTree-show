@@ -4,6 +4,7 @@ const ThemeManager = {
   
   // 初始化主题系统
   init() {
+    console.log('主题管理器初始化...');
     this.loadSavedTheme();
     this.bindEvents();
     this.applyTheme(this.currentTheme);
