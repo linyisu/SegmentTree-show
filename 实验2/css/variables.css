@@ -1,0 +1,37 @@
+/* CSS 变量定义 */
+:root {
+  /* 主色调 */
+  --primary-color: #6c5ce7;
+  --secondary-color: #a29bfe;
+  --accent-color: #fd79a8;
+  
+  /* 渐变背景 */
+  --success-bg: linear-gradient(135deg, #00b894, #00cec9);
+  --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
+  --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
+  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+  
+  /* 卡片和容器 */
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --nav-bg: rgba(255, 255, 255, 0.98);
+  
+  /* 文本颜色 */
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --text-white: #ffffff;
+  
+  /* 背景 */
+  --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  
+  /* 输入框 */
+  --input-bg: #ffffff;
+  --input-border: rgba(108, 92, 231, 0.2);
+  --input-text: #2d3436;
+  --focus-shadow: rgba(108, 92, 231, 0.1);
+  
+  /* 尺寸 */
+  --border-radius: 20px;
+  --font-size-base: 14px;
+  --line-height-base: 1.6;
+}

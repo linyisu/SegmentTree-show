@@ -1,0 +1,143 @@
+/* 布局样式 */
+
+/* 头部 */
+header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: var(--header-bg);
+  color: var(--text-white);
+  padding: 20px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  letter-spacing: 1px;
+  background-attachment: fixed;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 2px;
+}
+
+/* 导航栏 */
+nav {
+  margin-top: 85px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  padding: 25px;
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+nav button {
+  display: block;
+  width: 100%;
+  min-width: 220px;
+  margin: 15px 0;
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 15px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+  border: 2px solid transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+nav button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--primary-color);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+nav button:hover {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+  transform: translateX(5px);
+  border-color: rgba(108, 92, 231, 0.3);
+}
+
+nav button:hover::before {
+  transform: scaleY(1);
+}
+
+nav button.active {
+  background: var(--success-bg);
+  color: var(--text-white);
+  box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+nav button.active::before {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scaleY(1);
+}
+
+/* 主内容区 */
+main {
+  flex-grow: 1;
+  margin-top: 85px;
+  padding: 30px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 页面区域 */
+section {
+  display: none;
+}
+
+section.active {
+  display: block;
+}

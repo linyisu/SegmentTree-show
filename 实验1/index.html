@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>线段树全方位介绍</title>
+  
+  <!-- CSS 文件链接 -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/tree.css">
+  <link rel="stylesheet" href="styles/quiz.css">
+  <link rel="stylesheet" href="styles/settings.css">
+</head>
+<body>
+  <header>🌲 线段树全方位介绍（从入门到入土）</header>
+
+  <nav>
+    <button class="nav-btn active" onclick="showSection('intro')" aria-label="线段树简介">📚 线段树简介</button>
+    <button class="nav-btn" onclick="showSection('basic')" aria-label="基本操作">🔧 基本操作</button>
+    <button class="nav-btn" onclick="showSection('advanced')" aria-label="高级技巧">🚀 高级技巧</button>
+    <button class="nav-btn" onclick="showSection('quiz')" aria-label="互动测试">🎯 互动测试</button>
+    <button class="nav-btn" onclick="showSection('settings')" aria-label="自定义设置">⚙️ 自定义设置</button>
+  </nav>
+
+  <main>
+    <section id="intro" class="active">
+      <div class="card">
+        <h2>🌳 什么是线段树？</h2>
+        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为<strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
+        <h3>📊 线段树可维护的区间信息</h3>
+        <p>• <strong>区间和</strong>：计算区间内所有元素的总和</p>
+        <p>• <strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</p>
+        <p>• <strong>区间GCD</strong>：计算区间内所有数的最大公约数</p>
+        <p>• <strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</p>
+        <p>• <strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</p>
+        <p>• <strong>区间最长递增/递减段</strong>：寻找最长的单调序列</p>
+        <p>• <strong>……</strong></p>
+        <h3>⚡ 线段树支持的区间修改操作</h3>
+        <p>• <strong>区间加法</strong>：给区间内所有元素加上某个值</p>
+        <p>• <strong>区间乘法</strong>：给区间内所有元素乘以某个值</p>
+        <p>• <strong>区间赋值</strong>：将区间内所有元素设为某个值</p>
+        <p>• <strong>区间异或</strong>：对区间内所有元素进行异或操作</p>
+        <p>• <strong>区间取反</strong>：对区间内所有元素取反</p>
+        <p>• <strong>区间拼接</strong>：连接多个区间</p>
+        <p>• <strong>……</strong></p>
+      </div>
+    </section>
+
+    <section id="basic">
+      <div class="card">
+        <h2>🔧 线段树的构建与操作</h2>
+        <p>线段树的构建通常采用递归方式，根据区间不断对半划分，每个节点编号 <code>u</code> 表示当前处理的区间 <code>[l, r]</code>。</p>
+        <h3>📝 构建函数详解</h3>
+        <div class="code-block" id="build-code">void build(int l, int r, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</div>
+        <h3>🎯 构建过程可视化</h3>
+        <div class="settings-row">
+          <label>数组长度 n:</label>
+          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+        </div>
+        <div id="tree-container">
+          <p>点击"开始构建"按钮查看线段树构建过程</p>
+        </div>
+        <h3>📚 其他核心操作</h3>
+        <div class="code-block">// 区间查询
+Info query(int l, int r, int ql, int qr, int u)
+{
+    if (ql <= l && r <= qr)
+        return info[u];
+    
+    int mid = (l + r) >> 1;
+    Info res;
+    if (ql <= mid)
+        res = res + query(l, mid, ql, qr, u << 1);
+    if (qr > mid)
+        res = res + query(mid + 1, r, ql, qr, u << 1 | 1);
+    return res;
+}
+
+// 单点更新
+void update(int l, int r, int pos, int val, int u)
+{
+    if (l == r)
+    {
+        info[u] = Info(val);
+        return;
+    }
+    
+    int mid = (l + r) >> 1;
+    if (pos <= mid)
+        update(l, mid, pos, val, u << 1);
+    else
+        update(mid + 1, r, pos, val, u << 1 | 1);
+    push_up(u);
+}</div>
+      </div>
+    </section>
+
+    <section id="advanced">
+      <div class="card">
+        <h2>🚀 进阶技巧</h2>
+        <h3>⏰ 懒惰标记 (Lazy Propagation)</h3>
+        <p>懒惰标记是线段树的重要优化技术，用于处理区间修改操作，避免每次都递归到叶子节点。</p>
+        <div class="code-block">void push_down(int u, int l, int r)
+{
+    if (lazy[u] != 0)
+    {
+        int mid = (l + r) >> 1;
+        lazy[u << 1] += lazy[u];
+        lazy[u << 1 | 1] += lazy[u];
+        info[u << 1].sum += lazy[u] * (mid - l + 1);
+        info[u << 1 | 1].sum += lazy[u] * (r - mid);
+        lazy[u] = 0;
+    }
+}
+
+// 区间修改
+void modify(int l, int r, int ql, int qr, int val, int u)
+{
+    if (ql <= l && r <= qr)
+    {
+        lazy[u] += val;
+        info[u].sum += val * (r - l + 1);
+        return;
+    }
+    
+    push_down(u, l, r);
+    int mid = (l + r) >> 1;
+    if (ql <= mid)
+        modify(l, mid, ql, qr, val, u << 1);
+    if (qr > mid)
+        modify(mid + 1, r, ql, qr, val, u << 1 | 1);
+    push_up(u);
+}</div>
+        <h3>🌍 可持久化线段树</h3>
+        <p>可持久化线段树能够保存数据结构的历史版本，支持查询任意历史时刻的状态。</p>
+        <div class="code-block">struct Node
+{
+    int sum, lc, rc;
+} tree[MAXN];
+
+int tot = 0;
+
+int build(int l, int r)
+{
+    int u = ++tot;
+    if (l == r)
+    {
+        tree[u].sum = a[l];
+        return u;
+    }
+    
+    int mid = (l + r) >> 1;
+    tree[u].lc = build(l, mid);
+    tree[u].rc = build(mid + 1, r);
+    tree[u].sum = tree[tree[u].lc].sum + tree[tree[u].rc].sum;
+    return u;
+}
+
+int update(int pre, int l, int r, int pos, int val)
+{
+    int u = ++tot;
+    tree[u] = tree[pre];
+    if (l == r)
+    {
+        tree[u].sum += val;
+        return u;
+    }
+    
+    int mid = (l + r) >> 1;
+    if (pos <= mid)
+        tree[u].lc = update(tree[pre].lc, l, mid, pos, val);
+    else
+        tree[u].rc = update(tree[pre].rc, mid + 1, r, pos, val);
+    tree[u].sum = tree[tree[u].lc].sum + tree[tree[u].rc].sum;
+    return u;
+}
+        </div>
+        <h3>⚖️ 权值线段树</h3>
+        <p>权值线段树以值域作为下标建树，常用于处理第k小数、数值统计等问题。</p>
+        <div class="code-block">
+// 插入一个数值
+void insert(int l, int r, int val, int u)
+{
+    tree[u]++;
+    if (l == r)
+        return;
+        
+    int mid = (l + r) >> 1;
+    if (val <= mid)
+        insert(l, mid, val, u << 1);
+    else
+        insert(mid + 1, r, val, u << 1 | 1);
+}
+
+// 查询第k小的数
+int kth(int l, int r, int k, int u)
+{
+    if (l == r)
+        return l;
+        
+    int mid = (l + r) >> 1;
+    if (tree[u << 1] >= k)
+        return kth(l, mid, k, u << 1);
+    else
+        return kth(mid + 1, r, k - tree[u << 1], u << 1 | 1);
+}</div>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <div class="card">
+        <h2>🎯 互动小测</h2>
+        <p>通过以下选择题测试你对线段树的理解程度！</p>
+        <div id="quiz-container">
+          <div class="quiz-question">
+            <h3>问题 1: 线段树的单次区间操作的时间复杂度是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q1" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
+              <label><input type="radio" name="q1" value="b" aria-label="选项B: O(log n)"> B. O(log n)</label><br>
+              <label><input type="radio" name="q1" value="c" aria-label="选项C: O(n log n)"> C. O(n log n)</label><br>
+              <label><input type="radio" name="q1" value="d" aria-label="选项D: O(n²)"> D. O(n²)</label>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 2: 线段树的空间复杂度通常是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q2" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
+              <label><input type="radio" name="q2" value="b" aria-label="选项B: O(2n)"> B. O(2n)</label><br>
+              <label><input type="radio" name="q2" value="c" aria-label="选项C: O(4n)"> C. O(4n)</label><br>
+              <label><input type="radio" name="q2" value="d" aria-label="选项D: O(n log n)"> D. O(n log n)</label>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 3: 懒惰标记的主要作用是？</h3>
+            <div class="quiz-options">
+              <label><input type="radio" name="q3" value="a" aria-label="选项A: 减少内存使用"> A. 减少内存使用</label><br>
+              <label><input type="radio" name="q3" value="b" aria-label="选项B: 优化区间修改操作"> B. 优化区间修改操作</label><br>
+              <label><input type="radio" name="q3" value="c" aria-label="选项C: 简化代码实现"> C. 简化代码实现</label><br>
+              <label><input type="radio" name="q3" value="d" aria-label="选项D: 提高查询速度"> D. 提高查询速度</label>
+            </div>
+          </div>
+          <button class="btn" onclick="checkQuiz()" aria-label="提交测试答案">📊 提交答案</button>
+          <div id="quiz-result" class="quiz-result"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings">
+      <div class="card">
+        <h2>⚙️ 自定义设置</h2>
+        <div class="settings-panel">
+          <h3>🎨 代码高亮主题</h3>
+          <div class="settings-row">
+            <label>选择主题:</label>
+            <select id="theme-select" aria-label="选择代码高亮主题">
+              <option value="dark">🌙 深色主题</option>
+              <option value="light">☀️ 浅色主题</option>
+              <option value="monokai">🔥 Monokai</option>
+              <option value="github">📝 GitHub</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label>字体大小:</label>
+            <input type="range" id="font-size-slider" min="12" max="20" value="14" aria-label="调整代码字体大小">
+            <span id="font-size-display">14px</span>
+          </div>
+          <div class="settings-row">
+            <label>行高:</label>
+            <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6" aria-label="调整代码行高">
+            <span id="line-height-display">1.6</span>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>🌲 可视化设置</h3>
+          <div class="settings-row">
+            <label>动画速度:</label>
+            <select id="animation-speed" aria-label="选择动画速度">
+              <option value="slow">🐌 慢速 (2秒)</option>
+              <option value="normal">🚀 正常 (1秒)</option>
+              <option value="fast" selected>⚡ 快速 (0.5秒)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label>节点颜色:</label>
+            <input type="color" id="node-color" value="#74b9ff" aria-label="选择节点颜色">
+            <button class="btn" onclick="applyNodeColor()" aria-label="应用节点颜色">应用颜色</button>
+          </div>
+          <div class="settings-row">
+            <label>显示节点值:</label>
+            <input type="checkbox" id="show-values" checked aria-label="切换节点值显示">
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>💾 导出设置</h3>
+          <div class="settings-row">
+            <button class="btn" onclick="exportSettings()" aria-label="导出配置">📤 导出配置</button>
+            <button class="btn" onclick="resetSettings()" aria-label="重置设置">🔄 重置设置</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
+    </footer>
+  </main>
+
+  <!-- JavaScript 文件链接 -->
+  <script src="js/syntaxHighlighter.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/treeVisualizer.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

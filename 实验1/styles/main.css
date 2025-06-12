@@ -1,0 +1,185 @@
+/* 主要CSS文件 - 包含CSS变量和全局样式 */
+:root {
+  --primary-color: #6c5ce7;
+  --secondary-color: #a29bfe;
+  --accent-color: #fd79a8;
+  --success-bg: linear-gradient(135deg, #00b894, #00cec9);
+  --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
+  --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
+  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --border-radius: 20px;
+  --font-size-base: 14px;
+  --line-height-base: 1.6;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  min-width: 800px;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  z-index: -1;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: var(--header-bg);
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  letter-spacing: 1px;
+  background-attachment: fixed;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 2px;
+}
+
+nav {
+  margin-top: 85px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  padding: 25px;
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+main {
+  flex-grow: 1;
+  margin-top: 85px;
+  padding: 30px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+main > * {
+  position: relative;
+  z-index: 1;
+}
+
+section {
+  display: none;
+}
+
+section.active {
+  display: block;
+}
+
+footer {
+  margin-top: 50px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 25px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+/* 焦点样式 */
+.btn:focus,
+nav button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* 响应式优化 */
+@media (max-width: 1200px) {
+  nav {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+  }
+  nav button {
+    min-width: 200px;
+    font-size: 14px;
+    padding: 14px 18px;
+  }
+  .card h2 {
+    font-size: 24px;
+  }
+  .card h3 {
+    font-size: 18px;
+  }
+}

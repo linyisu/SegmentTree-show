@@ -1,0 +1,54 @@
+/* 设置面板样式 */
+
+.settings-panel {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 18px;
+  margin-bottom: 25px;
+  border: 2px solid rgba(108, 92, 231, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  gap: 18px;
+}
+
+.settings-row label {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 140px;
+  font-size: 15px;
+}
+
+.settings-row input, 
+.settings-row select {
+  padding: 12px 16px;
+  border: 2px solid rgba(108, 92, 231, 0.2);
+  border-radius: 12px;
+  background: white;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.settings-row input:focus, 
+.settings-row select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+  transform: translateY(-1px);
+}

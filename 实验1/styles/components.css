@@ -1,0 +1,233 @@
+/* 组件样式 - 按钮、卡片、代码块等 */
+
+.btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+nav button {
+  display: block;
+  width: 100%;
+  min-width: 220px;
+  margin: 15px 0;
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 15px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+  border: 2px solid transparent;
+}
+
+nav button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--primary-color);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+nav button:hover {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+  transform: translateX(5px);
+  border-color: rgba(108, 92, 231, 0.3);
+}
+
+nav button:hover::before {
+  transform: scaleY(1);
+}
+
+nav button.active {
+  background: var(--success-bg);
+  color: white;
+  box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+nav button.active::before {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scaleY(1);
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  padding: 35px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color));
+}
+
+.card h2 {
+  color: var(--text-primary);
+  margin-bottom: 25px;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.card h3 {
+  color: var(--text-secondary);
+  margin: 25px 0 18px 0;
+  font-size: 20px;
+  font-weight: 600;
+  position: relative;
+  padding-left: 20px;
+}
+
+.card h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  border-radius: 2px;
+}
+
+.card p {
+  line-height: 1.9;
+  color: var(--text-primary);
+  margin-bottom: 18px;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.code-block {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #e2e8f0;
+  padding: 25px;
+  border-radius: 16px;
+  margin: 25px 0;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.code-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 16px 16px 0 0;
+}
+
+.code-block::after {
+  content: '{ }';
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 代码高亮样式 */
+.code-block .keyword { color: #63b3ed; font-weight: bold; }
+.code-block .type { color: #68d391; font-weight: bold; }
+.code-block .function { color: #fbb6ce; }
+.code-block .number { color: #f6ad55; }
+.code-block .comment { color: #a0aec0; font-style: italic; }
+.code-block .string { color: #9ae6b4; }
+.code-block .operator { color: #fbb6ce; font-weight: bold; }
+
+/* 浅色主题 */
+.code-block.light { background: #f8f9fa; color: #212529; }
+.code-block.light .keyword { color: #d73a49; }
+.code-block.light .type { color: #005cc5; }
+.code-block.light .function { color: #6f42c1; }
+.code-block.light .number { color: #032f62; }
+.code-block.light .comment { color: #6a737d; }
+.code-block.light .operator { color: #d73a49; font-weight: bold; }
+
+/* Monokai主题 */
+.code-block.monokai { background: #272822; color: #f8f8f2; }
+.code-block.monokai .keyword { color: #f92672; }
+.code-block.monokai .type { color: #66d9ef; }
+.code-block.monokai .function { color: #a6e22e; }
+.code-block.monokai .number { color: #ae81ff; }
+.code-block.monokai .comment { color: #75715e; }
+.code-block.monokai .operator { color: #f92672; font-weight: bold; }
+
+/* GitHub主题 */
+.code-block.github { background: #ffffff; color: #24292e; border: 1px solid #e1e4e8; }
+.code-block.github .keyword { color: #d73a49; }
+.code-block.github .type { color: #005cc5; }
+.code-block.github .function { color: #6f42c1; }
+.code-block.github .number { color: #032f62; }
+.code-block.github .comment { color: #6a737d; }
+.code-block.github .operator { color: #d73a49; font-weight: bold; }
