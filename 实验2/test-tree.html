@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>树可视化测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+    .btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .info {
+      color: blue;
+    }
+    #tree-container {
+      min-height: 200px;
+      border: 1px solid #ccc;
+      margin: 10px 0;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌲 线段树可视化测试</h1>
+    
+    <div class="test-section">
+      <h2>模块加载测试</h2>
+      <button class="btn" onclick="testModuleLoading()">检查模块加载</button>
+      <div id="module-status"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>DOM元素测试</h2>
+      <button class="btn" onclick="testDOMElements()">检查DOM元素</button>
+      <div id="dom-status"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>树可视化测试</h2>
+      <div>
+        <label>数组长度: </label>
+        <input type="number" id="input-n" value="4" min="1" max="8">
+        <button class="btn" id="btn-build" onclick="testTreeVisualization()">构建树</button>
+      </div>
+      <div id="tree-container">
+        <p>点击构建树按钮开始测试...</p>
+      </div>
+      <div id="tree-status"></div>
+    </div>
+  </div>
+
+  <!-- JavaScript 模块 -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dom-manager.js"></script>
+  <script src="js/settings-manager.js"></script>
+  <script src="js/tree-visualizer.js"></script>
+
+  <script>
+    // 测试模块加载
+    function testModuleLoading() {
+      const status = document.getElementById('module-status');
+      let html = '<ul>';
+      
+      const modules = [
+        { name: 'CONFIG', obj: window.CONFIG },
+        { name: 'Utils', obj: window.Utils },
+        { name: 'DOMManager', obj: window.DOMManager },
+        { name: 'SettingsManager', obj: window.SettingsManager },
+        { name: 'TreeVisualizer', obj: window.TreeVisualizer }
+      ];
+      
+      modules.forEach(module => {
+        if (module.obj) {
+          html += `<li class="success">✅ ${module.name} 已加载</li>`;
+        } else {
+          html += `<li class="error">❌ ${module.name} 未加载</li>`;
+        }
+      });
+      
+      html += '</ul>';
+      status.innerHTML = html;
+    }
+
+    // 测试DOM元素
+    function testDOMElements() {
+      const status = document.getElementById('dom-status');
+      let html = '<ul>';
+      
+      // 初始化DOM管理器
+      if (window.DOMManager) {
+        DOMManager.init();
+        
+        const elements = [
+          { name: 'inputN', id: 'input-n' },
+          { name: 'btnBuild', id: 'btn-build' },
+          { name: 'treeContainer', id: 'tree-container' }
+        ];
+        
+        elements.forEach(element => {
+          const el = document.getElementById(element.id);
+          if (el) {
+            html += `<li class="success">✅ ${element.name} (${element.id}) 找到</li>`;
+          } else {
+            html += `<li class="error">❌ ${element.name} (${element.id}) 未找到</li>`;
+          }
+        });
+      } else {
+        html += '<li class="error">❌ DOMManager 未加载</li>';
+      }
+      
+      html += '</ul>';
+      status.innerHTML = html;
+    }
+
+    // 测试树可视化
+    function testTreeVisualization() {
+      const status = document.getElementById('tree-status');
+      const container = document.getElementById('tree-container');
+      const inputN = document.getElementById('input-n');
+      
+      try {
+        if (!window.TreeVisualizer) {
+          throw new Error('TreeVisualizer 模块未加载');
+        }
+        
+        if (!container) {
+          throw new Error('tree-container 元素未找到');
+        }
+        
+        const n = parseInt(inputN.value) || 4;
+        
+        status.innerHTML = '<div class="info">🔄 正在初始化树可视化...</div>';
+        
+        // 初始化DOM管理器
+        if (window.DOMManager) {
+          DOMManager.init();
+        }
+        
+        // 初始化设置管理器
+        if (window.SettingsManager) {
+          SettingsManager.init();
+        }
+        
+        // 调用树可视化
+        TreeVisualizer.init();
+        TreeVisualizer.startBuildVisualization();
+        
+        status.innerHTML = '<div class="success">✅ 树可视化已启动!</div>';
+        
+      } catch (error) {
+        status.innerHTML = `<div class="error">❌ 错误: ${error.message}</div>`;
+        console.error('树可视化测试失败:', error);
+      }
+    }
+
+    // 页面加载完成后自动运行测试
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('页面加载完成，开始自动测试...');
+      testModuleLoading();
+      testDOMElements();
+    });
+  </script>
+</body>
+</html>

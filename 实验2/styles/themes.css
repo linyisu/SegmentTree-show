@@ -1,0 +1,129 @@
+/* 主题变量定义 - 三种主题模式 */
+
+/* 默认主题 - 白天模式 */
+:root {
+  --primary-color: #6c5ce7;
+  --secondary-color: #a29bfe;
+  --accent-color: #fd79a8;
+  --success-bg: linear-gradient(135deg, #00b894, #00cec9);
+  --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
+  --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
+  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --text-white: #ffffff;
+  --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --nav-bg: rgba(255, 255, 255, 0.98);
+  --input-bg: #ffffff;
+  --input-border: rgba(108, 92, 231, 0.2);
+  --input-text: #2d3436;
+  --focus-shadow: rgba(108, 92, 231, 0.1);
+  --border-radius: 20px;
+  --font-size-base: 14px;
+  --line-height-base: 1.6;
+}
+
+/* 黑夜模式 */
+[data-theme="dark"] {
+  --header-bg: linear-gradient(135deg, #1a1a2e, #16213e);
+  --card-bg: rgba(26, 26, 46, 0.95);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --text-white: #ffffff;
+  --body-bg: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  --nav-bg: rgba(26, 26, 46, 0.95);
+  --input-bg: rgba(45, 55, 72, 0.9);
+  --input-border: rgba(108, 92, 231, 0.4);
+  --input-text: #e2e8f0;
+  --focus-shadow: rgba(108, 92, 231, 0.2);
+}
+
+/* 护眼模式 */
+[data-theme="eye-care"] {
+  --primary-color: #4a5568;
+  --secondary-color: #718096;
+  --accent-color: #68d391;
+  --header-bg: linear-gradient(135deg, #2d3748, #4a5568);
+  --card-bg: rgba(237, 242, 247, 0.98);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-white: #ffffff;
+  --body-bg: linear-gradient(135deg, #e6fffa 0%, #f0fff4 50%, #f7fafc 100%);
+  --nav-bg: rgba(237, 242, 247, 0.98);
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-border: rgba(74, 85, 104, 0.3);
+  --input-text: #2d3748;
+  --focus-shadow: rgba(74, 85, 104, 0.15);
+}
+
+/* 主题样式 */
+.theme-switcher {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 8px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: all 0.3s ease;
+}
+
+.theme-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  position: relative;
+  background: transparent;
+}
+
+.theme-option:hover {
+  transform: scale(1.1);
+}
+
+.theme-option.active {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.2);
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+}
+
+.theme-option[data-theme="light"] {
+  background: linear-gradient(135deg, #ffd93d, #ff9a56);
+}
+.theme-option[data-theme="dark"] {
+  background: linear-gradient(135deg, #2d3748, #4a5568);
+  color: #e2e8f0;
+}
+.theme-option[data-theme="eye-care"] {
+  background: linear-gradient(135deg, #68d391, #38b2ac);
+  color: white;
+}
+.theme-option.active[data-theme="light"] {
+  background: linear-gradient(135deg, #ffd93d, #ff9a56);
+  color: #2d3436;
+}
+.theme-option.active[data-theme="dark"] {
+  background: linear-gradient(135deg, #2d3748, #4a5568);
+  color: #e2e8f0;
+}
+.theme-option.active[data-theme="eye-care"] {
+  background: linear-gradient(135deg, #68d391, #38b2ac);
+  color: #2d3748;
+}

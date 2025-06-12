@@ -6,14 +6,13 @@
   <title>线段树全方位介绍</title>
   
   <!-- CSS 样式文件 -->
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/themes.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/tree-visualization.css">
-  <link rel="stylesheet" href="css/syntax-highlighting.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="styles/themes.css">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/code-highlight.css">
+  <link rel="stylesheet" href="styles/tree.css">
+  <link rel="stylesheet" href="styles/quiz.css">
+  <link rel="stylesheet" href="styles/settings.css">
 </head>
 <body>
   <!-- 三级主题开关 -->
@@ -327,38 +326,14 @@ int kth(int l, int r, int k, int u)
     <footer>
       <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
     </footer>
-  </main>
-  <!-- JavaScript 模块 - 修复版 -->
-  <script src="js/config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/theme-manager-simple.js"></script>
-  <script src="js/navigation-simple.js"></script>
-  <script src="js/app-simple.js"></script>
+  </main>  <!-- JavaScript 模块 -->
+  <script src="js/settings.js"></script>
+  <script src="js/themeManager.js"></script>
+  <script src="js/advancedSyntaxHighlighter.js"></script>
+  <script src="js/treeVisualizer.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/main.js"></script>
   
-  <script>
-    // 简单的功能测试
-    console.log('应用加载完成');
-    
-    // 检查核心功能
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM已加载，检查功能...');
-      
-      // 测试主题按钮
-      const themeButtons = document.querySelectorAll('.theme-option');
-      console.log('找到主题按钮数量:', themeButtons.length);
-      
-      // 测试导航按钮
-      const navButtons = document.querySelectorAll('.nav-btn');
-      console.log('找到导航按钮数量:', navButtons.length);
-      
-      // 手动绑定构建按钮（如果存在）
-      const buildBtn = document.getElementById('btn-build');
-      if (buildBtn) {
-        buildBtn.addEventListener('click', function() {
-          alert('树构建功能：开发中...\n请查看基本操作部分的代码示例');
-        });
-      }
-    });
-  </script>
 </body>
 </html>

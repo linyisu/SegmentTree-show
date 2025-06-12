@@ -1,0 +1,240 @@
+/* 主样式文件 - 全局样式和布局 */
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--body-bg);
+  min-width: 800px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  z-index: -1;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: var(--header-bg);
+  color: var(--text-white);
+  padding: 20px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  letter-spacing: 1px;
+  background-attachment: fixed;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 2px;
+}
+
+nav {
+  margin-top: 85px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  padding: 25px;
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+main {
+  flex-grow: 1;
+  margin-top: 85px;
+  padding: 30px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+main > * {
+  position: relative;
+  z-index: 1;
+}
+
+section {
+  display: none;
+}
+section.active {
+  display: block;
+}
+
+footer {
+  margin-top: 50px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 25px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+.btn:focus,
+nav button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1200px) {
+  nav {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+  }
+  nav button {
+    min-width: 200px;
+    font-size: 14px;
+    padding: 14px 18px;
+  }
+  .card h2 {
+    font-size: 24px;
+  }
+  .card h3 {
+    font-size: 18px;
+  }
+  /* 注意: 下方的 .tree-visual 样式存在于原始文件的媒体查询块中 */
+  .tree-visual {
+    width: 100%;
+    overflow: hidden;
+    padding: 30px 25px;
+    position: relative;
+    box-sizing: border-box;
+    min-height: 200px;
+  }
+}
+
+.theme-switcher {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 8px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: all 0.3s ease;
+}
+
+.theme-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  position: relative;
+  background: transparent;
+}
+
+.theme-option:hover {
+  transform: scale(1.1);
+}
+
+.theme-option.active {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.2);
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+}
+
+.theme-option[data-theme="light"] {
+  background: linear-gradient(135deg, #ffd93d, #ff9a56);
+}
+.theme-option[data-theme="dark"] {
+  background: linear-gradient(135deg, #2d3748, #4a5568);
+  color: #e2e8f0;
+}
+.theme-option[data-theme="eye-care"] {
+  background: linear-gradient(135deg, #68d391, #38b2ac);
+  color: white;
+}
+.theme-option.active[data-theme="light"] {
+  background: linear-gradient(135deg, #ffd93d, #ff9a56);
+  color: #2d3436;
+}
+.theme-option.active[data-theme="dark"] {
+  background: linear-gradient(135deg, #2d3748, #4a5568);
+  color: #e2e8f0;
+}
+.theme-option.active[data-theme="eye-care"] {
+  background: linear-gradient(135deg, #68d391, #38b2ac);
+  color: #2d3748;
+}

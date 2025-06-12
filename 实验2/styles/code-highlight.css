@@ -1,0 +1,313 @@
+/* 代码高亮样式 */
+
+.code-block {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.code-block .keyword {
+  color: var(--keyword-color);
+  font-weight: bold;
+}
+
+.code-block .type {
+  color: var(--type-color);
+}
+
+.code-block .string {
+  color: var(--string-color);
+}
+
+.code-block .comment {
+  color: var(--comment-color);
+  font-style: italic;
+}
+
+.code-block .number {
+  color: var(--number-color);
+}
+
+.code-block .operator {
+  color: var(--operator-color);
+}
+
+.code-block .bracket {
+  color: var(--bracket-color);
+}
+
+.code-block .symbol {
+  color: var(--symbol-color);
+}
+
+.code-block .function {
+  color: var(--function-color);
+  font-weight: bold;
+}
+
+.code-block .variable {
+  color: var(--variable-color);
+}
+
+.code-block .pointer {
+  color: var(--pointer-color);
+}
+
+.code-block .preprocessor {
+  color: var(--preprocessor-color);
+  font-weight: bold;
+}
+
+/* 默认暗色主题语法高亮 */
+.code-block .keyword, .code-block code .keyword { 
+  color: #63b3ed; 
+  font-weight: bold; 
+}
+
+.code-block .type, .code-block code .type { 
+  color: #68d391; 
+  font-weight: bold; 
+}
+
+.code-block .function, .code-block code .function { 
+  color: #fbb6ce; 
+}
+
+.code-block .number, .code-block code .number { 
+  color: #f6ad55; 
+}
+
+.code-block .comment, .code-block code .comment { 
+  color: #a0aec0; 
+  font-style: italic; 
+}
+
+.code-block .string, .code-block code .string { 
+  color: #9ae6b4; 
+}
+
+.code-block .operator, .code-block code .operator { 
+  color: #fbb6ce; 
+  font-weight: bold; 
+}
+
+.code-block .variable, .code-block code .variable { 
+  color: #e9c46a; 
+  font-weight: 500; 
+}
+
+.code-block .bracket, .code-block code .bracket { 
+  color: #ff6b6b; 
+  font-weight: bold; 
+}
+
+.code-block .symbol, .code-block code .symbol { 
+  color: #4ecdc4; 
+  font-weight: 500; 
+}
+
+.code-block .pointer, .code-block code .pointer { 
+  color: #ff8a65; 
+  font-weight: bold; 
+}
+
+.code-block .preprocessor, .code-block code .preprocessor { 
+  color: #ba68c8; 
+  font-weight: bold; 
+}
+
+.code-block .constant, .code-block code .constant { 
+  color: #ffd93d; 
+  font-weight: bold; 
+}
+
+.code-block .namespace, .code-block code .namespace { 
+  color: #a78bfa; 
+  font-weight: 600; 
+}
+
+/* 浅色主题语法高亮 */
+[data-theme="light"] .code-block {
+  background: #f8f9fa;
+  color: #212529;
+}
+
+[data-theme="light"] .code-block .keyword,
+[data-theme="light"] .code-block code .keyword { 
+  color: #d73a49; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .type,
+[data-theme="light"] .code-block code .type { 
+  color: #005cc5; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .function,
+[data-theme="light"] .code-block code .function { 
+  color: #6f42c1; 
+}
+
+[data-theme="light"] .code-block .number,
+[data-theme="light"] .code-block code .number { 
+  color: #032f62; 
+}
+
+[data-theme="light"] .code-block .comment,
+[data-theme="light"] .code-block code .comment { 
+  color: #6a737d; 
+  font-style: italic; 
+}
+
+[data-theme="light"] .code-block .string,
+[data-theme="light"] .code-block code .string { 
+  color: #28a745; 
+}
+
+[data-theme="light"] .code-block .operator,
+[data-theme="light"] .code-block code .operator { 
+  color: #d73a49; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .variable,
+[data-theme="light"] .code-block code .variable { 
+  color: #e36209; 
+  font-weight: 500; 
+}
+
+[data-theme="light"] .code-block .bracket,
+[data-theme="light"] .code-block code .bracket { 
+  color: #d73a49; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .symbol,
+[data-theme="light"] .code-block code .symbol { 
+  color: #0366d6; 
+  font-weight: 500; 
+}
+
+[data-theme="light"] .code-block .pointer,
+[data-theme="light"] .code-block code .pointer { 
+  color: #e36209; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .preprocessor,
+[data-theme="light"] .code-block code .preprocessor { 
+  color: #6f42c1; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .constant,
+[data-theme="light"] .code-block code .constant { 
+  color: #005cc5; 
+  font-weight: bold; 
+}
+
+[data-theme="light"] .code-block .namespace,
+[data-theme="light"] .code-block code .namespace { 
+  color: #6f42c1; 
+  font-weight: 600; 
+}
+
+/* 暗色主题代码块样式 */
+[data-theme="dark"] .code-block {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #e2e8f0;
+}
+
+/* 护眼主题代码块样式 */
+[data-theme="eye-care"] .code-block {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  color: #0f172a;
+}
+
+[data-theme="eye-care"] .code-block .keyword,
+[data-theme="eye-care"] .code-block code .keyword { 
+  color: #059669; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .type,
+[data-theme="eye-care"] .code-block code .type { 
+  color: #0891b2; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .function,
+[data-theme="eye-care"] .code-block code .function { 
+  color: #7c3aed; 
+}
+
+[data-theme="eye-care"] .code-block .number,
+[data-theme="eye-care"] .code-block code .number { 
+  color: #dc2626; 
+}
+
+[data-theme="eye-care"] .code-block .comment,
+[data-theme="eye-care"] .code-block code .comment { 
+  color: #6b7280; 
+  font-style: italic; 
+}
+
+[data-theme="eye-care"] .code-block .string,
+[data-theme="eye-care"] .code-block code .string { 
+  color: #059669; 
+}
+
+[data-theme="eye-care"] .code-block .operator,
+[data-theme="eye-care"] .code-block code .operator { 
+  color: #dc2626; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .variable,
+[data-theme="eye-care"] .code-block code .variable { 
+  color: #d97706; 
+  font-weight: 500; 
+}
+
+[data-theme="eye-care"] .code-block .bracket,
+[data-theme="eye-care"] .code-block code .bracket { 
+  color: #dc2626; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .symbol,
+[data-theme="eye-care"] .code-block code .symbol { 
+  color: #0891b2; 
+  font-weight: 500; 
+}
+
+[data-theme="eye-care"] .code-block .pointer,
+[data-theme="eye-care"] .code-block code .pointer { 
+  color: #d97706; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .preprocessor,
+[data-theme="eye-care"] .code-block code .preprocessor { 
+  color: #7c3aed; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .constant,
+[data-theme="eye-care"] .code-block code .constant { 
+  color: #0891b2; 
+  font-weight: bold; 
+}
+
+[data-theme="eye-care"] .code-block .namespace,
+[data-theme="eye-care"] .code-block code .namespace { 
+  color: #7c3aed; 
+  font-weight: 600; 
+}
