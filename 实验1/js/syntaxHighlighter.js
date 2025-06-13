@@ -2,9 +2,12 @@
 
 // 语法高亮规则 (来自附件)
 const highlightRules = {
-  keywords: ['void', 'int', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class', 'public', 'private', 'protected', 'const', 'static', 'bool', 'char', 'double', 'float', 'long', 'short', 'unsigned', 'signed', 'auto', 'break', 'continue', 'switch', 'case', 'default', 'namespace', 'using', 'include', 'define', 'ifdef', 'ifndef', 'endif', 'typedef', 'sizeof'],
-  types: ['Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue', 'MAXN'],
-  commonVars: ['info', 'lazy', 'tree', 'arr', 'a', 'n', 'l', 'r', 'u', 'mid', 'val', 'pos', 'ql', 'qr', 'res', 'sum', 'lc', 'rc', 'tot', 'pre', 'k'],
+  keywords: ['template', 'typename', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class', 'public', 
+    'private', 'protected', 'const', 'static', 'break', 'continue', 'switch', 'case', 'default', 'namespace', 
+    'using', 'include', 'define', 'ifdef', 'ifndef', 'endif', 'typedef', 'sizeof'],
+  types: ['T', 'signed', 'auto', 'bool', 'char', 'double', 'float', 'long', 'short', 'unsigned', 'void', 'int', 'Laz', 
+    'Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue', 'MAXN'],
+  commonVars: ['info', 'lazy', 'tree', 'arr', 'a', 'n', 'l', 'r', 'u', 'mid', 'res', 'sum', 'k'],
   commentSingle: /(\/\/.*?)(\n|$)/g,
   commentMulti: /(\/\*[\s\S]*?\*\/)/g,
   strings: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g,

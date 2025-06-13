@@ -67,7 +67,7 @@
     int add = 0;
 };
 
-template <typename T>
+template &lt;typename T&gt;
 struct Info 
 {
     int sum = 0, mx = 0, mn = 0;
@@ -110,7 +110,15 @@ struct Info
     build(mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>
-
+        <h3>🎯 构建过程可视化</h3>
+        <div class="settings-row">
+          <label>数组长度 n:</label>
+          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+        </div>
+        <div id="tree-container">
+          <p>点击"开始构建"按钮查看线段树构建过程</p>
+        </div>
         <p>关于线段树的<strong>空间</strong>：通常采用堆式存储（其中节点 <strong>u</strong> 的左儿子为 <strong>2u</strong>，右儿子为 <strong>2u+1</strong>）。
           若有 <strong>n</strong> 个叶子结点，则存储节点的数组范围最大可达 <strong>2<sup>&lceil;log<sub>2</sub>n&rceil;+1</sup></strong>。
           因此，实践中常使用 <strong>4n</strong> 作为数组大小的一个安全上限。</p>
