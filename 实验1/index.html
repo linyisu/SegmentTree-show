@@ -65,11 +65,12 @@
       <div class="card">
         <h2>🔧 线段树的构建与操作</h2>
         <h3>📦 信息与更新结构</h3>
-        <p>节点结构：在线段树中，每个节点存储一个区间的信息，这里用 <strong>Info</strong> 结构体来表示，如区间和、最大值、最小值等，
-          同时，我们定义了区间合并（<strong>operator+</strong>）与区间更新（<strong>apply</strong>）的方法。</p>
-          
-        <p>更新结构：为了支持灵活的区间操作，引入了 <strong>Laz</strong> 结构体。它用于存储对某一段区间的修改信息，可作为一种“变更指令”。
-          这些修改信息可以传入 <strong>Info</strong> 的 <strong>apply</strong> 方法，按需更新该区间的统计结果。</p>
+        <ul>
+          <li>节点结构：在线段树中，每个节点存储一个区间的信息，这里用 <strong>Info</strong> 结构体来表示，如区间和、最大值、最小值等，
+            同时，定义区间合并（<strong>operator+</strong>）与区间更新（<strong>apply</strong>）的方法。</li>
+          <li>更新结构：为了支持灵活的区间操作，引入了 <strong>Laz</strong> 结构体。它用于存储对某一段区间的修改信息，可作为一种“变更指令”。
+            这些修改信息可以传入 <strong>Info</strong> 的 <strong>apply</strong> 方法，按需更新该区间的统计结果。</li>
+        </ul>
         <pre class="code-block"><code>struct Laz 
 {
     int add = 0;
@@ -104,7 +105,7 @@ struct Info
           
         <h3>📝 构建函数详解</h3>
           <p>线段树的构建通常采用递归的方式，设当前的根节点为 <strong>u</strong>，若当前节点管辖的区间长度已经是 <strong>1</strong>，则可直接根据所需初始化该节点。
-            否则我们将该区间对半划分两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong>push_up</strong>）。</p>
+            否则将该区间对半划分两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong>push_up</strong>）。</p>
         <pre class="code-block" id="build-code"><code>void build(int l, int r, int u)
 {
     if (l == r)
