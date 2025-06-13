@@ -233,28 +233,64 @@ int kth(int l, int r, int k, int u)
           <div class="quiz-question">
             <h3>问题 1: 线段树的单次区间操作的时间复杂度是？</h3>
             <div class="quiz-options">
-              <label><input type="radio" name="q1" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
-              <label><input type="radio" name="q1" value="b" aria-label="选项B: O(log n)"> B. O(log n)</label><br>
-              <label><input type="radio" name="q1" value="c" aria-label="选项C: O(n log n)"> C. O(n log n)</label><br>
-              <label><input type="radio" name="q1" value="d" aria-label="选项D: O(n²)"> D. O(n²)</label>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="a" id="q1a" aria-label="选项A: O(n)">
+                <label for="q1a">A. O(n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="b" id="q1b" aria-label="选项B: O(log n)">
+                <label for="q1b">B. O(log n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="c" id="q1c" aria-label="选项C: O(n log n)">
+                <label for="q1c">C. O(n log n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="d" id="q1d" aria-label="选项D: O(n²)">
+                <label for="q1d">D. O(n²)</label>
+              </div>
             </div>
           </div>
           <div class="quiz-question">
             <h3>问题 2: 线段树的空间复杂度通常是？</h3>
             <div class="quiz-options">
-              <label><input type="radio" name="q2" value="a" aria-label="选项A: O(n)"> A. O(n)</label><br>
-              <label><input type="radio" name="q2" value="b" aria-label="选项B: O(2n)"> B. O(2n)</label><br>
-              <label><input type="radio" name="q2" value="c" aria-label="选项C: O(4n)"> C. O(4n)</label><br>
-              <label><input type="radio" name="q2" value="d" aria-label="选项D: O(n log n)"> D. O(n log n)</label>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: O(n)">
+                <label for="q2a">A. O(n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: O(2n)">
+                <label for="q2b">B. O(2n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: O(4n)">
+                <label for="q2c">C. O(4n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: O(n log n)">
+                <label for="q2d">D. O(n log n)</label>
+              </div>
             </div>
           </div>
           <div class="quiz-question">
             <h3>问题 3: 懒惰标记的主要作用是？</h3>
             <div class="quiz-options">
-              <label><input type="radio" name="q3" value="a" aria-label="选项A: 减少内存使用"> A. 减少内存使用</label><br>
-              <label><input type="radio" name="q3" value="b" aria-label="选项B: 优化区间修改操作"> B. 优化区间修改操作</label><br>
-              <label><input type="radio" name="q3" value="c" aria-label="选项C: 简化代码实现"> C. 简化代码实现</label><br>
-              <label><input type="radio" name="q3" value="d" aria-label="选项D: 提高查询速度"> D. 提高查询速度</label>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="a" id="q3a" aria-label="选项A: 减少内存使用">
+                <label for="q3a">A. 减少内存使用</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="b" id="q3b" aria-label="选项B: 优化区间修改操作">
+                <label for="q3b">B. 优化区间修改操作</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="c" id="q3c" aria-label="选项C: 简化代码实现">
+                <label for="q3c">C. 简化代码实现</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="d" id="q3d" aria-label="选项D: 提高查询速度">
+                <label for="q3d">D. 提高查询速度</label>
+              </div>
             </div>
           </div>
           <button class="btn" onclick="checkQuiz()" aria-label="提交测试答案">📊 提交答案</button>
@@ -316,5 +352,13 @@ int kth(int l, int r, int k, int u)
   <script src="js/quiz.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    // Ensure initQuiz is called after the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.Quiz && typeof window.Quiz.initQuiz === 'function') {
+        window.Quiz.initQuiz();
+      }
+    });
+  </script>
 </body>
 </html>

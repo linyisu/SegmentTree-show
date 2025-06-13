@@ -43,7 +43,15 @@ function checkQuiz() {
 
 // 初始化测验功能
 function initQuiz() {
-  // 测验功能已通过全局函数checkQuiz()在onclick中调用
+  const quizOptionItems = document.querySelectorAll('.quiz-options .quiz-option-item');
+  quizOptionItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const radioInput = this.querySelector('input[type="radio"]');
+      if (radioInput) {
+        radioInput.checked = true;
+      }
+    });
+  });
   // 这里可以添加其他初始化逻辑
 }
 

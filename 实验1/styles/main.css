@@ -17,6 +17,7 @@
   --input-bg: white; /* Default input background for light theme */
   --eye-care-text-primary: #3a3a3a; /* Specific for eye-care, as it's on a light bg */
   --eye-care-text-secondary: #5c5c5c; /* Specific for eye-care */
+  --primary-color-rgb: 108, 92, 231; /* Default for light theme */
 }
 
 /* ... existing body, header, nav, main, footer, scrollbar, focus styles ... */
@@ -242,6 +243,7 @@ html[data-theme="dark"] {
   --text-secondary: #b2bec3;    /* Lighter grey text for dark theme */
   --input-bg: #2d3436;          /* Dark input background */
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --primary-color-rgb: 129, 236, 236; /* Corresponds to #81ecec */
 }
 html[data-theme="dark"] body {
   background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
@@ -276,6 +278,7 @@ html[data-theme="eye-care"] {
   --text-secondary: var(--eye-care-text-secondary); /* Defined in :root */
   --input-bg: #f0f0e0;          /* Light beige input background for eye-care */
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --primary-color-rgb: 134, 217, 179; /* Corresponds to #86d9b3 */
 }
 html[data-theme="eye-care"] body {
   background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%);

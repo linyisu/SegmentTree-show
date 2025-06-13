@@ -3,65 +3,137 @@
 .quiz-question {
   margin: 25px 0;
   padding: 25px;
-  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.05));
-  border-radius: 16px;
+  background: var(--card-bg); /* Use themed card background */
+  border-radius: var(--border-radius);
   border-left: 5px solid var(--primary-color);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--card-shadow);
   position: relative;
   overflow: hidden;
+  color: var(--text-primary); /* Ensure question text is themed */
 }
 
-.quiz-question::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
-  border-radius: 50%;
+.quiz-question p {
+    margin-bottom: 15px; /* Space between question and options */
+    font-weight: 600;
+    font-size: 1.1em;
 }
 
-.quiz-options label {
-  display: block;
-  margin: 6px 0;
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between options */
+}
+
+.quiz-options .quiz-option-item {
+  display: flex; /* Use flex for alignment */
+  align-items: center;
+  margin: 0; /* Remove default margin */
   cursor: pointer;
-  padding: 10px 14px;
-  border-radius: 10px;
-  transition: all 0.3s ease;
+  padding: 12px 18px;
+  border-radius: 12px; /* Slightly larger radius */
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 2px solid transparent;
-  background: rgba(255, 255, 255, 0.5);
+  background-color: var(--input-bg); /* Use themed input background */
+  color: var(--text-secondary); /* Use themed secondary text color */
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.quiz-options label::before {
+.quiz-options .quiz-option-item:hover {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--input-bg) 90%, var(--primary-color) 10%); /* Slight primary color mix on hover */
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 5px 15px rgba(var(--primary-color-rgb, 108, 92, 231), 0.2);
+}
+
+/* Style for the actual radio button (hidden, but its state is used) */
+.quiz-options input[type="radio"] {
+  display: none; /* Hide the default radio button */
+}
+
+/* Custom radio button appearance */
+.quiz-options .quiz-option-item label::before {
   content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  background: var(--primary-color);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--text-secondary);
+  background-color: var(--input-bg);
+  transition: all 0.2s ease;
+  flex-shrink: 0; /* Prevent shrinking */
+  margin-right: 10px; /* Space between custom radio and text */
 }
 
-.quiz-options label:hover {
-  background: rgba(108, 92, 231, 0.1);
-  border-color: rgba(108, 92, 231, 0.3);
-  transform: translateX(5px);
+/* Custom radio button when selected */
+.quiz-options input[type="radio"]:checked + label::before {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--input-bg) inset, 0 0 0 2px var(--primary-color) inset; /* Simulates inner dot */
 }
 
-.quiz-options label:hover::before {
-  transform: scaleY(1);
+.quiz-options .quiz-option-item input[type="radio"]:checked + label {
+    color: var(--text-primary);
+}
+
+/* Corrected: Style for the parent item when its radio button is selected */
+.quiz-options .quiz-option-item:has(input[type="radio"]:checked) {
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--input-bg) 80%, var(--primary-color) 20%);
+  box-shadow: 0 5px 15px rgba(var(--primary-color-rgb, 108, 92, 231), 0.3);
+}
+
+
+/* Focus style for accessibility */
+.quiz-options input[type="radio"]:focus + label {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Ensure the label itself doesn't have conflicting background/border */
+.quiz-options .quiz-option-item label {
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    display: contents; /* Make label behave more like a simple text container */
+}
+.quiz-options .quiz-option-item label:hover {
+    background-color: transparent; /* Prevent hover on label from overriding parent item's hover */
+    border-color: transparent;
+    transform: none;
+    box-shadow: none;
 }
 
 .quiz-result {
   margin-top: 25px;
   padding: 20px;
-  border-radius: 16px;
+  border-radius: var(--border-radius);
   display: none;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--card-shadow);
+  border: 1px solid transparent; /* Remove default border or theme it */
+  color: var(--text-primary);
+}
+
+.quiz-result.correct {
+    background: var(--success-bg);
+    color: white;
+}
+
+.quiz-result.incorrect {
+    background: var(--error-bg);
+    color: white;
+}
+
+/* Ensure primary-color-rgb is defined for box-shadow transparency */
+:root {
+  --primary-color-rgb: 108, 92, 231; /* Default for light theme */
+}
+html[data-theme="dark"] {
+  --primary-color-rgb: 129, 236, 236; /* Corresponds to #81ecec */
+}
+html[data-theme="eye-care"] {
+  --primary-color-rgb: 134, 217, 179; /* Corresponds to #86d9b3 */
 }
