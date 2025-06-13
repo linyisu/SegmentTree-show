@@ -80,7 +80,7 @@ css 层叠样式表
   height: 35px;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* 将动画时间从 0.3s 调整为 0.15s */
   position: absolute;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -172,11 +172,6 @@ css 层叠样式表
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   z-index: 10;
-}
-
-/* 简化的节点出现动画 */
-.tree-node {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 响应式优化 */
