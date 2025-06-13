@@ -164,22 +164,126 @@ select:focus {
   outline-offset: 2px;
 }
 
-/* 响应式优化 */
-@media (max-width: 1200px) {
-  nav {
-    width: 250px;
-    min-width: 250px;
-    max-width: 250px;
-  }
-  nav button {
-    min-width: 200px;
-    font-size: 14px;
-    padding: 14px 18px;
-  }
-  .card h2 {
-    font-size: 24px;
-  }
-  .card h3 {
-    font-size: 18px;
-  }
+/* 主题切换器样式 */
+.theme-switcher {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 8px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: all 0.3s ease;
+}
+
+.theme-option {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.theme-option:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.theme-option.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* 白天模式 */
+body[data-theme="light"] {
+  --primary-color: #6c5ce7;
+  --secondary-color: #a29bfe;
+  --accent-color: #fd79a8;
+  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+/* 黑夜模式 */
+body[data-theme="dark"] {
+  --primary-color: #81ecec;
+  --secondary-color: #74b9ff;
+  --accent-color: #fab1a0;
+  --header-bg: linear-gradient(135deg, #1e272e, #34495e);
+  --card-bg: rgba(45, 52, 54, 0.85);
+  --text-primary: #dfe6e9;
+  --text-secondary: #b2bec3;
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
+}
+
+body[data-theme="dark"] nav,
+body[data-theme="dark"] main {
+  background: rgba(30, 39, 46, 0.7);
+}
+
+body[data-theme="dark"] .card {
+  background: var(--card-bg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="dark"] .nav-btn {
+  color: var(--text-primary);
+}
+
+body[data-theme="dark"] .nav-btn.active {
+  background: var(--primary-color);
+  color: #1e272e;
+}
+
+body[data-theme="dark"] footer {
+  color: rgba(223, 230, 233, 0.9);
+  background: linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1));
+  border: 1px solid rgba(223, 230, 233, 0.2);
+}
+
+/* 护眼模式 */
+body[data-theme="eye-care"] {
+  --primary-color: #55efc4;
+  --secondary-color: #00b894;
+  --accent-color: #ffeaa7;
+  --header-bg: linear-gradient(135deg, #00b894, #00cec9);
+  --card-bg: rgba(240, 255, 240, 0.95); /* 淡绿色背景 */
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%); /* 柔和的绿色渐变 */
+}
+
+body[data-theme="eye-care"] nav,
+body[data-theme="eye-care"] main {
+  background: rgba(224, 242, 241, 0.7); /* 更柔和的导航和主内容背景 */
+}
+
+body[data-theme="eye-care"] .card {
+  background: var(--card-bg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+body[data-theme="eye-care"] .nav-btn {
+  color: var(--text-primary);
+}
+
+body[data-theme="eye-care"] .nav-btn.active {
+  background: var(--primary-color);
+  color: #2d3436;
+}
+
+body[data-theme="eye-care"] footer {
+  color: #2d3436; /* 深色文字以保证可读性 */
+  background: linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1));
+  border: 1px solid rgba(45, 52, 54, 0.2);
 }
