@@ -3,10 +3,10 @@
   --primary-color: #6c5ce7;
   --secondary-color: #a29bfe;
   --accent-color: #fd79a8;
-  --success-bg: linear-gradient(135deg, #00b894, #00cec9);
-  --warning-bg: linear-gradient(135deg, #fdcb6e, #e17055);
-  --error-bg: linear-gradient(135deg, #fd79a8, #e84393);
-  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
+  --success-bg: #00b894; /* Was linear-gradient(135deg, #00b894, #00cec9) */
+  --warning-bg: #fdcb6e; /* Was linear-gradient(135deg, #fdcb6e, #e17055) */
+  --error-bg: #fd79a8;   /* Was linear-gradient(135deg, #fd79a8, #e84393) */
+  --header-bg: #2d3436;  /* Was linear-gradient(135deg, #2d3436, #636e72) */
   --card-bg: rgba(255, 255, 255, 0.98);
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   --text-primary: #2d3436; /* Default for light theme */
@@ -15,7 +15,7 @@
   --font-size-base: 15px;
   --line-height-base: 1.6;
   --input-bg: white; /* Default input background for light theme */
-  --eye-care-text-primary: #3a3a3a; /* Specific for eye-care, as it's on a light bg */
+  --eye-care-text-primary: #3a3a3a; /* Specific for eye-care, as it\'s on a light bg */
   --eye-care-text-secondary: #5c5c5c; /* Specific for eye-care */
   --primary-color-rgb: 108, 92, 231; /* Default for light theme */
 }
@@ -25,28 +25,26 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: \'Inter\', \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   height: 100vh;
   overflow: hidden;
   /* Default background, will be overridden by themes */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: #667eea; /* Was linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) */
   min-width: 800px;
   position: relative;
   color: var(--text-primary); /* Set default body text color */
 }
 
 body::before {
-  content: '';
+  content: \'\';
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  /* Removed radial gradients */
+  background: transparent; 
   z-index: -1;
 }
 
@@ -69,14 +67,14 @@ header {
 }
 
 header::after {
-  content: '';
+  content: \'\';
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 100px;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  background: var(--primary-color); /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color)) */
   border-radius: 2px;
 }
 
@@ -107,15 +105,14 @@ main {
 }
 
 main::before {
-  content: '';
+  content: \'\';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  /* Removed radial gradients */
+  background: transparent;
   pointer-events: none;
   z-index: 0;
 }
@@ -139,7 +136,7 @@ footer {
   color: rgba(255, 255, 255, 0.9); /* Default light text for footer */
   text-align: center;
   padding: 25px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  background: rgba(255, 255, 255, 0.1); /* Was linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) */
   border-radius: 18px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -157,12 +154,12 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+  background: var(--secondary-color); /* Was linear-gradient(135deg, var(--secondary-color), var(--primary-color)) */
 }
 
 /* 焦点样式 */
@@ -228,7 +225,7 @@ html[data-theme="light"] {
   /* We can override specific ones if needed, but usually :root is the light theme baseline */
 }
 html[data-theme="light"] body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: #e9eafc; /* Was linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) - simplified to a light variant */
   /* Other light-theme specific body styles if any */
 }
 
@@ -237,7 +234,7 @@ html[data-theme="dark"] {
   --primary-color: #81ecec;
   --secondary-color: #74b9ff;
   --accent-color: #fab1a0;
-  --header-bg: linear-gradient(135deg, #1e272e, #34495e);
+  --header-bg: #1e272e; /* Was linear-gradient(135deg, #1e272e, #34495e) */
   --card-bg: rgba(45, 52, 54, 0.85); /* Dark card background */
   --text-primary: #dfe6e9;       /* Light text for dark theme */
   --text-secondary: #b2bec3;    /* Lighter grey text for dark theme */
@@ -246,7 +243,7 @@ html[data-theme="dark"] {
   --primary-color-rgb: 129, 236, 236; /* Corresponds to #81ecec */
 }
 html[data-theme="dark"] body {
-  background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
+  background: #2c3e50; /* Was linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%) - simplified */
   color: var(--text-primary); /* Ensure body text color is updated */
 }
 html[data-theme="dark"] nav,
@@ -263,7 +260,7 @@ html[data-theme="dark"] .nav-btn.active {
 }
 html[data-theme="dark"] footer {
   color: rgba(223, 230, 233, 0.9);
-  background: linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1));
+  background: rgba(45, 52, 54, 0.2); /* Was linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1)) */
   border: 1px solid rgba(223, 230, 233, 0.2);
 }
 
@@ -272,7 +269,7 @@ html[data-theme="eye-care"] {
   --primary-color: #86d9b3; 
   --secondary-color: #4db6ac; 
   --accent-color: #fff9e0; 
-  --header-bg: linear-gradient(135deg, var(--secondary-color), #80cbc4);
+  --header-bg: var(--secondary-color); /* Was linear-gradient(135deg, var(--secondary-color), #80cbc4) */
   --card-bg: rgba(240, 255, 240, 0.95); /* Pale green card */
   --text-primary: var(--eye-care-text-primary); /* Defined in :root */
   --text-secondary: var(--eye-care-text-secondary); /* Defined in :root */
@@ -281,7 +278,7 @@ html[data-theme="eye-care"] {
   --primary-color-rgb: 134, 217, 179; /* Corresponds to #86d9b3 */
 }
 html[data-theme="eye-care"] body {
-  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%);
+  background: #e0f2f1; /* Was linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%) - simplified */
   color: var(--text-primary); /* Ensure body text color is updated */
 }
 html[data-theme="eye-care"] nav,
@@ -298,6 +295,6 @@ html[data-theme="eye-care"] .nav-btn.active {
 }
 html[data-theme="eye-care"] footer {
   color: var(--text-primary); 
-  background: linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1));
+  background: rgba(224, 242, 241, 0.2); /* Was linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1)) */
   border: 1px solid rgba(45, 52, 54, 0.2);
 }

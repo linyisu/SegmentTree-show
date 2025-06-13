@@ -2,7 +2,7 @@
 
 .btn {
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
   color: white;
   border: none;
   border-radius: 12px;
@@ -17,13 +17,13 @@
 }
 
 .btn::before {
-  content: '';
+  content: \'\';
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: rgba(255, 255, 255, 0.2); /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
   transition: left 0.5s;
 }
 
@@ -54,7 +54,7 @@ nav button {
   border-radius: 15px;
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+  background: rgba(108, 92, 231, 0.1); /* Was linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1)) */
   border: 2px solid transparent;
 }
 
@@ -65,14 +65,14 @@ nav button::before {
   top: 0;
   height: 100%;
   width: 4px;
-  background: var(--primary-color);
+  background: var(--primary-color); /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color)) */
   transform: scaleY(0);
   transition: transform 0.3s ease;
   border-radius: 0 2px 2px 0;
 }
 
 nav button:hover {
-  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15));
+  background: rgba(108, 92, 231, 0.15); /* Was linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15)) */
   transform: translateX(5px);
   border-color: rgba(108, 92, 231, 0.3);
 }
@@ -112,7 +112,7 @@ nav button.active::before {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color));
+  background: var(--primary-color); /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color)) */
 }
 
 .card h2 {
@@ -120,10 +120,11 @@ nav button.active::before {
   margin-bottom: 25px;
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  /* background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); */ /* Removed gradient */
+  /* -webkit-background-clip: text; */
+  /* -webkit-text-fill-color: transparent; */
+  /* background-clip: text; */
+  color: var(--primary-color); /* Use primary color directly */
   position: relative;
 }
 
@@ -144,7 +145,7 @@ nav button.active::before {
   transform: translateY(-50%);
   width: 4px;
   height: 20px;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--accent-color)) */
   border-radius: 2px;
 }
 
@@ -158,7 +159,7 @@ nav button.active::before {
 
 /* Code Block Styles from Attachment */
 .code-block {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background: #1a1a2e; /* Was linear-gradient(135deg, #1a1a2e, #16213e) */
   color: #e2e8f0;
   padding: 25px;
   padding-top: 45px; /* Ensure space for the button */
@@ -184,11 +185,12 @@ nav button.active::before {
   display: block;
   width: 100%;
   height: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
+  transition: left 0.5s;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
-  background: transparent;
   border: none;
   padding: 0;
   margin: 0;
@@ -375,7 +377,7 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
 
 /* Dark Theme Code Block Styles (explicit for clarity) */
 [data-theme="dark"] .code-block {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background: #1a1a2e; /* Was linear-gradient(135deg, #1a1a2e, #16213e) */
   color: #e2e8f0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
@@ -389,7 +391,7 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
 
 /* Eye-Care Theme Code Block Styles */
 [data-theme="eye-care"] .code-block {
-  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  background: #f0f9ff; /* Was linear-gradient(135deg, #f0f9ff, #e0f2fe) */
   color: #0f172a;
   border: 1px solid #cbd5e1; /* Adjusted border for eye-care */
   box-shadow: 
@@ -476,7 +478,7 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
 
 .settings-panel button {
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
   color: white;
   border: none;
   border-radius: 12px;
@@ -497,7 +499,7 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: rgba(255, 255, 255, 0.2); /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
   transition: left 0.5s;
 }
 
