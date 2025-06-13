@@ -1,10 +1,10 @@
 /* 设置管理模块 */
 
 // 全局变量
-let currentTheme = 'dark';
-let currentFontSize = 14;
+let currentTheme = 'light';
+let currentFontSize = 15;
 let currentLineHeight = 1.6;
-let animationSpeed = 'fast';
+let animationSpeed = 'normal';
 let nodeColor = '#74b9ff';
 let showValues = true;
 
@@ -114,14 +114,14 @@ function debounce(func, wait) {
 // 设置管理
 const Settings = {
   defaults: {
-    theme: 'dark',
-    fontSize: 14,
+    theme: 'light',
+    fontSize: 15,
     lineHeight: 1.6,
-    animationSpeed: 'fast',
+    animationSpeed: 'normal',
     nodeColor: '#74b9ff',
     showValues: true
   },
-    save() {
+  save() {
     localStorage.setItem('segmentTreeSettings', JSON.stringify({
       theme: currentTheme,
       fontSize: currentFontSize,
