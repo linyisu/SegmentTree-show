@@ -56,8 +56,47 @@
     <section id="basic">
       <div class="card">
         <h2>🔧 线段树的构建与操作</h2>
-        <p>线段树的构建通常采用递归方式，根据区间不断对半划分，每个节点编号 <code>u</code> 表示当前处理的区间 <code>[l, r]</code>。</p>
+        <h3>📦 信息与更新结构</h3>
+        <p>节点结构：在线段树中，每个节点存储一个区间的信息，这里用 <strong>Info</strong> 结构体来表示，如区间和、最大值、最小值等，
+          同时，我们定义了区间合并（<strong>operator+</strong>）与区间更新（<strong>apply</strong>）的方法。</p>
+          
+        <p>更新结构：为了支持灵活的区间操作，引入了 <strong>Laz</strong> 结构体。它用于存储对某一段区间的修改信息，可作为一种“变更指令”。
+          这些修改信息可以传入 <strong>Info</strong> 的 <strong>apply</strong> 方法，按需更新该区间的统计结果。</p>
+        <pre class="code-block"><code>struct Laz 
+{
+    int add = 0;
+};
+
+template <typename T>
+struct Info 
+{
+    int sum = 0, mx = 0, mn = 0;
+    Info() {}
+    Info(T x) : sum(x), mx(x), mn(x) {}
+    void apply(const Laz &tag, int len) 
+    {
+        if (tag.add) 
+        {
+          mn += tag.add;
+          mx += tag.add;
+          sum += tag.add * len;
+        }
+    }
+
+    Info operator+(const Info &a) const 
+    {
+        Info res;
+        res.mn = min(mn, a.mn);
+        res.mx = max(mx, a.mx);
+        res.sum = sum + a.sum;
+        return res;
+    }
+};
+</code></pre>
+          
         <h3>📝 构建函数详解</h3>
+          <p>线段树的构建通常采用递归的方式，设当前的根节点为 <strong>u</strong>，若当前节点管辖的区间长度已经是 <strong>1</strong>，则可直接根据所需初始化该节点。
+            否则我们将该区间对半划分两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong>push_up</strong>）。</p>
         <pre class="code-block" id="build-code"><code>void build(int l, int r, int u)
 {
     if (l == r)
@@ -71,15 +110,11 @@
     build(mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>
-        <h3>🎯 构建过程可视化</h3>
-        <div class="settings-row">
-          <label>数组长度 n:</label>
-          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
-          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
-        </div>
-        <div id="tree-container">
-          <p>点击"开始构建"按钮查看线段树构建过程</p>
-        </div>
+
+        <p>关于线段树的<strong>空间</strong>：通常采用堆式存储（其中节点 <strong>u</strong> 的左儿子为 <strong>2u</strong>，右儿子为 <strong>2u+1</strong>）。
+          若有 <strong>n</strong> 个叶子结点，则存储节点的数组范围最大可达 <strong>2<sup>&lceil;log<sub>2</sub>n&rceil;+1</sup></strong>。
+          因此，实践中常使用 <strong>4n</strong> 作为数组大小的一个安全上限。</p>
+
         <h3>📚 其他核心操作</h3>
         <pre class="code-block"><code>// 区间查询
 Info query(int l, int r, int ql, int qr, int u)
@@ -255,20 +290,20 @@ int kth(int l, int r, int k, int u)
             <h3>问题 2: 线段树的空间复杂度通常是？</h3>
             <div class="quiz-options">
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: O(n)">
-                <label for="q2a">A. O(n)</label>
+                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: 空间约为输入规模的1倍">
+                <label for="q2a">A. 空间约为输入规模的1倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: O(2n)">
-                <label for="q2b">B. O(2n)</label>
+                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: 空间约为输入规模的2倍">
+                <label for="q2b">B. 空间约为输入规模的2倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: O(4n)">
-                <label for="q2c">C. O(4n)</label>
+                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: 空间约为输入规模的4倍">
+                <label for="q2c">C. 空间约为输入规模的4倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: O(n log n)">
-                <label for="q2d">D. O(n log n)</label>
+                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: 空间约为输入规模的 n log n 倍">
+                <label for="q2d">D. 空间约为输入规模的 n log n 倍</label>
               </div>
             </div>
           </div>
