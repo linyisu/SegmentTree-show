@@ -185,7 +185,7 @@ nav button.active::before {
   display: block;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.2); /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
+  background: rgba(255, 255, 255, 0); /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
   transition: left 0.5s;
   font-family: inherit;
   font-size: inherit;
@@ -377,8 +377,7 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
 
 /* Dark Theme Code Block Styles (explicit for clarity) */
 [data-theme="dark"] .code-block {
-  background: #1a1a2e; /* Was linear-gradient(135deg, #1a1a2e, #16213e) */
-  color: #e2e8f0;
+  background: rgb(255 255, 255, 0%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
