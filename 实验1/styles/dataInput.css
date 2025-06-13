@@ -1,0 +1,66 @@
+/* styles/dataInput.css */
+
+.data-input-container {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 25px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.data-input-container h4 {
+    color: var(--text-primary);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+#input-custom-data {
+    width: calc(100% - 30px); /* Full width minus padding */
+    padding: 12px 15px;
+    border: 1px solid var(--input-bg); /* Use a subtle border, or var(--border-color) if defined */
+    border-radius: 8px; /* Smaller border radius for input field */
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 15px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+#input-custom-data:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.3);
+}
+
+#btn-update-custom-data {
+    display: block; /* Make button block to take full width or control width easily */
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 12px 20px;
+    font-size: 15px;
+}
+
+.data-stats {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.data-stats p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.data-stats p strong {
+    color: var(--text-primary);
+    min-width: 80px; /* Align values somewhat */
+    display: inline-block;
+}
+
+.data-stats span {
+    font-weight: bold;
+    color: var(--primary-color);
+}

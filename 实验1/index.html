@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="styles/tree.css">
   <link rel="stylesheet" href="styles/quiz.css">
   <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/dataInput.css"> <!-- Added new CSS file -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- Example, replace if not used -->
 </head>
 <body>
   <!-- 三级主题开关 -->
@@ -124,6 +127,15 @@ struct Info
     push_up(u);
 }</code></pre>
 
+        <h3>🎯 构建过程可视化</h3>
+          <div class="settings-row">
+            <label>数组长度 n:</label>
+            <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+            <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+          </div>
+          <div id="tree-container"></div>
+
+
         <h3>⚙️ 信息维护：push_up 与 push_down</h3>
         <ul> 
           <li><strong> push_up </strong>：用于更新当前节点的信息。它的作用是将左右子节点的信息通过区间合并（<strong> operator+ </strong>）向上传递，
@@ -167,6 +179,21 @@ void push_down(int u, int llen, int rlen)
     if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>
+
+        <h3>🔧 可视化修改与数据维护</h3>
+        <p>在此处输入新的数组数据（以逗号分隔，例如 <code>1,5,3,7,2,8</code>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>
+        <div class="data-input-container card">
+            <h4>输入新数据:</h4>
+            <input type="text" id="input-custom-data" placeholder="例如: 1,5,3,7,2,8" aria-label="输入自定义数组数据">
+            <button id="btn-update-custom-data" class="btn">更新可视化与统计</button>
+            
+            <h4>当前数据统计:</h4>
+            <div class="data-stats">
+                <p><strong>最大值:</strong> <span id="stat-max">-</span></p>
+                <p><strong>最小值:</strong> <span id="stat-min">-</span></p>
+                <p><strong>总和:</strong> <span id="stat-sum">-</span></p>
+            </div>
+        </div>
 
         <h3>🔍 区间查询</h3>
         <p>查询指定区间的合并结果：</p>
@@ -318,20 +345,12 @@ void push_down(int u, int llen, int rlen)
   </main>
 
   <!-- JavaScript 文件链接 -->
-  <script src="js/syntaxHighlighter.js"></script>
   <script src="js/navigation.js"></script>
-  <script src="js/treeVisualizer.js"></script>
-  <script src="js/quiz.js"></script>
+  <script src="js/dataUpdater.js"></script> <!-- Added new JS file -->
   <script src="js/settings.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/syntaxHighlighter.js"></script>
+  <script src="js/treeVisualizer.js"></script>
   <script src="js/main.js"></script>
-  <script>
-    // Ensure initQuiz is called after the DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      if (window.Quiz && typeof window.Quiz.initQuiz === 'function') {
-        window.Quiz.initQuiz();
-      }
-    });
-  </script>
 </body>
 </html>
-           
