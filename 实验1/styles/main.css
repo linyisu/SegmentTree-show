@@ -169,37 +169,45 @@ select:focus {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 10000;
-  background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  border-radius: 25px;
-  padding: 8px;
-  box-shadow: var(--card-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
-  align-items: center;
-  gap: 0;
-  transition: all 0.3s ease;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 5px;
+  box-shadow: var(--card-shadow);
+  z-index: 1001;
+  overflow: hidden; /* 确保滑块在容器内 */
 }
 
 .theme-option {
   background: none;
   border: none;
-  color: var(--text-primary);
-  font-size: 20px;
-  padding: 5px 10px;
+  padding: 10px 15px;
   cursor: pointer;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.theme-option:hover {
-  background: rgba(0, 0, 0, 0.1);
+  font-size: 1.2em;
+  color: var(--text-secondary);
+  transition: color 0.3s ease, transform 0.2s ease;
+  position: relative; /* 为滑块定位提供参考 */
+  z-index: 1; /* 确保按钮在滑块之上 */
 }
 
 .theme-option.active {
-  background: var(--primary-color);
-  color: white;
+  color: var(--primary-color);
+}
+
+.theme-option:hover {
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.theme-slider {
+  position: absolute;
+  top: 5px; /* 与 .theme-switcher 的 padding 保持一致 */
+  bottom: 5px; /* 与 .theme-switcher 的 padding 保持一致 */
+  width: calc((100% - 10px) / 3); /* 减去 padding，然后除以按钮数量 */
+  background-color: var(--primary-color);
+  border-radius: calc(var(--border-radius) - 5px); /* 调整圆角以适应内部 */
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.3s ease; /* 快速且有弹性的动画 */
+  z-index: 0; /* 在按钮之下 */
 }
 
 /* 白天模式 */
@@ -253,10 +261,10 @@ html[data-theme="dark"] footer {
 
 /* 护眼模式 */
 html[data-theme="eye-care"] body {
-  --primary-color: #50d8b2;
-  --secondary-color: #00b894;
-  --accent-color: #ffeaa7;
-  --header-bg: linear-gradient(135deg, #00b894, #00cec9);
+  --primary-color: #86d9b3; /* Softer mint green */
+  --secondary-color: #4db6ac; /* Softer teal */
+  --accent-color: #fff9e0; /* Pale yellow */
+  --header-bg: linear-gradient(135deg, var(--secondary-color), #80cbc4); /* Adjusted header gradient */
   --card-bg: rgba(240, 255, 240, 0.95); /* 淡绿色背景 */
   --text-primary: #2d3436;
   --text-secondary: #636e72;

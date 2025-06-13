@@ -69,15 +69,32 @@ function switchTheme(themeName) {
   document.documentElement.setAttribute('data-theme', themeName); // <--- 修改：应用到 documentElement
   localStorage.setItem('selectedTheme', themeName); // 保存用户选择
 
-  // 更新按钮的 active状态
   const themeButtons = document.querySelectorAll('.theme-option');
-  themeButtons.forEach(button => {
+  let activeIndex = 0;
+  themeButtons.forEach((button, index) => {
     if (button.dataset.theme === themeName) {
       button.classList.add('active');
+      activeIndex = index;
     } else {
       button.classList.remove('active');
     }
   });
+
+  updateSliderPosition(activeIndex); // 更新滑块位置
+}
+
+// 更新滑块位置的函数
+function updateSliderPosition(activeIndex) {
+  const slider = document.querySelector('.theme-slider');
+  if (slider) {
+    const buttonWidth = slider.parentElement.querySelector('.theme-option').offsetWidth;
+    slider.style.transform = `translateX(${activeIndex * buttonWidth}px)`;
+    // 更新滑块背景色以匹配当前主题的主色
+    const currentThemeColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+    if (currentThemeColor) {
+        slider.style.backgroundColor = currentThemeColor;
+    }
+  }
 }
 
 // 辅助函数，避免在循环中创建匿名函数导致潜在的重复监听器问题
@@ -87,18 +104,22 @@ function handleThemeButtonClick(event) {
 
 function initThemeSwitcher() {
   const savedTheme = localStorage.getItem('selectedTheme');
-  if (savedTheme) {
-    switchTheme(savedTheme);
-  } else {
-    // 默认主题（例如：白天模式）
-    // 确保在没有保存主题时，也调用 switchTheme 来设置初始 data-theme
-    switchTheme('light'); 
-  }
+  const initialTheme = savedTheme || 'light'; // 默认主题为 'light'
+  switchTheme(initialTheme); // 应用初始主题并更新滑块
 
   const themeButtons = document.querySelectorAll('.theme-option');
   themeButtons.forEach(button => {
-    // 移除旧的监听器，以防 initThemeSwitcher 被意外多次调用（虽然在此处不太可能）
-    button.removeEventListener('click', handleThemeButtonClick); 
+    button.removeEventListener('click', handleThemeButtonClick); // 确保移除旧监听器
     button.addEventListener('click', handleThemeButtonClick);
   });
+
+  // 首次加载时，确保滑块位置正确（在按钮渲染完毕后）
+  // 使用 setTimeout 确保 offsetWidth 可用
+  setTimeout(() => {
+    const activeButton = document.querySelector('.theme-option.active');
+    if (activeButton) {
+        const activeIndex = Array.from(themeButtons).indexOf(activeButton);
+        updateSliderPosition(activeIndex);
+    }
+  }, 0);
 }
