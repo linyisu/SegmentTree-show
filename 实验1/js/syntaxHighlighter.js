@@ -197,6 +197,76 @@ function highlightCode(code) {
   return `<code>${finalCode}</code>`;
 }
 
+function addCopyButton(preElement) {
+  // Ensure preElement has position:relative for absolute positioning of the button
+  if (getComputedStyle(preElement).position === 'static') {
+      preElement.style.position = 'relative';
+  }
+
+  // Avoid adding multiple buttons
+  if (preElement.querySelector('.copy-button')) {
+      return;
+  }
+
+  const copyButton = document.createElement('button');
+  copyButton.className = 'copy-button';
+  copyButton.setAttribute('aria-label', 'Copy code'); // For accessibility
+
+  const bracketsSpan = document.createElement('span');
+  bracketsSpan.className = 'brackets';
+  bracketsSpan.textContent = '{}';
+
+  const messageSpan = document.createElement('span');
+  messageSpan.className = 'message';
+  messageSpan.textContent = 'Copied!'; // Default message text, will be shown on success
+
+  copyButton.appendChild(bracketsSpan);
+  copyButton.appendChild(messageSpan);
+
+  copyButton.addEventListener('click', async () => {
+      const codeElement = preElement.querySelector('code');
+      if (!codeElement) {
+          // console.warn('Could not find code element to copy.'); // Optional: user-facing feedback might be better
+          return;
+      }
+
+      const textToCopy = codeElement.innerText;
+
+      try {
+          await navigator.clipboard.writeText(textToCopy);
+          
+          // Clear any previous error state and set copied state
+          if (copyButton.classList.contains('error')) {
+            copyButton.classList.remove('error');
+            // Ensure messageSpan text is correct for 'copied' state if it was 'Error!'
+            messageSpan.textContent = 'Copied!'; 
+          }
+          copyButton.classList.add('copied');
+
+          setTimeout(() => {
+              copyButton.classList.remove('copied');
+          }, 2000);
+
+      } catch (err) {
+          console.error('Failed to copy text: ', err);
+          
+          // Clear copied state (if any) and set error state
+          if (copyButton.classList.contains('copied')) {
+            copyButton.classList.remove('copied');
+          }
+          copyButton.classList.add('error');
+          messageSpan.textContent = 'Error!'; // Set message to 'Error!' for the error state
+
+          setTimeout(() => {
+              copyButton.classList.remove('error');
+              messageSpan.textContent = 'Copied!'; // Reset message text for next potential copy
+          }, 2000);
+      }
+  });
+
+  preElement.appendChild(copyButton);
+}
+
 // 立即应用语法高亮 (Adjusted)
 function applyHighlighting() {
   document.querySelectorAll('.code-block').forEach(block => {
@@ -220,6 +290,7 @@ function applyHighlighting() {
       }
       block.dataset.highlighted = true;
     }
+    addCopyButton(block); // Add copy button after highlighting
   });
 }
 
@@ -253,6 +324,7 @@ function setupLazyHighlighting() {
             block.dataset.highlighted = true;
           }
         }
+        addCopyButton(block); // Add copy button when block becomes visible and is processed
       }
     });
   }, { threshold: 0.1 });

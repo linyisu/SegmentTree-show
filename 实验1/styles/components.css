@@ -161,6 +161,7 @@ nav button.active::before {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: #e2e8f0;
   padding: 25px;
+  padding-top: 45px; /* Ensure space for the button */
   border-radius: 16px;
   margin: 25px 0;
   overflow-x: auto;
@@ -172,9 +173,12 @@ nav button.active::before {
     0 10px 30px rgba(0, 0, 0, 0.3);
   white-space: pre-wrap;
   word-wrap: break-word;
-  position: relative;
+  position: relative; /* This is crucial for absolute positioning of children */
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Remove any ::after pseudo-element styling previously intended for a copy button */
+/* pre#build-code.code-block::after, .code-block::after { content: none; } */
 
 .code-block code {
   display: block;
@@ -192,33 +196,77 @@ nav button.active::before {
   word-wrap: inherit;
 }
 
-.code-block::before {
-  content: '';
+.code-block .copy-button {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-  border-radius: 16px 16px 0 0;
+  top: 10px;
+  right: 10px; /* Changed from left to right */
+  background: transparent; /* Make background transparent by default */
+  color: #a0aec0; /* Subtler color for default state, adjust as needed */
+  border: none; /* Remove border by default */
+  border-radius: 6px;
+  padding: 6px 8px; /* Adjust padding for a tighter look */
+  cursor: pointer;
+  font-size: 14px; /* Slightly larger for better visibility of {} */
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+  line-height: 1; /* Ensure text is vertically centered if padding is tricky */
 }
 
-.code-block::after {
-  content: '{ }';
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  color: rgba(255, 255, 255, 0.3); /* Default for dark theme */
-  font-size: 18px;
-  font-weight: bold;
+.code-block .copy-button:hover {
+  background: rgba(255, 255, 255, 0.1); /* Show subtle background on hover */
+  color: #e2e8f0; /* Brighter color on hover */
+  transform: scale(1.1);
 }
+
+.code-block .copy-button.copied {
+  background: var(--success-bg); /* Prominent background when copied */
+  color: white;
+  border-color: transparent;
+  transform: scale(1); /* Reset scale if needed */
+}
+
+/* Light theme adjustments for copy button */
+html[data-theme="light"] .code-block .copy-button {
+  background: transparent;
+  color: #718096; /* Subtler color for light theme */
+  border: none;
+}
+
+html[data-theme="light"] .code-block .copy-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #2d3748; /* Darker on hover */
+}
+
+html[data-theme="light"] .code-block .copy-button.copied {
+  background: #28a745;
+  color: white;
+}
+
+/* Eye-care theme adjustments for copy button */
+html[data-theme="eye-care"] .code-block .copy-button {
+  background: transparent;
+  color: var(--eye-care-text-secondary); /* Subtler color for eye-care */
+  border: none;
+}
+
+html[data-theme="eye-care"] .code-block .copy-button:hover {
+  background: rgba(80, 80, 30, 0.15); /* Subtle hover for eye-care */
+  color: var(--eye-care-text-primary);
+}
+
+html[data-theme="eye-care"] .code-block .copy-button.copied {
+  background: #5cb85c;
+  color: #f0f0e0;
+}
+
 
 /* Default (Dark Theme) Syntax Highlighting Styles */
 .code-block .keyword, .code-block code .keyword { color: #63b3ed; font-weight: bold; }
 .code-block .type, .code-block code .type { color: #68d391; font-weight: bold; }
 .code-block .function, .code-block code .function { color: #fbb6ce; }
 .code-block .number, .code-block code .number { color: #f6ad55; }
-.code-block .comment, .code-block code .comment { color: #a0aec0; font-style: italic; }
+.code-block .comment, .code-block code .comment { color: #a0aec0; /* font-style: italic; */ }
 .code-block .string, .code-block code .string { color: #9ae6b4; }
 .code-block .operator, .code-block code .operator { color: #fbb6ce; font-weight: bold; }
 .code-block .variable, .code-block code .variable { color: #e9c46a; font-weight: 500; }
@@ -248,9 +296,9 @@ nav button.active::before {
 [data-theme="light"] .code-block .function,
 [data-theme="light"] .code-block code .function { color: #6f42c1; }
 [data-theme="light"] .code-block .number,
-[data-theme="light"] .code-block code .number { color: #032f62; }
+[data-theme="light"] .code-block code .number { color: #D95F02; /* Changed from blue to dark orange */ }
 [data-theme="light"] .code-block .comment,
-[data-theme="light"] .code-block code .comment { color: #6a737d; font-style: italic; }
+[data-theme="light"] .code-block code .comment { color: #6a737d; /* font-style: italic; */ }
 [data-theme="light"] .code-block .string,
 [data-theme="light"] .code-block code .string { color: #28a745; }
 [data-theme="light"] .code-block .operator,
@@ -305,7 +353,7 @@ nav button.active::before {
 [data-theme="eye-care"] .code-block .number,
 [data-theme="eye-care"] .code-block code .number { color: #dc2626; }
 [data-theme="eye-care"] .code-block .comment,
-[data-theme="eye-care"] .code-block code .comment { color: #6b7280; font-style: italic; }
+[data-theme="eye-care"] .code-block code .comment { color: #6b7280; /* font-style: italic; */ }
 [data-theme="eye-care"] .code-block .string,
 [data-theme="eye-care"] .code-block code .string { color: #059669; }
 [data-theme="eye-care"] .code-block .operator,
