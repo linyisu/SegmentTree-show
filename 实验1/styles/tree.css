@@ -3,7 +3,7 @@
 css 层叠样式表
 #tree-container {
   margin-top: 30px;
-  padding: 25px;
+  padding: 25px 25px 10px 25px; /* Modified from padding: 25px; */
   background: var(--card-bg);
   border-radius: 18px;
   border-left: 5px solid var(--primary-color);
@@ -44,22 +44,24 @@ css 层叠样式表
 /* 树形可视化样式 */
 .tree-visual {
   width: 100%;
-  overflow: hidden;
-  padding: 30px 25px;
+  /* overflow: hidden; */ /* Temporarily changed to visible for debugging */
+  overflow: visible;
+  padding: 30px 25px 0px 25px;
   position: relative;
   box-sizing: border-box;
-  min-height: auto; /* 关键：允许容器根据内容收缩高度 */
+  min-height: auto; /* JS will set explicit height */
+  background: rgba(173, 216, 230, 0.5); /* Temporary lightblue background for debugging */
 }
 
 .tree-level {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 18px 0;
+  margin: 10px 0; /* Modified from margin: 18px 0; */
   position: relative;
   width: 100%;
   padding: 0;
-  min-height: 50px;
+  min-height: 40px; /* Modified from min-height: 50px; */
 }
 
 .tree-level-0, .tree-level-1, .tree-level-2, .tree-level-3 {
