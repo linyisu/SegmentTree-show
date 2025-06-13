@@ -34,22 +34,30 @@
     <section id="intro" class="active">
       <div class="card">
         <h2>🌳 什么是线段树？</h2>
-        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为<strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为 <strong>O(log n)</strong>，适用于静态或动态数组。</p>
         <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
+
         <h3>📊 线段树可维护的区间信息</h3>
-        <p>• <strong>区间和</strong>：计算区间内所有元素的总和</p>
-        <p>• <strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</p>
-        <p>• <strong>区间GCD</strong>：计算区间内所有数的最大公约数</p>
-        <p>• <strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</p>
-        <p>• <strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</p>
-        <p>• <strong>区间最长递增/递减段</strong>：寻找最长的单调序列</p>
+        <ul>
+          <li><strong>区间和</strong>：计算区间内所有元素的总和</li>
+          <li><strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</li>
+          <li><strong>区间GCD</strong>：计算区间内所有数的最大公约数</li>
+          <li><strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</li>
+          <li><strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</li>
+          <li><strong>区间最长递增/递减段</strong>：寻找最长的单调序列</li>
+          <li><strong>……</strong></li>
+        </ul>
+
         <h3>⚡ 线段树支持的区间修改操作</h3>
-        <p>• <strong>区间加法</strong>：给区间内所有元素加上某个值</p>
-        <p>• <strong>区间乘法</strong>：给区间内所有元素乘以某个值</p>
-        <p>• <strong>区间赋值</strong>：将区间内所有元素设为某个值</p>
-        <p>• <strong>区间异或</strong>：对区间内所有元素进行异或操作</p>
-        <p>• <strong>区间取反</strong>：对区间内所有元素取反</p>
-        <p>• <strong>区间拼接</strong>：连接多个区间</p>
+        <ul>
+          <li><strong>区间加法</strong>：给区间内所有元素加上某个值</li>
+          <li><strong>区间乘法</strong>：给区间内所有元素乘以某个值</li>
+          <li><strong>区间赋值</strong>：将区间内所有元素设为某个值</li>
+          <li><strong>区间异或</strong>：对区间内所有元素进行异或操作</li>
+          <li><strong>区间取反</strong>：对区间内所有元素取反</li>
+          <li><strong>区间拼接</strong>：连接多个区间</li>
+          <li><strong>……</strong></li>
+        </ul>
       </div>
     </section>
 
@@ -116,12 +124,30 @@ struct Info
           <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
           <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
         </div>
-        <div id="tree-container">
-          <p>点击"开始构建"按钮查看线段树构建过程</p>
-        </div>
-        <p>关于线段树的<strong>空间</strong>：通常采用堆式存储（其中节点 <strong>u</strong> 的左儿子为 <strong>2u</strong>，右儿子为 <strong>2u+1</strong>）。
-          若有 <strong>n</strong> 个叶子结点，则存储节点的数组范围最大可达 <strong>2<sup>&lceil;log<sub>2</sub>n&rceil;+1</sup></strong>。
-          因此，实践中常使用 <strong>4n</strong> 作为数组大小的一个安全上限。</p>
+        <div id="tree-container"></div>
+
+        <h3>🔄 信息维护函数</h3>
+          <p>为了更新和维护节点信息，线段树中通常会用到以下两个辅助函数：</p>
+          <ul>
+            <li><strong>push_up</strong>：合并左右子节点的信息，更新当前节点。</li>
+            <li><strong>push_down</strong>：将当前节点的更新信息（即 <strong>Laz</strong> 中的“变更指令”）传递给左右子节点。在本版本中，<strong>Laz</strong> 不具有懒标记语义，但仍必须被下发，以确保信息正确更新。</li>
+          </ul>
+
+          <pre class="code-block"><code>void apply(int u, const Laz &tag, int len) 
+{
+    info[u].apply(tag, len);
+}
+
+void push_up(int u) 
+{
+    info[u] = info[u << 1] + info[u << 1 | 1];
+}
+
+void push_down(int u, int llen, int rlen) 
+{
+    apply(u << 1, laz[u], llen);
+    apply(u << 1 | 1, laz[u], rlen);
+}</code></pre>
 
         <h3>📚 其他核心操作</h3>
         <pre class="code-block"><code>// 区间查询
@@ -155,6 +181,11 @@ void update(int l, int r, int pos, int val, int u)
         update(mid + 1, r, pos, val, u << 1 | 1);
     push_up(u);
 }</code></pre>
+
+        <h3>📌 补充说明</h3>
+          <p>线段树的构建通常采用堆式存储（其中节点 <strong>u</strong> 的左儿子为 <strong>2u</strong>，右儿子为 <strong>2u+1</strong>）。
+          若有 <strong>n</strong> 个叶子结点，则存储节点的数组范围最大可达 <strong>2<sup>&lceil;log<sub>2</sub>n&rceil;+1</sup></strong>。
+          因此，实践中常使用 <strong>4n</strong> 作为数组大小的一个安全上限。</p>
       </div>
     </section>
 
@@ -192,20 +223,20 @@ void update(int l, int r, int pos, int val, int u)
             <h3>问题 2: 线段树的空间复杂度通常是？</h3>
             <div class="quiz-options">
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: 空间约为输入规模的1倍">
-                <label for="q2a">A. 空间约为输入规模的1倍</label>
+                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: 输入规模的1倍">
+                <label for="q2a">A. 输入规模的1倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: 空间约为输入规模的2倍">
-                <label for="q2b">B. 空间约为输入规模的2倍</label>
+                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: 输入规模的2倍">
+                <label for="q2b">B. 输入规模的2倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: 空间约为输入规模的4倍">
-                <label for="q2c">C. 空间约为输入规模的4倍</label>
+                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: 空输入规模的4倍">
+                <label for="q2c">C. 输入规模的4倍</label>
               </div>
               <div class="quiz-option-item">
-                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: 空间约为输入规模的 n log n 倍">
-                <label for="q2d">D. 空间约为输入规模的 n log n 倍</label>
+                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: 输入规模的 n log n 倍">
+                <label for="q2d">D. 输入规模的 n log n 倍</label>
               </div>
             </div>
           </div>
