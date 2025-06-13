@@ -57,7 +57,7 @@
         <h2>🔧 线段树的构建与操作</h2>
         <p>线段树的构建通常采用递归方式，根据区间不断对半划分，每个节点编号 <code>u</code> 表示当前处理的区间 <code>[l, r]</code>。</p>
         <h3>📝 构建函数详解</h3>
-        <div class="code-block" id="build-code">void build(int l, int r, int u)
+        <pre class="code-block" id="build-code"><code>void build(int l, int r, int u)
 {
     if (l == r)
     {
@@ -69,7 +69,7 @@
     build(l, mid, u << 1);
     build(mid + 1, r, u << 1 | 1);
     push_up(u);
-}</div>
+}</code></pre>
         <h3>🎯 构建过程可视化</h3>
         <div class="settings-row">
           <label>数组长度 n:</label>
@@ -80,7 +80,7 @@
           <p>点击"开始构建"按钮查看线段树构建过程</p>
         </div>
         <h3>📚 其他核心操作</h3>
-        <div class="code-block">// 区间查询
+        <pre class="code-block"><code>// 区间查询
 Info query(int l, int r, int ql, int qr, int u)
 {
     if (ql <= l && r <= qr)
@@ -110,7 +110,7 @@ void update(int l, int r, int pos, int val, int u)
     else
         update(mid + 1, r, pos, val, u << 1 | 1);
     push_up(u);
-}</div>
+}</code></pre>
       </div>
     </section>
 
@@ -119,7 +119,7 @@ void update(int l, int r, int pos, int val, int u)
         <h2>🚀 进阶技巧</h2>
         <h3>⏰ 懒惰标记 (Lazy Propagation)</h3>
         <p>懒惰标记是线段树的重要优化技术，用于处理区间修改操作，避免每次都递归到叶子节点。</p>
-        <div class="code-block">void push_down(int u, int l, int r)
+        <pre class="code-block"><code>void push_down(int u, int l, int r)
 {
     if (lazy[u] != 0)
     {
@@ -149,10 +149,10 @@ void modify(int l, int r, int ql, int qr, int val, int u)
     if (qr > mid)
         modify(mid + 1, r, ql, qr, val, u << 1 | 1);
     push_up(u);
-}</div>
+}</code></pre>
         <h3>🌍 可持久化线段树</h3>
         <p>可持久化线段树能够保存数据结构的历史版本，支持查询任意历史时刻的状态。</p>
-        <div class="code-block">struct Node
+        <pre class="code-block"><code>struct Node
 {
     int sum, lc, rc;
 } tree[MAXN];
@@ -192,12 +192,10 @@ int update(int pre, int l, int r, int pos, int val)
         tree[u].rc = update(tree[pre].rc, mid + 1, r, pos, val);
     tree[u].sum = tree[tree[u].lc].sum + tree[tree[u].rc].sum;
     return u;
-}
-        </div>
+}</code></pre>
         <h3>⚖️ 权值线段树</h3>
         <p>权值线段树以值域作为下标建树，常用于处理第k小数、数值统计等问题。</p>
-        <div class="code-block">
-// 插入一个数值
+        <pre class="code-block"><code>// 插入一个数值
 void insert(int l, int r, int val, int u)
 {
     tree[u]++;
@@ -222,7 +220,7 @@ int kth(int l, int r, int k, int u)
         return kth(l, mid, k, u << 1);
     else
         return kth(mid + 1, r, k - tree[u << 1], u << 1 | 1);
-}</div>
+}</code></pre>
       </div>
     </section>
 

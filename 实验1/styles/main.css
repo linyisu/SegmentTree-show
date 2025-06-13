@@ -203,7 +203,7 @@ select:focus {
 }
 
 /* 白天模式 */
-body[data-theme="light"] {
+html[data-theme="light"] body {
   --primary-color: #6c5ce7;
   --secondary-color: #a29bfe;
   --accent-color: #fd79a8;
@@ -215,7 +215,7 @@ body[data-theme="light"] {
 }
 
 /* 黑夜模式 */
-body[data-theme="dark"] {
+html[data-theme="dark"] body {
   --primary-color: #81ecec;
   --secondary-color: #74b9ff;
   --accent-color: #fab1a0;
@@ -226,34 +226,34 @@ body[data-theme="dark"] {
   background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
 }
 
-body[data-theme="dark"] nav,
-body[data-theme="dark"] main {
+html[data-theme="dark"] nav,
+html[data-theme="dark"] main {
   background: rgba(30, 39, 46, 0.7);
 }
 
-body[data-theme="dark"] .card {
+html[data-theme="dark"] .card {
   background: var(--card-bg);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-body[data-theme="dark"] .nav-btn {
+html[data-theme="dark"] .nav-btn {
   color: var(--text-primary);
 }
 
-body[data-theme="dark"] .nav-btn.active {
+html[data-theme="dark"] .nav-btn.active {
   background: var(--primary-color);
   color: #1e272e;
 }
 
-body[data-theme="dark"] footer {
+html[data-theme="dark"] footer {
   color: rgba(223, 230, 233, 0.9);
   background: linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1));
   border: 1px solid rgba(223, 230, 233, 0.2);
 }
 
 /* 护眼模式 */
-body[data-theme="eye-care"] {
-  --primary-color: #55efc4;
+html[data-theme="eye-care"] body {
+  --primary-color: #50d8b2;
   --secondary-color: #00b894;
   --accent-color: #ffeaa7;
   --header-bg: linear-gradient(135deg, #00b894, #00cec9);
@@ -263,26 +263,26 @@ body[data-theme="eye-care"] {
   background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%); /* 柔和的绿色渐变 */
 }
 
-body[data-theme="eye-care"] nav,
-body[data-theme="eye-care"] main {
+html[data-theme="eye-care"] nav,
+html[data-theme="eye-care"] main {
   background: rgba(224, 242, 241, 0.7); /* 更柔和的导航和主内容背景 */
 }
 
-body[data-theme="eye-care"] .card {
+html[data-theme="eye-care"] .card {
   background: var(--card-bg);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-body[data-theme="eye-care"] .nav-btn {
+html[data-theme="eye-care"] .nav-btn {
   color: var(--text-primary);
 }
 
-body[data-theme="eye-care"] .nav-btn.active {
+html[data-theme="eye-care"] .nav-btn.active {
   background: var(--primary-color);
   color: #2d3436;
 }
 
-body[data-theme="eye-care"] footer {
+html[data-theme="eye-care"] footer {
   color: #2d3436; /* 深色文字以保证可读性 */
   background: linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1));
   border: 1px solid rgba(45, 52, 54, 0.2);
