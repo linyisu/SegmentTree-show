@@ -20,7 +20,7 @@
     <button class="theme-option" data-theme="eye-care" onclick="switchTheme('eye-care')" title="护眼模式">🌿</button>
     <button class="theme-option" data-theme="dark" onclick="switchTheme('dark')" title="黑夜模式">🌙</button>
   </div>
-  <header>🌲 线段树全方位介绍（从入门到入土）</header>
+  <header>🌲 线段树介绍</header>
 
   <nav>
     <button class="nav-btn active" onclick="showSection('intro')" aria-label="线段树简介">📚 线段树简介</button>
@@ -34,7 +34,7 @@
     <section id="intro" class="active">
       <div class="card">
         <h2>🌳 什么是线段树？</h2>
-        <p>线段树(Segment Tree)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为 <strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>线段树(<strong>Segment Tree</strong>)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为 <strong>O(log n)</strong>，适用于静态或动态数组。</p>
         <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
 
         <h3>📊 线段树可维护的区间信息</h3>
@@ -64,16 +64,21 @@
     <section id="basic">
       <div class="card">
         <h2>🔧 线段树的构建与操作</h2>
+
         <h3>📦 信息与更新结构</h3>
         <ul>
-          <li>节点结构：在线段树中，每个节点存储一个区间的信息，这里用 <strong>Info</strong> 结构体来表示，如区间和、最大值、最小值等，
-            同时，定义区间合并（<strong>operator+</strong>）与区间更新（<strong>apply</strong>）的方法。</li>
-          <li>更新结构：为了支持灵活的区间操作，引入了 <strong>Laz</strong> 结构体。它用于存储对某一段区间的修改信息，可作为一种“变更指令”。
-            这些修改信息可以传入 <strong>Info</strong> 的 <strong>apply</strong> 方法，按需更新该区间的统计结果。</li>
+          <li><strong>Info 结构体</strong>：每个节点维护区间的信息，比如区间和、最大值、最小值等；支持合并（<strong> operator+ </strong>）和更新（<strong> apply </strong>）。</li>
+          <li><strong>Laz 结构体</strong>：用于记录对某一段区间的修改请求。它可作用于 <strong> Info </strong>的懒更新。</li>
         </ul>
+
         <pre class="code-block"><code>struct Laz 
 {
     int add = 0;
+    void apply(const Laz &tag) 
+    { 
+        if (tag.add)
+            add += tag.add; 
+    }
 };
 
 template &lt;typename T&gt;
@@ -100,93 +105,91 @@ struct Info
         res.sum = sum + a.sum;
         return res;
     }
-};
-</code></pre>
-          
-        <h3>📝 构建函数详解</h3>
-          <p>线段树的构建通常采用递归的方式，设当前的根节点为 <strong>u</strong>，若当前节点管辖的区间长度已经是 <strong>1</strong>，则可直接根据所需初始化该节点。
-            否则将该区间对半划分两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong>push_up</strong>）。</p>
-        <pre class="code-block" id="build-code"><code>void build(int l, int r, int u)
+};</code></pre>
+
+        <h3>🧱 构建线段树</h3>
+         <p>线段树的构建通常采用递归的方式，设当前节点为 <strong> u </strong>，若其管辖区间的长度已为 <strong> 1 </strong>，则可根据所需初始化该节点。
+          否则将该区间对半划分为两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong> push_up </strong>）。</p>
+        <pre class="code-block"><code>void build(int l, int r, int u)
 {
     if (l == r)
     {
         info[u] = Info(arr[l]);
         return;
     }
-    
+
     int mid = (l + r) >> 1;
     build(l, mid, u << 1);
     build(mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>
-        <h3>🎯 构建过程可视化</h3>
-        <div class="settings-row">
-          <label>数组长度 n:</label>
-          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
-          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
-        </div>
-        <div id="tree-container"></div>
 
-        <h3>🔄 信息维护函数</h3>
-          <p>为了更新和维护节点信息，线段树中通常会用到以下两个辅助函数：</p>
-          <ul>
-            <li><strong>push_up</strong>：合并左右子节点的信息，更新当前节点。</li>
-            <li><strong>push_down</strong>：将当前节点的更新信息（即 <strong>Laz</strong> 中的“变更指令”）传递给左右子节点。在本版本中，<strong>Laz</strong> 不具有懒标记语义，但仍必须被下发，以确保信息正确更新。</li>
-          </ul>
-
-          <pre class="code-block"><code>void apply(int u, const Laz &tag, int len) 
+        <h3>⚙️ 信息维护：push_up 与 push_down</h3>
+        <ul> 
+          <li><strong> push_up </strong>：用于更新当前节点的信息。它的作用是将左右子节点的信息通过区间合并（<strong> operator+ </strong>）向上传递，
+            更新当前节点的统计数据（如区间和、最小值、最大值等）。这个过程确保了每次修改或查询操作后，整棵线段树的状态始终是最新的。</li> 
+          <li><strong> push_down </strong>：用于懒标记（<strong> lazy tag </strong>）的传递。当一个节点上存在尚未向下传播的更新信息时，调用此函数会将该节点的懒标记应用到它的左右子节点，使得这些子节点的数据能够正确反映出应有的更新效果。随后，将当前节点的懒标记清空，避免重复更新。懒标记能减少重复更新操作，提高效率。</li>
+        </ul>
+        <pre class="code-block"><code>void apply(int u, Laz tag, int len) 
 {
+    laz[u].apply(tag);
     info[u].apply(tag, len);
 }
 
-void push_up(int u) 
-{
-    info[u] = info[u << 1] + info[u << 1 | 1];
-}
+void push_up(int u) { info[u] = info[u << 1] + info[u << 1 | 1]; }
 
 void push_down(int u, int llen, int rlen) 
 {
     apply(u << 1, laz[u], llen);
     apply(u << 1 | 1, laz[u], rlen);
+    laz[u] = Laz();
 }</code></pre>
 
-        <h3>📚 其他核心操作</h3>
-        <pre class="code-block"><code>// 区间查询
-Info query(int l, int r, int ql, int qr, int u)
+        <h3>✏️ 区间修改</h3>
+        <p>该操作可以对一个连续子区间统一修改。懒标记允许先记录修改指令，而不立即递归更新所有子节点，从而提升修改效率，直到真正访问子节点时再下传这些修改。</p>
+        <ul>
+          <li>如果当前节点负责的区间<strong> [l, r] </strong>完全被覆盖，直接用<strong> apply </strong>应用懒标记并返回。</li>
+          <li>否则先通过 <strong>push_down</strong> 把当前节点的懒标记传递给左右子节点，保证子节点信息最新。</li>
+          <li>递归修改左子区间（如果有交集）和右子区间（如果有交集）。</li>
+          <li>最后用<strong> push_up </strong>合并左右子节点的信息，更新当前节点。</li>
+        </ul>
+        <pre class="code-block"><code>void modify(int jobl, int jobr, Laz tag, int l, int r, int u) 
 {
-    if (ql <= l && r <= qr)
-        return info[u];
-    
-    int mid = (l + r) >> 1;
-    Info res;
-    if (ql <= mid)
-        res = res + query(l, mid, ql, qr, u << 1);
-    if (qr > mid)
-        res = res + query(mid + 1, r, ql, qr, u << 1 | 1);
-    return res;
-}
-
-// 单点更新
-void update(int l, int r, int pos, int val, int u)
-{
-    if (l == r)
+    if (jobl <= l && jobr >= r) 
     {
-        info[u] = Info(val);
+        apply(u, tag, r - l + 1);
         return;
     }
-    
+
     int mid = (l + r) >> 1;
-    if (pos <= mid)
-        update(l, mid, pos, val, u << 1);
-    else
-        update(mid + 1, r, pos, val, u << 1 | 1);
+    push_down(u, mid - l + 1, r - mid);
+    if (jobl <= mid) modify(jobl, jobr, tag, l, mid, u << 1);
+    if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>
 
-        <h3>📌 补充说明</h3>
-          <p>线段树的构建通常采用堆式存储（其中节点 <strong>u</strong> 的左儿子为 <strong>2u</strong>，右儿子为 <strong>2u+1</strong>）。
-          若有 <strong>n</strong> 个叶子结点，则存储节点的数组范围最大可达 <strong>2<sup>&lceil;log<sub>2</sub>n&rceil;+1</sup></strong>。
-          因此，实践中常使用 <strong>4n</strong> 作为数组大小的一个安全上限。</p>
+        <h3>🔍 区间查询</h3>
+        <p>查询指定区间的合并结果：</p>
+        <pre class="code-block"><code>Info query(int jobl, int jobr, int l, int r, int u) 
+{
+    if (jobl <= l && jobr >= r) 
+        return info[u];
+
+    int mid = (l + r) >> 1;
+    push_down(u, mid - l + 1, r - mid);
+    if (jobl <= mid && jobr > mid) 
+        return query(jobl, jobr, l, mid, u << 1) + query(jobl, jobr, mid + 1, r, u << 1 | 1);
+    else if (jobl <= mid) 
+        return query(jobl, jobr, l, mid, u << 1);
+    else
+        return query(jobl, jobr, mid + 1, r, u << 1 | 1);
+}</code></pre>
+
+        <h3>📌 小贴士</h3>
+        <ul>
+          <li>建议使用堆式存储法：设节点编号为 <strong>u</strong>，其左右儿子分别为 <strong>2u</strong> 与 <strong>2u+1</strong>。</li>
+          <li>实际应用中空间开辟可使用 <strong>4n</strong> 作为数组大小上限。</li>
+        </ul>
       </div>
     </section>
 
@@ -331,3 +334,4 @@ void update(int l, int r, int pos, int val, int u)
   </script>
 </body>
 </html>
+           

@@ -133,7 +133,7 @@ section.active {
 footer {
   margin-top: 50px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.9); /* Default light text for footer */
+  color: var(--text-secondary); /* Changed from rgba(255, 255, 255, 0.9) to use a theme variable suitable for light backgrounds */
   text-align: center;
   padding: 25px;
   background: rgba(255, 255, 255, 0.1); /* Was linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) */
