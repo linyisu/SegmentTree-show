@@ -156,6 +156,7 @@ nav button.active::before {
   font-weight: 400;
 }
 
+/* Code Block Styles from Attachment */
 .code-block {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: #e2e8f0;
@@ -175,6 +176,22 @@ nav button.active::before {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.code-block code {
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  white-space: inherit;
+  word-wrap: inherit;
+}
+
 .code-block::before {
   content: '';
   position: absolute;
@@ -191,12 +208,12 @@ nav button.active::before {
   position: absolute;
   top: 15px;
   right: 20px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.3); /* Default for dark theme */
   font-size: 18px;
   font-weight: bold;
 }
 
-/* 语法高亮样式 - 确保在 pre > code 结构中正常工作 */
+/* Default (Dark Theme) Syntax Highlighting Styles */
 .code-block .keyword, .code-block code .keyword { color: #63b3ed; font-weight: bold; }
 .code-block .type, .code-block code .type { color: #68d391; font-weight: bold; }
 .code-block .function, .code-block code .function { color: #fbb6ce; }
@@ -210,12 +227,20 @@ nav button.active::before {
 .code-block .pointer, .code-block code .pointer { color: #ff8a65; font-weight: bold; }
 .code-block .preprocessor, .code-block code .preprocessor { color: #ba68c8; font-weight: bold; }
 .code-block .constant, .code-block code .constant { color: #ffd93d; font-weight: bold; }
-.code-block .namespace, .code-block code .namespace { color: #a78bfa; font-weight: 600; }    /* 语法高亮主题样式 */
+.code-block .namespace, .code-block code .namespace { color: #a78bfa; font-weight: 600; }
+
+/* Light Theme Code Block Styles */
 [data-theme="light"] .code-block {
   background: #f8f9fa;
   color: #212529;
+  border: 1px solid #dee2e6; /* Adjusted border for light theme */
+  box-shadow: 
+    inset 0 1px 0 rgba(0, 0, 0, 0.05),
+    0 10px 30px rgba(0, 0, 0, 0.1); /* Adjusted shadow for light theme */
 }
-
+[data-theme="light"] .code-block::after {
+  color: rgba(0, 0, 0, 0.3);
+}
 [data-theme="light"] .code-block .keyword,
 [data-theme="light"] .code-block code .keyword { color: #d73a49; font-weight: bold; }
 [data-theme="light"] .code-block .type,
@@ -245,18 +270,32 @@ nav button.active::before {
 [data-theme="light"] .code-block .namespace,
 [data-theme="light"] .code-block code .namespace { color: #6f42c1; font-weight: 600; }
 
-/* 黑夜模式代码块样式 */
+/* Dark Theme Code Block Styles (explicit for clarity) */
 [data-theme="dark"] .code-block {
   background: linear-gradient(135deg, #1a1a2e, #16213e);
   color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.3);
 }
+[data-theme="dark"] .code-block::after {
+  color: rgba(255, 255, 255, 0.3);
+}
+/* Dark theme token colors use the default .code-block .token styles defined above */
 
-/* 护眼模式代码块样式 */
+/* Eye-Care Theme Code Block Styles */
 [data-theme="eye-care"] .code-block {
   background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
   color: #0f172a;
+  border: 1px solid #cbd5e1; /* Adjusted border for eye-care */
+  box-shadow: 
+    inset 0 1px 0 rgba(0, 0, 0, 0.03),
+    0 10px 30px rgba(0, 0, 0, 0.08); /* Adjusted shadow for eye-care */
 }
-
+[data-theme="eye-care"] .code-block::after {
+  color: rgba(15, 23, 42, 0.3); 
+}
 [data-theme="eye-care"] .code-block .keyword,
 [data-theme="eye-care"] .code-block code .keyword { color: #059669; font-weight: bold; }
 [data-theme="eye-care"] .code-block .type,
@@ -285,3 +324,89 @@ nav button.active::before {
 [data-theme="eye-care"] .code-block code .constant { color: #0891b2; font-weight: bold; }
 [data-theme="eye-care"] .code-block .namespace,
 [data-theme="eye-care"] .code-block code .namespace { color: #7c3aed; font-weight: 600; }
+
+.settings-panel {
+  background: var(--panel-bg);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-panel h2 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.settings-panel label {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.settings-panel input,
+.settings-panel select,
+.settings-panel textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 15px;
+  transition: border-color 0.3s;
+}
+
+.settings-panel input:focus,
+.settings-panel select:focus,
+.settings-panel textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.settings-panel button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+.settings-panel button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.settings-panel button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+}
+
+.settings-panel button:hover::before {
+  left: 100%;
+}
+
+.settings-panel button:active {
+  transform: translateY(-1px) scale(0.98);
+}
