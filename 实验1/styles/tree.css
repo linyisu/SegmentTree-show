@@ -1,5 +1,6 @@
 /* 线段树可视化样式 */
 
+css 层叠样式表
 #tree-container {
   margin-top: 30px;
   padding: 25px;
@@ -8,8 +9,8 @@
   border-left: 5px solid var(--primary-color);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: visible;
-  min-height: 200px;
+  overflow: visible; /* Changed from hidden to visible to ensure content isn't clipped if it overflows temporarily */
+  min-height: 50px; /* 进一步调小初始最小高度 */
 }
 
 #tree-container::before {
@@ -47,7 +48,7 @@
   padding: 30px 25px;
   position: relative;
   box-sizing: border-box;
-  min-height: 400px;
+  min-height: auto; /* 关键：允许容器根据内容收缩高度 */
 }
 
 .tree-level {
