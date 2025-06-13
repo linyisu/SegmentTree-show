@@ -211,53 +211,108 @@ nav button.active::before {
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   z-index: 10;
   line-height: 1; /* Ensure text is vertically centered if padding is tricky */
+  overflow: hidden; 
+  display: inline-flex; 
+  align-items: center;
+  justify-content: center;
+  min-width: 30px; 
+  min-height: 28px; 
+  transition: background 0.2s ease;
 }
 
+.code-block .copy-button .brackets,
+.code-block .copy-button .message {
+  display: inline-block;
+  transition: opacity 0.3s ease-in-out, max-width 0.4s ease-in-out;
+  white-space: nowrap;
+  will-change: opacity, max-width;
+}
+
+/* Initial state: Show brackets, HIDE message */
+.code-block .copy-button .brackets {
+  opacity: 1;
+  max-width: 30px; /* Adjust if "{}" is wider */
+  color: #a0aec0; 
+  transition-delay: 0.1s, 0s; /* Delay showing brackets slightly when reverting */
+}
+
+.code-block .copy-button .message {
+  opacity: 0;
+  max-width: 0;
+  color: #38a169; /* Default copied color, will be overridden by themes */
+  /* Ensure message is hidden initially and animates out quickly */
+  transition-delay: 0s, 0s; 
+}
+
+/* "Copied" state: Hide brackets, show message */
+.code-block .copy-button.copied .brackets {
+  opacity: 0;
+  max-width: 0;
+  transition-delay: 0s, 0s; /* Hide brackets immediately */
+}
+
+.code-block .copy-button.copied .message {
+  opacity: 1;
+  max-width: 100px; /* Adjust for "Copied!" text width */
+  /* Delay showing message slightly to allow brackets to disappear */
+  transition-delay: 0s, 0.1s; /* Opacity, max-width */
+}
+
+/* "Error" state: Hide brackets, show error message */
+.code-block .copy-button.error .brackets {
+  opacity: 0;
+  max-width: 0;
+  transition-delay: 0s, 0s;
+}
+
+.code-block .copy-button.error .message {
+  opacity: 1;
+  max-width: 100px; /* Adjust for "Error!" text width */
+  color: #e53e3e; /* Default error color */
+  transition-delay: 0s, 0.1s;
+}
+
+
+/* Hover styles for the button */
 .code-block .copy-button:hover {
-  background: rgba(255, 255, 255, 0.1); /* Show subtle background on hover */
-  color: #e2e8f0; /* Brighter color on hover */
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1); 
+}
+.code-block .copy-button:not(.copied):not(.error):hover .brackets { 
+  color: #e2e8f0; 
 }
 
-.code-block .copy-button.copied {
-  background: var(--success-bg); /* Prominent background when copied */
-  color: white;
-  border-color: transparent;
-  transform: scale(1); /* Reset scale if needed */
+/* --- Light Theme Adjustments --- */
+html[data-theme="light"] .code-block .copy-button .brackets {
+  color: #718096; 
 }
-
-/* Light theme adjustments for copy button */
-html[data-theme="light"] .code-block .copy-button {
-  background: transparent;
-  color: #718096; /* Subtler color for light theme */
-  border: none;
-}
-
 html[data-theme="light"] .code-block .copy-button:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #2d3748; /* Darker on hover */
+}
+html[data-theme="light"] .code-block .copy-button:not(.copied):not(.error):hover .brackets {
+  color: #2d3748; 
+}
+html[data-theme="light"] .code-block .copy-button.copied .message {
+  color: #2f855a; 
+}
+html[data-theme="light"] .code-block .copy-button.error .message {
+  color: #c53030; 
 }
 
-html[data-theme="light"] .code-block .copy-button.copied {
-  background: #28a745;
-  color: white;
+/* --- Eye-Care Theme Adjustments --- */
+html[data-theme="eye-care"] .code-block .copy-button .brackets {
+  color: var(--eye-care-text-secondary);
 }
-
-/* Eye-care theme adjustments for copy button */
-html[data-theme="eye-care"] .code-block .copy-button {
-  background: transparent;
-  color: var(--eye-care-text-secondary); /* Subtler color for eye-care */
-  border: none;
-}
-
 html[data-theme="eye-care"] .code-block .copy-button:hover {
-  background: rgba(80, 80, 30, 0.15); /* Subtle hover for eye-care */
+  background: rgba(80, 80, 30, 0.15);
+}
+html[data-theme="eye-care"] .code-block .copy-button:not(.copied):not(.error):hover .brackets {
   color: var(--eye-care-text-primary);
 }
-
-html[data-theme="eye-care"] .code-block .copy-button.copied {
-  background: #5cb85c;
-  color: #f0f0e0;
+html[data-theme="eye-care"] .code-block .copy-button.copied .message {
+  color: #5cb85c; 
+}
+html[data-theme="eye-care"] .code-block .copy-button.error .message {
+  color: #d9534f; 
 }
 
 
