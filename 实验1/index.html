@@ -183,15 +183,15 @@ void push_down(int u, int llen, int rlen)
         <h3>🔧 可视化修改与数据维护</h3>
         <p>在此处输入新的数组数据（以逗号分隔，例如 <code>1,5,3,7,2,8</code>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>
         <div class="data-input-container card">
-            <h4>输入新数据:</h4>
+            <h4><i class="fas fa-edit"></i> 输入新数据:</h4>
             <input type="text" id="input-custom-data" placeholder="例如: 1,5,3,7,2,8" aria-label="输入自定义数组数据">
             <button id="btn-update-custom-data" class="btn">更新可视化与统计</button>
             
-            <h4>当前数据统计:</h4>
+            <h4><i class="fas fa-chart-bar"></i> 当前数据统计:</h4>
             <div class="data-stats">
-                <p><strong>最大值:</strong> <span id="stat-max">-</span></p>
-                <p><strong>最小值:</strong> <span id="stat-min">-</span></p>
-                <p><strong>总和:</strong> <span id="stat-sum">-</span></p>
+                <p><i class="fas fa-arrow-up"></i> <strong>最大值:</strong> <span id="stat-max">-</span></p>
+                <p><i class="fas fa-arrow-down"></i> <strong>最小值:</strong> <span id="stat-min">-</span></p>
+                <p><i class="fas fa-calculator"></i> <strong>总和:</strong> <span id="stat-sum">-</span></p>
             </div>
         </div>
 
