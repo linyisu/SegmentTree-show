@@ -25,30 +25,58 @@
   display: flex;
   align-items: center;
   margin: 18px 0;
-  gap: 18px;
+  gap: 15px; /* Reduced default gap slightly */
 }
 
 .settings-row label {
   font-weight: 600;
   color: var(--text-primary);
-  min-width: 140px;
+  min-width: 120px; /* Reduced min-width for labels */
   font-size: 15px;
+  flex-shrink: 0; /* Prevent labels from shrinking too much */
 }
 
-.settings-row input, 
+.settings-row input[type="range"] {
+  flex-grow: 1;
+  max-width: 200px; /* Limit slider width */
+  margin-right: 10px; /* Add some space before the value display */
+}
+
 .settings-row select {
-  padding: 12px 16px;
+  max-width: 200px; /* Limit select box width */
+  flex-grow: 1;
+}
+
+.settings-row input,
+.settings-row select {
+  padding: 10px 14px; /* Slightly reduced padding */
   border: 2px solid rgba(108, 92, 231, 0.2);
-  border-radius: 12px;
-  background: white;
+  border-radius: 10px; /* Slightly reduced border-radius */
+  background: var(--input-bg, white); /* Use variable for background */
+  color: var(--text-primary); /* Ensure text color is inherited or set */
   transition: all 0.3s ease;
   font-size: 14px;
 }
 
-.settings-row input:focus, 
-.settings-row select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
-  transform: translateY(-1px);
+/* Styles for the slider value display */
+.settings-row .slider-value {
+  min-width: 30px; /* Ensure space for the value */
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Specific row for checkbox to have less gap or different alignment if needed */
+.settings-row.checkbox-row {
+  gap: 10px; /* Smaller gap for checkbox row */
+}
+
+.settings-row.checkbox-row label {
+  min-width: auto; /* Allow label to be shorter */
+  margin-right: 5px;
+}
+
+.settings-row input[type="checkbox"] {
+  width: auto; /* Override default input width for checkbox */
+  margin-right: auto; /* Push following elements to the right if any, or just take its space */
 }

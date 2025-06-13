@@ -9,12 +9,18 @@
   --header-bg: linear-gradient(135deg, #2d3436, #636e72);
   --card-bg: rgba(255, 255, 255, 0.98);
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  --text-primary: #2d3436;
-  --text-secondary: #636e72;
+  --text-primary: #2d3436; /* Default for light theme */
+  --text-secondary: #636e72; /* Default for light theme */
   --border-radius: 20px;
-  --font-size-base: 14px;
+  --font-size-base: 15px;
   --line-height-base: 1.6;
+  --input-bg: white; /* Default input background for light theme */
+  --eye-care-text-primary: #3a3a3a; /* Specific for eye-care, as it's on a light bg */
+  --eye-care-text-secondary: #5c5c5c; /* Specific for eye-care */
 }
+
+/* ... existing body, header, nav, main, footer, scrollbar, focus styles ... */
+/* These styles are generally theme-agnostic or use variables defined above/below */
 
 body {
   margin: 0;
@@ -22,9 +28,11 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  /* Default background, will be overridden by themes */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   min-width: 800px;
   position: relative;
+  color: var(--text-primary); /* Set default body text color */
 }
 
 body::before {
@@ -46,7 +54,7 @@ header {
   top: 0;
   width: 100%;
   background: var(--header-bg);
-  color: white;
+  color: white; /* Header text is usually light on dark backgrounds */
   padding: 20px;
   text-align: center;
   font-size: 32px;
@@ -77,14 +85,14 @@ nav {
   min-width: 280px;
   max-width: 280px;
   flex-shrink: 0;
-  background: var(--card-bg);
+  background: var(--card-bg); /* Uses themed card background */
   backdrop-filter: blur(20px);
   padding: 25px;
   box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
   overflow-y: auto;
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   box-sizing: border-box;
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  border-right: 1px solid rgba(255, 255, 255, 0.3); /* This border might need theme adjustments */
 }
 
 main {
@@ -92,7 +100,8 @@ main {
   margin-top: 85px;
   padding: 30px;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.05);
+  /* Default background, will be overridden by themes if needed */
+  background: rgba(255, 255, 255, 0.05); 
   position: relative;
 }
 
@@ -126,7 +135,7 @@ section.active {
 footer {
   margin-top: 50px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9); /* Default light text for footer */
   text-align: center;
   padding: 25px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
@@ -170,12 +179,12 @@ select:focus {
   top: 20px;
   right: 20px;
   display: flex;
-  background-color: var(--card-bg);
+  background-color: var(--card-bg); /* Themed */
   border-radius: var(--border-radius);
   padding: 5px;
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--card-shadow); /* Themed */
   z-index: 1001;
-  overflow: hidden; /* 确保滑块在容器内 */
+  overflow: hidden; 
 }
 
 .theme-option {
@@ -184,114 +193,108 @@ select:focus {
   padding: 10px 15px;
   cursor: pointer;
   font-size: 1.2em;
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Themed */
   transition: color 0.3s ease, transform 0.2s ease;
-  position: relative; /* 为滑块定位提供参考 */
-  z-index: 1; /* 确保按钮在滑块之上 */
+  position: relative; 
+  z-index: 1; 
 }
 
 .theme-option.active {
-  color: var(--primary-color);
+  color: var(--primary-color); /* Themed */
 }
 
 .theme-option:hover {
-  color: var(--primary-color);
+  color: var(--primary-color); /* Themed */
   transform: translateY(-2px);
 }
 
 .theme-slider {
   position: absolute;
-  top: 5px; /* 与 .theme-switcher 的 padding 保持一致 */
-  bottom: 5px; /* 与 .theme-switcher 的 padding 保持一致 */
-  width: calc((100% - 10px) / 3); /* 减去 padding，然后除以按钮数量 */
-  background-color: var(--primary-color);
-  border-radius: calc(var(--border-radius) - 5px); /* 调整圆角以适应内部 */
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.3s ease; /* 快速且有弹性的动画 */
-  z-index: 0; /* 在按钮之下 */
+  top: 5px; 
+  bottom: 5px; 
+  width: calc((100% - 10px) / 3); 
+  background-color: var(--primary-color); /* Themed */
+  border-radius: calc(var(--border-radius) - 5px); 
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.3s ease; 
+  z-index: 0; 
 }
 
-/* 白天模式 */
+/* --- Theme Definitions --- */
+
+/* Light Theme (relies on :root defaults mostly) */
+html[data-theme="light"] {
+  /* Variables defined in :root are used by default for light theme */
+  /* We can override specific ones if needed, but usually :root is the light theme baseline */
+}
 html[data-theme="light"] body {
-  --primary-color: #6c5ce7;
-  --secondary-color: #a29bfe;
-  --accent-color: #fd79a8;
-  --header-bg: linear-gradient(135deg, #2d3436, #636e72);
-  --card-bg: rgba(255, 255, 255, 0.98);
-  --text-primary: #2d3436;
-  --text-secondary: #636e72;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  /* Other light-theme specific body styles if any */
 }
 
-/* 黑夜模式 */
-html[data-theme="dark"] body {
+/* Dark Theme */
+html[data-theme="dark"] {
   --primary-color: #81ecec;
   --secondary-color: #74b9ff;
   --accent-color: #fab1a0;
   --header-bg: linear-gradient(135deg, #1e272e, #34495e);
-  --card-bg: rgba(45, 52, 54, 0.85);
-  --text-primary: #dfe6e9;
-  --text-secondary: #b2bec3;
-  background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
+  --card-bg: rgba(45, 52, 54, 0.85); /* Dark card background */
+  --text-primary: #dfe6e9;       /* Light text for dark theme */
+  --text-secondary: #b2bec3;    /* Lighter grey text for dark theme */
+  --input-bg: #2d3436;          /* Dark input background */
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
-
+html[data-theme="dark"] body {
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%);
+  color: var(--text-primary); /* Ensure body text color is updated */
+}
 html[data-theme="dark"] nav,
 html[data-theme="dark"] main {
-  background: rgba(30, 39, 46, 0.7);
+  background: rgba(30, 39, 46, 0.7); /* Darker background for nav/main */
 }
-
-html[data-theme="dark"] .card {
-  background: var(--card-bg);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-html[data-theme="dark"] .nav-btn {
+/* html[data-theme="dark"] .card is already covered by --card-bg var */
+html[data-theme="dark"] .nav-btn { /* Assuming .nav-btn exists */
   color: var(--text-primary);
 }
-
 html[data-theme="dark"] .nav-btn.active {
   background: var(--primary-color);
-  color: #1e272e;
+  color: #1e272e; /* Dark text on light primary */
 }
-
 html[data-theme="dark"] footer {
   color: rgba(223, 230, 233, 0.9);
   background: linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1));
   border: 1px solid rgba(223, 230, 233, 0.2);
 }
 
-/* 护眼模式 */
-html[data-theme="eye-care"] body {
-  --primary-color: #86d9b3; /* Softer mint green */
-  --secondary-color: #4db6ac; /* Softer teal */
-  --accent-color: #fff9e0; /* Pale yellow */
-  --header-bg: linear-gradient(135deg, var(--secondary-color), #80cbc4); /* Adjusted header gradient */
-  --card-bg: rgba(240, 255, 240, 0.95); /* 淡绿色背景 */
-  --text-primary: #2d3436;
-  --text-secondary: #636e72;
-  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%); /* 柔和的绿色渐变 */
+/* Eye-Care Theme */
+html[data-theme="eye-care"] {
+  --primary-color: #86d9b3; 
+  --secondary-color: #4db6ac; 
+  --accent-color: #fff9e0; 
+  --header-bg: linear-gradient(135deg, var(--secondary-color), #80cbc4);
+  --card-bg: rgba(240, 255, 240, 0.95); /* Pale green card */
+  --text-primary: var(--eye-care-text-primary); /* Defined in :root */
+  --text-secondary: var(--eye-care-text-secondary); /* Defined in :root */
+  --input-bg: #f0f0e0;          /* Light beige input background for eye-care */
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
-
+html[data-theme="eye-care"] body {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%);
+  color: var(--text-primary); /* Ensure body text color is updated */
+}
 html[data-theme="eye-care"] nav,
 html[data-theme="eye-care"] main {
-  background: rgba(224, 242, 241, 0.7); /* 更柔和的导航和主内容背景 */
+  background: rgba(224, 242, 241, 0.7); 
 }
-
-html[data-theme="eye-care"] .card {
-  background: var(--card-bg);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-html[data-theme="eye-care"] .nav-btn {
+/* html[data-theme="eye-care"] .card is already covered by --card-bg var */
+html[data-theme="eye-care"] .nav-btn { /* Assuming .nav-btn exists */
   color: var(--text-primary);
 }
-
 html[data-theme="eye-care"] .nav-btn.active {
   background: var(--primary-color);
-  color: #2d3436;
+  color: #2d3436; /* Dark text on light primary */
 }
-
 html[data-theme="eye-care"] footer {
-  color: #2d3436; /* 深色文字以保证可读性 */
+  color: var(--text-primary); 
   background: linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1));
   border: 1px solid rgba(45, 52, 54, 0.2);
 }
