@@ -67,33 +67,24 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     return;
   }
 
-  // Recalculate containerWidth for both initial build and resize
-  // clientWidth includes padding if box-sizing is border-box (default for most modern setups)
-  // The original code subtracts 50, assuming 25px padding on each side of an inner content area.
-  // If treeVisual's padding is 25px, then its clientWidth is the "outer" width.
-  // The effective drawing width *inside* the padding is clientWidth - 2*padding_of_treeVisual.
-  // However, the original code's `padding` variable (25) seems to be for node positioning *within* this area.
-  const containerWidth = treeVisual.clientWidth - (25 + 25); // Available width for nodes, inside treeVisual's padding.
-
+  const containerWidth = treeVisual.clientWidth - 50; // Effective drawing width after treeVisual's own 25px padding
   const nodeMinWidth = 50;
   const levelHeight = 80;
-  const nodeHorizontalPadding = 25; // Renamed from 'padding' to avoid confusion
+  const padding = 25; // Internal padding within the containerWidth
 
   if (!isResizeUpdate) {
-    function calculateActualDepth(num) {
-      if (num === 1) return 1;
-      return Math.floor(Math.log2(num)) + 1;
-    }
-    // const actualDepth = calculateActualDepth(n); // Not directly used later, levels.length is used
-
+    // This is an initial build: collect tree levels data
     currentTreeLevelsData = []; // Clear for new build
     function collectLevels(l, r, u, depth = 0) {
+      if (l > r) return; // Base case: invalid range, do not process
       if (!currentTreeLevelsData[depth]) currentTreeLevelsData[depth] = [];
       currentTreeLevelsData[depth].push({ l, r, u, depth });
-      if (l < r) {
+      if (l < r) { // Only recurse if the range can be split further
         const mid = Math.floor((l + r) / 2);
         collectLevels(l, mid, u * 2, depth + 1);
-        collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+        }
       }
     }
     collectLevels(1, n, 1);
@@ -106,103 +97,86 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     treeVisual.style.height = `${minHeight}px`;
   }
   
-  // This nodePositions map is recalculated for every build/resize
   const nodePositions = new Map();
 
-  // Calculate node positions (uses currentTreeLevelsData)
-  function calculateNodePositionsInternal(l, r, u, depth = 0, leftBound = 0, rightBound = containerWidth, parentWidth = null) {
-    const y = depth * levelHeight + 30;
-    const isLeafLevel = (depth === currentTreeLevelsData.length - 1);
-    const nodesInCurrentLevel = currentTreeLevelsData[depth] ? currentTreeLevelsData[depth].length : 0;
-    // const totalNodesPossibleInLevel = Math.pow(2, depth); // Original, might not be accurate for non-full trees if used for width division
+  // 修改后的 calculateNodePositions 函数
+  function calculateNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
+    // Check if this node should exist based on currentTreeLevelsData
+    // This is a more robust way to ensure we only calculate positions for valid nodes
+    const levelNodes = currentTreeLevelsData[depth];
+    if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+        return; // Do not calculate position for a node that doesn't exist in the collected levels
+    }
 
+    const y = depth * levelHeight + 30;
     let x, nodeWidth;
 
-    if (isLeafLevel) {
-      if (parentWidth) {
-        nodeWidth = parentWidth / 2;
-      } else { // Root is also a leaf if n=1
-        nodeWidth = Math.max(nodeMinWidth, (containerWidth - 2 * nodeHorizontalPadding) / (nodesInCurrentLevel || 1) );
-      }
-      
-      const parentU = Math.floor(u / 2);
-      const isLeftChild = (u % 2 === 0);
-      const parentPos = nodePositions.get(parentU); // Relies on parent being processed first or available
-
-      if (u === 1) { // Special case for n=1, root is a leaf
-          x = containerWidth / 2; // Centered
-      } else if (parentPos && parentWidth) { // Ensure parentPos and parentWidth are valid
-          if (isLeftChild) {
-            const leftHalfCenter = parentPos.x - parentWidth / 4;
-            x = Math.max(nodeHorizontalPadding + nodeWidth / 2, leftHalfCenter);
-          } else {
-            const rightHalfCenter = parentPos.x + parentWidth / 4;
-            x = Math.min(containerWidth - nodeHorizontalPadding - nodeWidth / 2, rightHalfCenter);
-          }
-      } else { // Fallback if parent info is not as expected (e.g. for root's children if parentWidth wasn't passed correctly for root)
-          // This part of original logic might need robust handling if parentWidth for root's children is tricky
-          // Simplified: divide the available space for this level
-          const nodeIndexInLevel = currentTreeLevelsData[depth].findIndex(node => node.u === u);
-          const spacePerNode = (containerWidth - 2 * nodeHorizontalPadding) / nodesInCurrentLevel;
-          x = nodeHorizontalPadding + spacePerNode * (nodeIndexInLevel + 0.5);
-          // nodeWidth was already set above for leaf level
-      }
-
-    } else { // Non-leaf level
-      if (nodesInCurrentLevel === 1 && u === 1) { // Root node, not a leaf
-        nodeWidth = containerWidth - 2 * nodeHorizontalPadding;
-        x = containerWidth / 2;
-      } else {
-        // Distribute width among nodes in this level based on their bounds
-        // This part of original logic is complex. Let's use a simpler distribution for non-leaf nodes for now.
-        // The bounds (leftBound, rightBound) passed recursively are more reliable.
-        nodeWidth = (rightBound - leftBound) * 0.8; // Example: node takes 80% of its allocated slot width
+    if (u === 1) { // Root node
+        nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
         nodeWidth = Math.max(nodeMinWidth, nodeWidth);
-        x = leftBound + (rightBound - leftBound) / 2; // Center in its allocated slot
-      }
+        x = containerWidth / 2; // Centered within containerWidth
+    } else { // Child Node
+        if (parentW == null || parentX == null) {
+            console.error(`Parent data not passed for node ${u}`);
+            nodeWidth = nodeMinWidth; // Fallback
+            const tempParentPos = nodePositions.get(Math.floor(u/2)); // Attempt to get from map if available
+            x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
+        } else {
+            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+
+            const isLeftChild = (u % 2 === 0);
+            if (isLeftChild) {
+                x = parentX - parentW / 4; // Center in parent's left half-width
+            } else { // Right child
+                x = parentX + parentW / 4; // Center in parent's right half-width
+            }
+        }
+    }
+
+    // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
+    const halfW = nodeWidth / 2;
+    if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
+        x = padding + halfW;
+    }
+    if (x + halfW > containerWidth - padding) { // Right edge should not exceed 'containerWidth - padding'
+        x = containerWidth - padding - halfW;
     }
     
-    nodeWidth = Math.max(nodeMinWidth, nodeWidth); // Ensure min width
-    // Ensure node does not exceed its bounds, adjust x if necessary
-    if (x - nodeWidth / 2 < leftBound) x = leftBound + nodeWidth / 2;
-    if (x + nodeWidth / 2 > rightBound) x = rightBound - nodeWidth / 2;
+    nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
 
-
-    nodePositions.set(u, { x, y, l, r, depth, nodeWidth, leftBound, rightBound });
-
-    if (l < r) {
-      const mid = Math.floor((l + r) / 2);
-      const childLeftBound = leftBound;
-      const childMidPoint = leftBound + (rightBound - leftBound) / 2; // Midpoint of current node's bounds
-      const childRightBound = rightBound;
-      
-      calculateNodePositionsInternal(l, mid, u * 2, depth + 1, childLeftBound, childMidPoint, nodeWidth);
-      calculateNodePositionsInternal(mid + 1, r, u * 2 + 1, depth + 1, childMidPoint, childRightBound, nodeWidth);
+    if (l < r) { // If not a data leaf, recurse for children
+        const mid = Math.floor((l + r) / 2);
+        calculateNodePositions(l, mid, u * 2, depth + 1, x, nodeWidth);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            calculateNodePositions(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
+        }
     }
   }
-  calculateNodePositionsInternal(1, n, 1, 0, 0, containerWidth, null);
   
-  function ensureBoundariesInternal() {
-    nodePositions.forEach((pos) => {
-      const halfW = pos.nodeWidth / 2;
-      if (pos.x - halfW < nodeHorizontalPadding) { // Check against outer padding
-        pos.x = nodeHorizontalPadding + halfW;
-      }
-      if (pos.x + halfW > containerWidth - nodeHorizontalPadding) { // Check against outer padding
-        pos.x = containerWidth - nodeHorizontalPadding - halfW;
-      }
-    });
-  }
-  ensureBoundariesInternal();
-
+  // Initial call to the modified calculateNodePositions
+  calculateNodePositions(1, n, 1, 0, null, null); 
+  
   if (!isResizeUpdate) {
+    // This is a new build: generate render order and start animation
     currentTreeBuildOrderData = []; // Clear for new build
+
     function generateBuildOrder(l, r, u, depth = 0) {
-      currentTreeBuildOrderData.push({ l, r, u, depth });
+      if (l > r) return;
+      
+      const levelNodes = currentTreeLevelsData[depth];
+      if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+          return; 
+      }
+
+      currentTreeBuildOrderData.push({ l, r, u, depth }); 
+      
       if (l < r) {
         const mid = Math.floor((l + r) / 2);
         generateBuildOrder(l, mid, u * 2, depth + 1);
-        generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+        if (mid < r) {
+            generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+        }
       }
     }
     generateBuildOrder(1, n, 1);
@@ -210,23 +184,23 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     let orderIndex = 0;
     function renderNextNode() {
       if (orderIndex >= currentTreeBuildOrderData.length) {
-        isTreeRendered = true; // Mark as fully rendered
+        isTreeRendered = true;
         activeBuildAnimationTimeout = null;
         return;
       }
 
-      const { l, r, u, depth } = currentTreeBuildOrderData[orderIndex];
+      const { l, r, u, depth } = currentTreeBuildOrderData[orderIndex]; 
       const position = nodePositions.get(u);
-      if (!position) { // Should not happen if logic is correct
+      if (!position) {
           orderIndex++;
-          activeBuildAnimationTimeout = setTimeout(renderNextNode, 50); // Skip and continue
+          activeBuildAnimationTimeout = setTimeout(renderNextNode, 50);
           return;
       }
-      const nodeInfo = `${u}\\n[${l},${r}]`;
+      const nodeInfo = `${u}\\\\n[${l},${r}]`; 
       
       const nodeDiv = document.createElement('div');
       nodeDiv.className = `tree-node depth-${depth}`;
-      nodeDiv.textContent = nodeInfo;
+      nodeDiv.innerHTML = nodeInfo.replace(/\\\\n/g, '<br>');
       nodeDiv.setAttribute('data-node-id', u);
       
       nodeDiv.style.position = 'absolute';
