@@ -10,7 +10,7 @@ css 层叠样式表
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: visible; /* Changed from hidden to visible to ensure content isn't clipped if it overflows temporarily */
-  min-height: 50px; /* 进一步调小初始最小高度 */
+  min-height: 400px; /* 增加最小高度以确保有足够空间显示线段树 */
 }
 
 #tree-container::before {
@@ -41,16 +41,15 @@ css 层叠样式表
   border-left: 3px solid var(--primary-color);
 }
 
-/* 树形可视化样式 */
 .tree-visual {
   width: 100%;
-  /* overflow: hidden; */ /* Temporarily changed to visible for debugging */
   overflow: visible;
-  padding: 30px 25px 0px 25px;
+  padding: 30px 25px 20px 25px;
   position: relative;
   box-sizing: border-box;
-  min-height: auto; /* JS will set explicit height */
-  background: rgba(173, 216, 230, 0.5); /* Temporary lightblue background for debugging */
+  min-height: 300px;
+  background: var(--card-bg);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* 添加轻微阴影增强效果 */
 }
 
 .tree-level {
@@ -74,7 +73,7 @@ css 层叠样式表
   background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
   color: white;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 4px; /* 从 8px 减少到 4px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +84,7 @@ css 层叠样式表
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* 将动画时间从 0.3s 调整为 0.15s */
   position: absolute;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  /* border: 1px solid rgba(255, 255, 255, 0.3); */ /* 移除白色描边 */
   word-wrap: break-word;
   font-size: 13px;
   line-height: 1.3;
@@ -93,6 +92,8 @@ css 层叠样式表
   backdrop-filter: blur(3px);
   white-space: pre-line;
   box-sizing: border-box;
+  border-radius: 5px; /* 添加圆角 */
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .tree-node.depth-0 {

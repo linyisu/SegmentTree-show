@@ -87,13 +87,19 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     if (n < 1 || n > 8) {
       alert('请输入1-8');
       return;
-    }
-
-    container.innerHTML = '<h4>🌲 线段树构建过程 (基于长度):</h4>';
+    }    
+    container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
     container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
     const treeVisual = document.createElement('div');
     treeVisual.className = 'tree-visual';
-    // Rely on CSS for styling .tree-visual
+    treeVisual.style.position = 'relative';
+    treeVisual.style.width = '100%';
+    treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
+    treeVisual.style.background = 'var(--card-bg)';
+    treeVisual.style.borderRadius = '12px'; // 改为12px圆角
+    treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
+    treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
+    treeVisual.style.overflow = 'visible';
     container.appendChild(treeVisual);
   }
 
