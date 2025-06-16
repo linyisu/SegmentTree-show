@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>线段树全方位介绍</title>
   
-  <!-- CSS 文件链接 -->
-  <link rel="stylesheet" href="styles/main.css">
+  <!-- CSS 文件链接 -->  <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/tree.css">
   <link rel="stylesheet" href="styles/quiz.css">
   <link rel="stylesheet" href="styles/settings.css">
-  <link rel="stylesheet" href="styles/dataInput.css"> <!-- Added new CSS file -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- Example, replace if not used -->
+  <link rel="stylesheet" href="styles/Visualizer_modify.css">
 </head>
 <body>
   <!-- 三级主题开关 -->
@@ -133,7 +130,9 @@ struct Info
             <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
             <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
           </div>
-          <div id="tree-container"></div>
+          <div id="tree-container">
+            <p>点击"开始构建"按钮查看线段树构建过程</p>
+          </div>
 
 
         <h3>⚙️ 信息维护：push_up 与 push_down</h3>
@@ -158,7 +157,7 @@ void push_down(int u, int llen, int rlen)
 }</code></pre>
 
         <h3>✏️ 区间修改</h3>
-        <p>该操作可以对一个连续子区间统一修改。懒标记允许先记录修改指令，而不立即递归更新所有子节点，从而提升修改效率，直到真正访问子节点时再下传这些修改。</p>
+        <p>线段树的区间修改可以对一个连续子区间统一修改。懒标记允许先记录修改指令，而不立即递归更新所有子节点，从而提升修改效率，直到真正访问子节点时再下传修改。</p>
         <ul>
           <li>如果当前节点负责的区间<strong> [l, r] </strong>完全被覆盖，直接用<strong> apply </strong>应用懒标记并返回。</li>
           <li>否则先通过 <strong>push_down</strong> 把当前节点的懒标记传递给左右子节点，保证子节点信息最新。</li>
@@ -178,21 +177,31 @@ void push_down(int u, int llen, int rlen)
     if (jobl <= mid) modify(jobl, jobr, tag, l, mid, u << 1);
     if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
     push_up(u);
-}</code></pre>
-
-        <h3>🔧 可视化修改与数据维护</h3>
-        <p>在此处输入新的数组数据（以逗号分隔，例如 <code>1,5,3,7,2,8</code>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>
-        <div class="data-input-container card">
-            <h4>输入新数据:</h4>
-            <input type="text" id="input-custom-data" placeholder="例如: 1,5,3,7,2,8" aria-label="输入自定义数组数据">
-            <button id="btn-update-custom-data" class="btn">更新可视化与统计</button>
-            
-            <h4>当前数据统计:</h4>
-            <div class="data-stats">
-                <p><strong>最大值:</strong> <span id="stat-max">-</span></p>
-                <p><strong>最小值:</strong> <span id="stat-min">-</span></p>
-                <p><strong>总和:</strong> <span id="stat-sum">-</span></p>
+}</code></pre>        <h3>🔧 可视化修改与数据维护</h3>
+        <p>在此处输入新的数组数据（以空格分隔，例如 <strong>1 5 3 7 2 8</strong>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p><div class="data-input-container card">            <h4>线段树可视化操作:</h4>            <!-- 输入控件在上方，左右各占一半并分别居中 -->
+            <div class="settings-row" style="display: flex;">
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <label>输入数据:</label>
+                    <input type="text" id="input-custom-data" value="" aria-label="输入自定义数组数据" placeholder="例如: 1 2 3 4 (最多8个数字)">
+                    <button id="btn-random-data" class="btn" style="min-width: 100px;">🎲 随机生成</button>
+                </div>
+                  <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;" class="modification-group">
+                    <label for="input-modify-left">区间修改:</label>
+                    <input type="number" id="input-modify-left" min="1" max="8" aria-label="输入修改区间的左端点" style="width: 50px;">
+                    <span>到</span>
+                    <input type="number" id="input-modify-right" min="1" max="8" aria-label="输入修改区间的右端点" style="width: 50px;">
+                    <span>+</span>
+                    <input type="number" id="input-modify-value" aria-label="输入要增加的值" style="width: 60px;">
+                </div>
             </div>
+            
+            <!-- 两个按钮在下方 -->
+            <div class="settings-row">
+                <button id="btn-update-custom-data" class="btn" style="flex: 1;">🚀 更新可视化</button>
+                <button id="btn-apply-modification" class="btn" style="flex: 1;">⚡ 应用修改</button>
+            </div>
+
+            <div id="custom-tree-visualizer-host" style="margin-top: 20px;"></div> <!-- Placeholder for the custom tree canvas -->
         </div>
 
         <h3>🔍 区间查询</h3>
@@ -343,10 +352,9 @@ void push_down(int u, int llen, int rlen)
       <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
     </footer>
   </main>
-
   <!-- JavaScript 文件链接 -->
+  <script src="js/generate_Visualizer_modify.js"></script>
   <script src="js/navigation.js"></script>
-  <script src="js/dataUpdater.js"></script> <!-- Added new JS file -->
   <script src="js/settings.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/syntaxHighlighter.js"></script>
