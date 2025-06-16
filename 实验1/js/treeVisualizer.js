@@ -348,10 +348,3 @@ window.TreeVisualizer = {
   buildTreeVisualization, // Might not be needed externally if only init is called
   initTreeVisualizer
 };
-
-// Ensure init is called (e.g. from main.js or at the end of the script if appropriate)
-// document.addEventListener('DOMContentLoaded', () => {
-//   if (window.TreeVisualizer && window.TreeVisualizer.initTreeVisualizer) {
-//     window.TreeVisualizer.initTreeVisualizer();
-//   }
-// });

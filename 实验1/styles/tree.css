@@ -49,8 +49,6 @@ css 层叠样式表
   box-sizing: border-box;
   min-height: 300px;
   background: var(--card-bg);
-  border-radius: 12px; /* 添加圆角 */
-  border: 2px solid rgba(255, 255, 255, 0.8); /* 添加白边 */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* 添加轻微阴影增强效果 */
 }
 
@@ -94,6 +92,8 @@ css 层叠样式表
   backdrop-filter: blur(3px);
   white-space: pre-line;
   box-sizing: border-box;
+  border-radius: 5px; /* 添加圆角 */
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .tree-node.depth-0 {
