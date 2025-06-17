@@ -309,8 +309,7 @@ function createTreeNodes(withAnimation = false) {
         }
         
         const positions = calculatePositions();
-        
-        // 创建节点元素
+          // 创建节点元素
         function createNodeElement(nodeInfo, delay = 0) {
             const { node, start, end, level } = nodeInfo;
             const position = positions.get(node);
@@ -410,38 +409,56 @@ function createTreeNodes(withAnimation = false) {
                 setTimeout(() => {
                     nodeElement.style.opacity = '1';
                     nodeElement.style.transform = 'translateY(-50%) scale(1)';
+                      // 节点动画完成后，如果是非叶子节点，立即绘制连线（此时子节点已存在）
+                    if (start !== end) {
+                        const timing = getAnimationTiming();
+                        setTimeout(() => {
+                            drawNodeConnections(node, start, end);
+                        }, timing.fade); // 使用配置的淡入时间
+                    }
                 }, delay);
             }
             
             return nodeElement;
-        }
-        
-        if (withAnimation) {
-            // 递归动画创建节点
+        }        if (withAnimation) {
+            // 获取动画时间配置
+            const timing = getAnimationTiming();
+            
+            // 按线段树构建顺序：先创建子节点，再创建父节点
             function animateNodeCreation(node, start, end, delay = 0) {
                 if (node >= segmentTree.tree.length) return delay;
                 
                 let currentDelay = delay;
                 
-                if (start !== end) {
+                if (start === end) {
+                    // 叶子节点，直接创建
+                    const nodeInfo = nodesByLevel.flat().find(n => n.node === node);
+                    if (nodeInfo) {
+                        createNodeElement(nodeInfo, currentDelay);
+                        currentDelay += timing.step;
+                    }
+                } else {
+                    // 内部节点，先创建子节点，再创建自己
                     const mid = Math.floor((start + end) / 2);
-                    currentDelay = animateNodeCreation(2 * node, start, mid, currentDelay);
-                    currentDelay = animateNodeCreation(2 * node + 1, mid + 1, end, currentDelay + 150);
+                    
+                    // 先递归创建左右子树
+                    const leftDelay = animateNodeCreation(2 * node, start, mid, currentDelay);
+                    const rightDelay = animateNodeCreation(2 * node + 1, mid + 1, end, leftDelay + timing.step);
+                    currentDelay = rightDelay;
+                    
+                    // 再创建当前节点
+                    const nodeInfo = nodesByLevel.flat().find(n => n.node === node);
+                    if (nodeInfo) {
+                        createNodeElement(nodeInfo, currentDelay + timing.step);
+                        currentDelay += timing.base;
+                    }
                 }
                 
-                const nodeInfo = nodesByLevel.flat().find(n => n.node === node);
-                if (nodeInfo) {
-                    createNodeElement(nodeInfo, currentDelay + 200);
-                }
-                
-                return currentDelay + 300;
-            }            // 开始递归动画
-            const totalDelay = animateNodeCreation(1, 0, segmentTree.n - 1, 200);
+                return currentDelay;
+            }
             
-            // 在所有节点动画完成后绘制连线
-            setTimeout(() => {
-                drawAllConnectingLines();
-            }, totalDelay + 500);
+            // 开始递归动画
+            animateNodeCreation(1, 0, segmentTree.n - 1, 200);
         } else {
             // 立即创建所有节点
             nodesByLevel.forEach(levelNodes => {
@@ -457,6 +474,17 @@ function createTreeNodes(withAnimation = false) {
         }
         
     }, 300);
+}
+
+// 获取动画速度配置
+function getAnimationTiming() {
+    const speed = window.animationSpeed || 'normal';
+    const timings = {
+        'slow': { base: 600, step: 300, fade: 400 },
+        'normal': { base: 400, step: 200, fade: 300 },
+        'fast': { base: 200, step: 100, fade: 150 }
+    };
+    return timings[speed] || timings['normal'];
 }
 
 function initEventListeners() {
@@ -579,6 +607,18 @@ function initEventListeners() {
             setTimeout(drawTree, 150);
         }
     });
+    
+    // 动画速度设置变化监听
+    const animSpeedSelect = document.getElementById('animation-speed');
+    if (animSpeedSelect) {
+        animSpeedSelect.addEventListener('change', () => {
+            console.log('动画速度已更新为:', animSpeedSelect.value);
+            // 如果当前有显示的树，可以立即体验新的动画速度
+            if (currentTreeDisplayed) {
+                console.log('下次更新可视化时将使用新的动画速度');
+            }
+        });
+    }
 }
 
 // 高亮受影响的节点
@@ -598,9 +638,9 @@ function highlightAffectedNodes(left, right) {
     });
 }
 
-// 绘制所有连接线
-function drawAllConnectingLines() {
-    if (!treeContainer || !nodeElements || nodeElements.length === 0) return;
+// 绘制单个节点的连线
+function drawNodeConnections(node, start, end) {
+    if (!treeContainer || start === end) return; // 叶子节点无需连线
     
     // 确保有SVG容器
     let svg = treeContainer.querySelector('svg.connection-lines');
@@ -632,84 +672,85 @@ function drawAllConnectingLines() {
         lineColor = 'rgba(74, 85, 104, 0.8)';
     }
     
-    // 为每个非叶子节点绘制连线
-    nodeElements.forEach(nodeData => {
-        const { node, start, end, element } = nodeData;
+    // 找到当前节点
+    const parentNodeData = nodeElements.find(n => n.node === node);
+    if (!parentNodeData) return;
+    
+    const leftChildNode = 2 * node;
+    const rightChildNode = 2 * node + 1;
+    
+    // 找到子节点元素（它们可能还没有创建完成）
+    const leftChild = nodeElements.find(n => n.node === leftChildNode);
+    const rightChild = nodeElements.find(n => n.node === rightChildNode);
+    
+    // 获取父节点的位置（下底边中点）
+    const parentRect = parentNodeData.element.getBoundingClientRect();
+    const containerRect = treeContainer.getBoundingClientRect();
+    
+    const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
+    const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
+    
+    // 绘制到左子节点的连线
+    if (leftChild && leftChild.element) {
+        const childRect = leftChild.element.getBoundingClientRect();
+        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+        const childTopY = childRect.top - containerRect.top;
         
-        // 跳过叶子节点
-        if (start === end) return;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', parentCenterX);
+        line.setAttribute('y1', parentBottomY);
+        line.setAttribute('x2', childCenterX);
+        line.setAttribute('y2', childTopY);
+        line.setAttribute('stroke', lineColor);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        line.style.opacity = '0';
+        line.style.transition = 'opacity 0.3s ease';
         
-        const leftChildNode = 2 * node;
-        const rightChildNode = 2 * node + 1;
+        svg.appendChild(line);
+          // 延迟显示连线
+        const timing = getAnimationTiming();
+        setTimeout(() => {
+            line.style.opacity = '1';
+        }, timing.fade / 4);
+    }
+    
+    // 绘制到右子节点的连线
+    if (rightChild && rightChild.element) {
+        const childRect = rightChild.element.getBoundingClientRect();
+        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+        const childTopY = childRect.top - containerRect.top;
         
-        // 找到子节点元素
-        const leftChild = nodeElements.find(n => n.node === leftChildNode);
-        const rightChild = nodeElements.find(n => n.node === rightChildNode);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', parentCenterX);
+        line.setAttribute('y1', parentBottomY);
+        line.setAttribute('x2', childCenterX);
+        line.setAttribute('y2', childTopY);
+        line.setAttribute('stroke', lineColor);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        line.style.opacity = '0';
+        line.style.transition = 'opacity 0.3s ease';
         
-        // 获取父节点的位置（下底边中点）
-        const parentRect = element.getBoundingClientRect();
-        const containerRect = treeContainer.getBoundingClientRect();
-        
-        const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-        const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
-        
-        // 绘制到左子节点的连线
-        if (leftChild && leftChild.element) {
-            const childRect = leftChild.element.getBoundingClientRect();
-            const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-            const childTopY = childRect.top - containerRect.top;
-            
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', parentCenterX);
-            line.setAttribute('y1', parentBottomY);
-            line.setAttribute('x2', childCenterX);
-            line.setAttribute('y2', childTopY);
-            line.setAttribute('stroke', lineColor);
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('stroke-linecap', 'round');
-            line.style.opacity = '0';
-            line.style.transition = 'opacity 0.5s ease';
-            
-            svg.appendChild(line);
-            
-            // 延迟显示连线
-            setTimeout(() => {
-                line.style.opacity = '1';
-            }, 100);
-        }
-        
-        // 绘制到右子节点的连线
-        if (rightChild && rightChild.element) {
-            const childRect = rightChild.element.getBoundingClientRect();
-            const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-            const childTopY = childRect.top - containerRect.top;
-            
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', parentCenterX);
-            line.setAttribute('y1', parentBottomY);
-            line.setAttribute('x2', childCenterX);
-            line.setAttribute('y2', childTopY);
-            line.setAttribute('stroke', lineColor);
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('stroke-linecap', 'round');
-            line.style.opacity = '0';
-            line.style.transition = 'opacity 0.5s ease';
-            
-            svg.appendChild(line);
-            
-            // 延迟显示连线
-            setTimeout(() => {
-                line.style.opacity = '1';
-            }, 150);
-        }
-    });
+        svg.appendChild(line);
+          // 延迟显示连线
+        const timing = getAnimationTiming();
+        setTimeout(() => {
+            line.style.opacity = '1';
+        }, timing.fade / 2);
+    }
 }
 
 // 清理所有连接线
 function clearAllLines() {
     const svg = treeContainer?.querySelector('svg.connection-lines');
     if (svg) {
-        svg.remove();
+        // 淡出效果
+        svg.style.transition = 'opacity 0.3s ease';
+        svg.style.opacity = '0';
+        setTimeout(() => {
+            svg.remove();
+        }, 300);
     }
 }
 
