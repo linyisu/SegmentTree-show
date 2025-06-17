@@ -202,10 +202,12 @@ function createTreeNodes(withAnimation = false) {
         node.style.opacity = '0';
         node.style.transform = 'scale(0.8)';
     });
-    
-    setTimeout(() => {
+      setTimeout(() => {
         treeContainer.innerHTML = '';
         nodeElements = [];
+        
+        // 清理所有连线
+        clearAllLines();
         
         // 响应式参数
         const screenWidth = window.innerWidth;
@@ -406,13 +408,22 @@ function createTreeNodes(withAnimation = false) {
                 level: level,
                 position: position
             });
-            
-            // 动画显示
+              // 动画显示
             if (withAnimation) {
                 setTimeout(() => {
                     nodeElement.style.opacity = '1';
                     nodeElement.style.transform = 'translateY(-50%) scale(1)';
+                    
+                    // 在节点出现后立即绘制其子节点的连线
+                    setTimeout(() => {
+                        drawConnectingLinesForNode(nodeInfo);
+                    }, 100);
                 }, delay);
+            } else {
+                // 立即绘制连线
+                setTimeout(() => {
+                    drawConnectingLinesForNode(nodeInfo);
+                }, 50);
             }
             
             return nodeElement;
@@ -437,9 +448,7 @@ function createTreeNodes(withAnimation = false) {
                 }
                 
                 return currentDelay + 300;
-            }
-            
-            animateNodeCreation(1, 0, segmentTree.n - 1, 200);
+            }            animateNodeCreation(1, 0, segmentTree.n - 1, 200);
         } else {
             // 立即创建所有节点
             nodesByLevel.forEach(levelNodes => {
@@ -589,6 +598,119 @@ function highlightAffectedNodes(left, right) {
             }, 600);
         }
     });
+}
+
+// 为单个节点绘制连接线到其子节点
+function drawConnectingLinesForNode(nodeInfo) {
+    const { node, start, end, element } = nodeInfo;
+    
+    // 跳过叶子节点
+    if (start === end) return;
+    
+    // 确保有SVG容器
+    let svg = treeContainer.querySelector('svg.connection-lines');
+    if (!svg) {
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('connection-lines');
+        svg.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        `;
+        treeContainer.appendChild(svg);
+    }
+    
+    // 检测当前主题
+    const isDarkTheme = document.body.classList.contains('dark');
+    const isEyeCareTheme = document.body.classList.contains('eye-care');
+    
+    let lineColor;
+    if (isDarkTheme) {
+        lineColor = 'rgba(255, 255, 255, 0.7)';
+    } else if (isEyeCareTheme) {
+        lineColor = 'rgba(74, 85, 104, 0.8)';
+    } else {
+        lineColor = 'rgba(74, 85, 104, 0.7)';
+    }
+    
+    const mid = Math.floor((start + end) / 2);
+    const leftChildNode = 2 * node;
+    const rightChildNode = 2 * node + 1;
+    
+    // 找到子节点元素
+    const leftChild = nodeElements.find(n => n.node === leftChildNode);
+    const rightChild = nodeElements.find(n => n.node === rightChildNode);
+    
+    if (!leftChild && !rightChild) return;
+    
+    // 获取父节点的位置（下底边中点）
+    const parentRect = element.getBoundingClientRect();
+    const containerRect = treeContainer.getBoundingClientRect();
+    
+    const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
+    const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
+    
+    // 绘制到左子节点的连线
+    if (leftChild && leftChild.element) {
+        const childRect = leftChild.element.getBoundingClientRect();
+        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+        const childTopY = childRect.top - containerRect.top;
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', parentCenterX);
+        line.setAttribute('y1', parentBottomY);
+        line.setAttribute('x2', childCenterX);
+        line.setAttribute('y2', childTopY);
+        line.setAttribute('stroke', lineColor);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        line.style.opacity = '0';
+        line.style.transition = 'opacity 0.4s ease';
+        
+        svg.appendChild(line);
+        
+        // 动画显示连线
+        requestAnimationFrame(() => {
+            line.style.opacity = '1';
+        });
+    }
+    
+    // 绘制到右子节点的连线
+    if (rightChild && rightChild.element) {
+        const childRect = rightChild.element.getBoundingClientRect();
+        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+        const childTopY = childRect.top - containerRect.top;
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', parentCenterX);
+        line.setAttribute('y1', parentBottomY);
+        line.setAttribute('x2', childCenterX);
+        line.setAttribute('y2', childTopY);
+        line.setAttribute('stroke', lineColor);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        line.style.opacity = '0';
+        line.style.transition = 'opacity 0.4s ease';
+        
+        svg.appendChild(line);
+        
+        // 动画显示连线
+        requestAnimationFrame(() => {
+            line.style.opacity = '1';
+        });
+    }
+}
+
+// 清理所有连接线
+function clearAllLines() {
+    const svg = treeContainer?.querySelector('svg.connection-lines');
+    if (svg) {
+        svg.remove();
+    }
 }
 
 // DOM加载完成后初始化
