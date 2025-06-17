@@ -238,25 +238,40 @@ function createTreeNodes() {
         const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
         const nodeWidth = 120;
         const nodeHeight = 110; // 增加高度以容纳懒标记
-        const levelHeight = 140; // 增加层高
-          // 响应式设计：根据屏幕尺寸调整节点大小
+        const levelHeight = 140; // 增加层高        // 响应式设计：根据实际容器尺寸调整节点大小
         const screenWidth = window.innerWidth;
+        
+        // 获取实际的父容器宽度（考虑页面缩放）
+        let actualContainerWidth = screenWidth;
+        if (treeContainer && treeContainer.parentElement) {
+            const parentRect = treeContainer.parentElement.getBoundingClientRect();
+            actualContainerWidth = Math.min(parentRect.width - 40, screenWidth - 40); // 减去边距
+        }
+        
+        const containerPadding = 40; // 容器内边距
+        const availableWidth = actualContainerWidth - containerPadding;
+        
         let responsiveNodeWidth = nodeWidth;
         let responsiveNodeHeight = nodeHeight;
         let responsiveFontSize = 13;
         
-        if (screenWidth <= 480) {
-            responsiveNodeWidth = 75;
+        // 根据实际可用宽度调整节点大小
+        if (availableWidth <= 320 || screenWidth <= 320) {
+            responsiveNodeWidth = 50;
+            responsiveNodeHeight = 60;
+            responsiveFontSize = 6;
+        } else if (availableWidth <= 480 || screenWidth <= 480) {
+            responsiveNodeWidth = 65;
+            responsiveNodeHeight = 75;
+            responsiveFontSize = 7;
+        } else if (availableWidth <= 768 || screenWidth <= 768) {
+            responsiveNodeWidth = 80;
             responsiveNodeHeight = 85;
-            responsiveFontSize = 9;
-        } else if (screenWidth <= 768) {
-            responsiveNodeWidth = 90;
+            responsiveFontSize = 8;
+        } else if (availableWidth <= 1024 || screenWidth <= 1024) {
+            responsiveNodeWidth = 95;
             responsiveNodeHeight = 95;
             responsiveFontSize = 10;
-        } else if (screenWidth <= 1024) {
-            responsiveNodeWidth = 105;
-            responsiveNodeHeight = 105;
-            responsiveFontSize = 12;
         }// 首先收集所有叶子节点，计算它们的理想位置
         const leafNodes = [];
         const nodesByLevel = [];
@@ -275,13 +290,16 @@ function createTreeNodes() {
             }
         }
         
-        collectLeafNodes(1, 0, segmentTree.n - 1);        // 强制限制容器尺寸，彻底解决超出问题
+        collectLeafNodes(1, 0, segmentTree.n - 1);        // 强制限制容器尺寸，基于实际可用宽度
         const viewportWidth = window.innerWidth;
-        const maxAllowedWidth = Math.min(viewportWidth * 0.95, viewportWidth - 30); // 最多占用95%屏幕宽度
+        const safeMargin = 20; // 安全边距
+        const maxAllowedWidth = Math.min(availableWidth * 0.95, actualContainerWidth - safeMargin);
         
-        // 计算最小节点间距
-        const minGap = 5; // 绝对最小间距
-        const preferredGap = screenWidth <= 768 ? 15 : 25;
+        console.log(`容器计算: 屏幕=${screenWidth}px, 实际容器=${actualContainerWidth}px, 可用=${availableWidth}px, 最大允许=${maxAllowedWidth}px`);
+        
+        // 动态计算最小节点间距
+        const minGap = screenWidth <= 480 ? 3 : 5;
+        const preferredGap = screenWidth <= 480 ? 8 : (screenWidth <= 768 ? 12 : 20);
         
         // 计算在给定间距下需要的总宽度
         const getRequiredWidth = (gap) => {
@@ -306,17 +324,48 @@ function createTreeNodes() {
             } else {
                 finalGap = 0;
             }
-            actualContentWidth = maxAllowedWidth;
-        } else {
-            // 连最小间距都放不下，使用最小间距并滚动
-            finalGap = minGap;
-            actualContentWidth = minWidth;
+            actualContentWidth = maxAllowedWidth;        } else {
+            // 连最小间距都放不下，强制缩小节点以适应容器
+            const forcedNodeWidth = Math.floor((maxAllowedWidth - (leafNodes.length - 1) * minGap) / leafNodes.length);
+            if (forcedNodeWidth < responsiveNodeWidth * 0.6) {
+                // 如果节点被压缩得太小，保持最小尺寸并使用滚动
+                finalGap = minGap;
+                actualContentWidth = minWidth;
+            } else {
+                // 使用强制压缩的节点宽度
+                responsiveNodeWidth = Math.max(forcedNodeWidth, responsiveNodeWidth * 0.6);
+                responsiveNodeHeight = Math.max(responsiveNodeHeight * 0.8, 60);
+                responsiveFontSize = Math.max(responsiveFontSize * 0.8, 7);
+                finalGap = minGap;
+                actualContentWidth = leafNodes.length * responsiveNodeWidth + (leafNodes.length - 1) * finalGap;
+            }
         }
         
-        // 分配叶子节点位置
+        // 确保内容宽度不超过容器最大允许宽度
+        actualContentWidth = Math.min(actualContentWidth, maxAllowedWidth);
+          // 计算容器内边距，确保节点不会超出边界
+        const drawingPadding = 15; // 绘制区域内边距
+        const drawingWidth = actualContentWidth - 2 * drawingPadding; // 实际绘制区域宽度        // 分配叶子节点位置 - 确保节点不会重合或贴边
         const leafPositions = new Map();
         leafNodes.forEach((leaf, index) => {
-            const position = index * (responsiveNodeWidth + finalGap) + responsiveNodeWidth / 2;
+            let position;
+            if (leafNodes.length === 1) {
+                position = drawingPadding + drawingWidth / 2;
+            } else {
+                // 确保左右两端都有足够的边距，避免节点贴边或重合
+                const nodeRadius = responsiveNodeWidth / 2;
+                const extraPadding = Math.max(5, nodeRadius * 0.2); // 额外间距
+                const safeDrawingWidth = drawingWidth - 2 * (nodeRadius + extraPadding);
+                
+                if (safeDrawingWidth > 0) {
+                    const stepWidth = safeDrawingWidth / (leafNodes.length - 1);
+                    position = drawingPadding + nodeRadius + extraPadding + index * stepWidth;
+                } else {
+                    // 如果空间不够，均匀分布但确保不超出边界
+                    const stepWidth = drawingWidth / (leafNodes.length + 1);
+                    position = drawingPadding + stepWidth * (index + 1);
+                }
+            }
             leafPositions.set(leaf.node, position);
         });
         
@@ -348,10 +397,9 @@ function createTreeNodes() {
                     position = leftChild.position;
                 } else if (rightChild) {
                     // 只有右子节点
-                    position = rightChild.position;
-                } else {
-                    // 理论上不应该发生
-                    position = totalWidth / 2;
+                    position = rightChild.position;                } else {
+                    // 理论上不应该发生，使用容器中心
+                    position = actualContentWidth / 2;
                 }
             }
             
@@ -375,18 +423,27 @@ function createTreeNodes() {
         
         // 强制限制容器宽度，绝对不超出屏幕
         const needsScroll = actualContentWidth > maxAllowedWidth;
-        const containerWidth = Math.min(actualContentWidth, maxAllowedWidth);
+        const containerWidth = Math.min(actualContentWidth, maxAllowedWidth);        // 设置主容器 - 确保完全适应屏幕并有明确边界
+        const finalContainerWidth = Math.min(actualContentWidth, maxAllowedWidth);
         
-        // 设置主容器 - 绝对不超出屏幕边界
-        treeContainer.style.width = `${containerWidth}px`;
-        treeContainer.style.maxWidth = `${maxAllowedWidth}px`;
+        treeContainer.style.width = `${finalContainerWidth}px`;
+        treeContainer.style.maxWidth = `${finalContainerWidth}px`;
         treeContainer.style.margin = '0 auto';
-        treeContainer.style.overflowX = needsScroll ? 'auto' : 'hidden';
+        treeContainer.style.overflowX = 'hidden'; // 强制隐藏水平滚动，确保内容不超出
         treeContainer.style.overflowY = 'visible';
         treeContainer.style.padding = '10px';
         treeContainer.style.boxSizing = 'border-box';
+        treeContainer.style.border = '1px solid rgba(255, 255, 255, 0.2)'; // 添加边界线用于调试
+        treeContainer.style.position = 'relative'; // 确保定位上下文
         
-        console.log(`容器设置: 内容=${actualContentWidth}px, 容器=${containerWidth}px, 最大=${maxAllowedWidth}px, 需要滚动=${needsScroll}`);
+        // 添加媒体查询样式适配
+        if (screenWidth <= 768) {
+            treeContainer.style.padding = '5px';
+        }
+        
+        console.log(`容器设置: 内容=${actualContentWidth}px, 容器=${finalContainerWidth}px, 最大=${maxAllowedWidth}px, 绘制宽度=${drawingWidth}px`);
+        console.log(`节点尺寸: 宽=${responsiveNodeWidth}px, 高=${responsiveNodeHeight}px, 字体=${responsiveFontSize}px`);
+        console.log(`叶节点数量: ${leafNodes.length}, 叶节点位置:`, Array.from(leafPositions.values()));
         
         // 创建层级容器
         for (let i = 0; i < nodesByLevel.length; i++) {
@@ -394,10 +451,13 @@ function createTreeNodes() {
             levelContainer.style.cssText = `
                 display: block;
                 position: relative;
-                width: ${actualContentWidth}px;
+                width: 100%;
+                max-width: ${finalContainerWidth - 20}px;
                 height: ${levelHeight}px;
                 margin-bottom: 10px;
-                overflow: visible;            `;
+                overflow: hidden;
+                box-sizing: border-box;
+            `;
             treeContainer.appendChild(levelContainer);
             levelContainers.push(levelContainer);
         }
@@ -413,15 +473,19 @@ function createTreeNodes() {
             
             // 当前节点的懒标记值（仅用于显示）
             const actualLazyValue = segmentTree.lazy[node];
-            
-            // Create node element
+              // Create node element
             const nodeElement = document.createElement('div');
             nodeElement.className = 'tree-node';
+              // 确保节点位置在容器边界内，并保持节点完整性
+            const nodeHalfWidth = responsiveNodeWidth / 2;
+            const minLeft = drawingPadding;
+            const maxLeft = actualContentWidth - drawingPadding - responsiveNodeWidth;
+            const nodeLeft = Math.max(minLeft, Math.min(position - nodeHalfWidth, maxLeft));
             
             // 使用绝对定位，将节点放在精确的位置
             nodeElement.style.cssText = `
                 position: absolute;
-                left: ${position - responsiveNodeWidth / 2}px;
+                left: ${nodeLeft}px;
                 top: 50%;
                 transform: translateY(-50%);
                 width: ${responsiveNodeWidth}px;
@@ -700,30 +764,49 @@ function initEventListeners() {    // 确保所有DOM元素都存在
             } catch (error) {
                 console.error('构建示例线段树时出错:', error);
             }        }, 100);
-    }
-    
-    window.addEventListener('resize', () => {
+    }    window.addEventListener('resize', () => {
         adjustContainerSize();
         if (segmentTree) {
-            setTimeout(() => {
+            // 使用防抖避免频繁重绘
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                console.log('窗口尺寸变化，重新绘制树结构');
+                // 重新计算所有尺寸并重绘
                 drawTree();
-            }, 100);
+            }, 150); // 减少延迟，提高响应性
         }
     });
 }
 
-// 窗口尺寸变化监听器，实现动态自适应
+// 窗口尺寸变化处理的防抖超时变量
 let resizeTimeout;
+
+// 全局resize监听器，确保所有情况下都能响应（包括页面缩放）
 window.addEventListener('resize', function() {
-    // 防抖处理，避免频繁重绘
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(function() {
-        if (segmentTree) {
-            console.log('窗口尺寸变化，重新绘制树结构');
-            visualizeTree();
+        if (segmentTree && treeContainer) {
+            console.log('全局resize - 重新绘制树结构');
+            adjustContainerSize();
+            drawTree();
         }
-    }, 300);
+    }, 200);
 });
+
+// 监听页面缩放变化
+let currentZoom = window.devicePixelRatio;
+setInterval(() => {
+    if (window.devicePixelRatio !== currentZoom) {
+        currentZoom = window.devicePixelRatio;
+        console.log('检测到页面缩放变化:', currentZoom);
+        if (segmentTree && treeContainer) {
+            setTimeout(() => {
+                adjustContainerSize();
+                drawTree();
+            }, 300);
+        }
+    }
+}, 500);
 
 document.addEventListener('DOMContentLoaded', () => {
     // 确保在DOM加载完成后立即设置树容器

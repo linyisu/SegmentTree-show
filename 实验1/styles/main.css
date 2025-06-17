@@ -1,3 +1,104 @@
+/* 响应式基础设置 */
+* {
+  box-sizing: border-box;
+}
+
+/* 确保容器不会超出屏幕 */
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+main {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 响应式媒体查询 */
+@media screen and (max-width: 480px) {
+  :root {
+    --font-size-base: 14px;
+    --border-radius: 12px;
+  }
+  
+  body {
+    font-size: 14px;
+  }
+  
+  header {
+    padding: 10px;
+    font-size: 18px;
+  }
+  
+  nav {
+    padding: 8px;
+    gap: 5px;
+  }
+  
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  main {
+    padding: 10px;
+  }
+  
+  .card {
+    padding: 15px;
+    margin: 10px 0;
+  }
+  
+  h2, h3 {
+    font-size: 1.2em;
+  }
+  
+  .settings-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  input, button, select {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  :root {
+    --font-size-base: 14px;
+  }
+  
+  header {
+    padding: 12px;
+    font-size: 20px;
+  }
+  
+  nav {
+    padding: 10px;
+  }
+  
+  .nav-btn {
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+  
+  main {
+    padding: 15px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+}
+
 /* 主要CSS文件 - 包含CSS变量和全局样式 */
 :root {
   --primary-color: #6c5ce7;

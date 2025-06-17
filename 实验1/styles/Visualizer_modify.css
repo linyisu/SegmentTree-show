@@ -1,3 +1,128 @@
+/* 严格限制线段树容器边界 */
+#custom-tree-visualizer-host {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important; /* 强制隐藏超出部分 */
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+#custom-tree-visualizer-host > div {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* 确保树节点不会超出父容器 */
+.tree-node {
+    max-width: calc(100% - 10px) !important;
+    box-sizing: border-box !important;
+}
+
+/* 响应式设计 - 自适应不同屏幕尺寸 */
+@media screen and (max-width: 320px) {
+    .data-input-container {
+        padding: 5px !important;
+        margin: 5px 0 !important;
+    }
+    
+    .settings-row {
+        flex-direction: column !important;
+        gap: 5px !important;
+    }
+    
+    .settings-row > * {
+        width: 100% !important;
+        margin: 2px 0 !important;
+    }
+    
+    input[type="number"], input[type="text"] {
+        font-size: 14px !important;
+        padding: 8px !important;
+    }
+    
+    .btn {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .data-input-container {
+        padding: 8px !important;
+        margin: 8px 0 !important;
+    }
+    
+    .settings-row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    
+    .settings-row > div {
+        flex: 1 1 100% !important;
+        min-width: auto !important;
+    }
+    
+    input[type="number"], input[type="text"] {
+        font-size: 14px !important;
+        padding: 10px !important;
+        min-width: 60px !important;
+    }
+    
+    .btn {
+        font-size: 13px !important;
+        padding: 10px 15px !important;
+    }
+    
+    label {
+        font-size: 14px !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .data-input-container {
+        padding: 10px !important;
+    }
+    
+    .settings-row {
+        gap: 10px !important;
+    }
+    
+    input[type="number"], input[type="text"] {
+        font-size: 15px !important;
+        padding: 12px !important;
+    }
+    
+    .btn {
+        font-size: 14px !important;
+        padding: 12px 18px !important;
+    }
+}
+
+/* 确保树容器始终自适应 */
+#custom-tree-visualizer-host {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* 树节点响应式文字大小 */
+@media screen and (max-width: 480px) {
+    .tree-node {
+        font-size: 8px !important;
+        line-height: 1.1 !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .tree-node {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+}
+
 /* 线段树可视化样式 */
 .tree-node {
     transition: all 0.3s ease;
@@ -112,5 +237,52 @@
 @media (min-width: 1200px) {
     .tree-node {
         font-size: 14px !important;
+    }
+}
+
+/* 严格控制基本操作页面中的数据输入容器 */
+#basic .data-input-container.card {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    padding: 15px !important;
+}
+
+#basic .data-input-container.card #custom-tree-visualizer-host {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    margin: 20px 0 10px 0 !important;
+    padding: 0 !important;
+}
+
+/* 响应式设计：在页面缩放时确保容器适应 */
+@media screen and (min-width: 1px) {
+    #basic .data-input-container.card {
+        margin: 10px auto !important;
+        padding: 10px !important;
+    }
+    
+    #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 20px) !important;
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+    }
+}
+
+/* 小屏幕特殊处理 */
+@media screen and (max-width: 768px) {
+    #basic .data-input-container.card {
+        padding: 8px !important;
+        margin: 5px auto !important;
+    }
+    
+    #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 16px) !important;
+        margin-left: 8px !important;
+        margin-right: 8px !important;
     }
 }

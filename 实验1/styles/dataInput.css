@@ -1,5 +1,6 @@
 /* styles/dataInput.css */
 
+/* 严格控制数据输入容器，防止内容超出边界 */
 .data-input-container {
     margin-top: 20px;
     margin-bottom: 30px;
@@ -8,6 +9,27 @@
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     border: 1px solid rgba(128, 128, 128, 0.2);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* 防止内容超出 */
+    position: relative;
+}
+
+/* 确保在页面缩放时容器仍然受控 */
+@supports (zoom: 1) {
+    .data-input-container {
+        contain: layout style size;
+    }
+}
+
+/* 特殊处理基本操作页面中的容器 */
+#basic .data-input-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow: hidden !important;
 }
 
 .data-input-container h4 {
