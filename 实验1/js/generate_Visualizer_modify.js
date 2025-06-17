@@ -24,7 +24,19 @@ SegmentTree.prototype.build = function(node, start, end) {
 };
 
 SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
-    // 先处理当前节点的懒标记
+    // 如果当前区间与修改区间没有交集，直接返回
+    if (start > r || end < l) return;
+
+    // 如果当前区间完全被修改区间覆盖，直接累加懒标记并返回
+    if (l <= start && end <= r) {
+        this.lazy[node] += val;
+        this.tree[node] += (end - start + 1) * val;
+        this.minTree[node] += val;
+        this.maxTree[node] += val;
+        return;
+    }
+
+    // 只有在需要访问子节点时，才下推懒标记
     if (this.lazy[node] !== 0) {
         this.tree[node] += (end - start + 1) * this.lazy[node];
         this.minTree[node] += this.lazy[node];
@@ -36,19 +48,7 @@ SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
         this.lazy[node] = 0;
     }
 
-    // 如果当前区间与修改区间没有交集，直接返回
-    if (start > r || end < l) return;
-
-    // 如果当前区间完全被修改区间覆盖，打懒标记并返回
-    if (l <= start && end <= r) {
-        this.lazy[node] += val;
-        this.tree[node] += (end - start + 1) * val;
-        this.minTree[node] += val;
-        this.maxTree[node] += val;
-        return;
-    }
-
-    // 否则递归处理子区间
+    // 递归处理子区间
     const mid = Math.floor((start + end) / 2);
     this.updateRange(2 * node, start, mid, l, r, val);
     this.updateRange(2 * node + 1, mid + 1, end, l, r, val);
@@ -229,13 +229,11 @@ function createTreeNodes() {
         const secondaryColor = isDark ? '#7b68ee' : isEyeCare ? '#66bb6a' : '#a29bfe';
         const textColor = '#ffffff';
         const borderColor = '#ffffff';
-        
-        // Tree layout parameters
+          // Tree layout parameters
         const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
         const nodeWidth = 120;
         const nodeHeight = 110; // 增加高度以容纳懒标记
         const levelHeight = 140; // 增加层高
-        const containerWidth = Math.min(1200, window.innerWidth - 80);
         
         // 响应式设计：根据屏幕尺寸调整节点大小
         const screenWidth = window.innerWidth;
@@ -251,29 +249,112 @@ function createTreeNodes() {
             responsiveNodeWidth = 100;
             responsiveNodeHeight = 100;
             responsiveFontSize = 11;
+        }        // 首先收集所有叶子节点，计算它们的理想位置
+        const leafNodes = [];
+        const nodesByLevel = [];
+        const nodePositions = new Map();
+        
+        // 收集所有叶子节点
+        function collectLeafNodes(node, start, end) {
+            if (node >= segmentTree.tree.length) return;
+            
+            if (start === end) {
+                leafNodes.push({ node, start, end, index: start });
+            } else {
+                const mid = Math.floor((start + end) / 2);
+                collectLeafNodes(2 * node, start, mid);
+                collectLeafNodes(2 * node + 1, mid + 1, end);
+            }
         }
-          // Create level containers
+        
+        collectLeafNodes(1, 0, segmentTree.n - 1);
+        
+        // 计算叶子节点的理想间距和位置
+        const containerWidth = Math.min(1200, window.innerWidth - 80);
+        const minSpacing = responsiveNodeWidth + 40; // 保证最小间距
+        const totalWidth = Math.max(containerWidth, leafNodes.length * minSpacing);
+        const leafSpacing = totalWidth / (leafNodes.length + 1);
+        
+        // 为每个叶子节点分配位置
+        const leafPositions = new Map();
+        leafNodes.forEach((leaf, index) => {
+            const position = (index + 1) * leafSpacing;
+            leafPositions.set(leaf.node, position);
+        });
+        
+        // 递归计算所有节点的位置，确保严格的父子对称
+        function calculatePositions(node, start, end, level) {
+            if (node >= segmentTree.tree.length) return null;
+            
+            // 确保层级数组足够大
+            while (nodesByLevel.length <= level) {
+                nodesByLevel.push([]);
+            }
+            
+            let position;
+            
+            if (start === end) {
+                // 叶子节点使用预计算的位置
+                position = leafPositions.get(node);
+            } else {
+                // 内部节点：计算子节点位置的平均值
+                const mid = Math.floor((start + end) / 2);
+                const leftChild = calculatePositions(2 * node, start, mid, level + 1);
+                const rightChild = calculatePositions(2 * node + 1, mid + 1, end, level + 1);
+                
+                if (leftChild && rightChild) {
+                    // 父节点严格位于两个子节点的中点
+                    position = (leftChild.position + rightChild.position) / 2;
+                } else if (leftChild) {
+                    // 只有左子节点
+                    position = leftChild.position;
+                } else if (rightChild) {
+                    // 只有右子节点
+                    position = rightChild.position;
+                } else {
+                    // 理论上不应该发生
+                    position = totalWidth / 2;
+                }
+            }
+            
+            const nodeInfo = {
+                node: node,
+                start: start,
+                end: end,
+                level: level,
+                position: position
+            };
+            
+            nodesByLevel[level].push(nodeInfo);
+            nodePositions.set(node, position);
+            
+            return nodeInfo;
+        }
+        
+        // 计算所有节点位置
+        calculatePositions(1, 0, segmentTree.n - 1, 0);        // Create level containers based on actual levels
         const levelContainers = [];
-        for (let i = 0; i < levels; i++) {
+        
+        // 设置树容器的宽度以适应节点布局
+        treeContainer.style.width = `${totalWidth}px`;
+        treeContainer.style.margin = '0 auto';
+        
+        for (let i = 0; i < nodesByLevel.length; i++) {
             const levelContainer = document.createElement('div');
             levelContainer.style.cssText = `
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
+                display: block;
+                position: relative;
                 width: 100%;
                 height: ${levelHeight}px;
-                position: relative;
                 margin-bottom: 10px;
-                padding: 0 20px;
-                box-sizing: border-box;
             `;
             treeContainer.appendChild(levelContainer);
             levelContainers.push(levelContainer);
-        }
-        
-        function createNodeElement(node, start, end, level, positionInLevel, totalInLevel) {
-            if (node >= segmentTree.tree.length) return null;
-              // Calculate node values with lazy propagation
+        }// 直接基于收集到的节点创建DOM元素，使用绝对定位
+        function createNodeElement(nodeInfo) {
+            const { node, start, end, level, position } = nodeInfo;
+            
+            // Calculate node values with lazy propagation
             let sum = segmentTree.tree[node];
             let minVal = segmentTree.minTree[node];
             let maxVal = segmentTree.maxTree[node];
@@ -290,7 +371,14 @@ function createTreeNodes() {
             
             // Create node element
             const nodeElement = document.createElement('div');
-            nodeElement.className = 'tree-node';            nodeElement.style.cssText = `
+            nodeElement.className = 'tree-node';
+            
+            // 使用绝对定位，将节点放在精确的位置
+            nodeElement.style.cssText = `
+                position: absolute;
+                left: ${position - responsiveNodeWidth / 2}px;
+                top: 50%;
+                transform: translateY(-50%);
                 width: ${responsiveNodeWidth}px;
                 height: ${responsiveNodeHeight}px;
                 background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor} 30%, ${secondaryColor} 70%, ${secondaryColor} 100%);
@@ -307,17 +395,14 @@ function createTreeNodes() {
                 text-align: center;
                 line-height: 1.2;
                 box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-                position: relative;
-                margin: 0 5px;
                 transition: all 0.3s ease;
                 cursor: default;
                 text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
                 opacity: 0;
-                transform: scale(0.8) translateY(-20px);
                 z-index: 2;
-                flex: 1;
-                max-width: ${responsiveNodeWidth}px;
-            `;            // Add node content with lazy tag
+            `;
+            
+            // Add node content with lazy tag
             const lazyDisplay = actualLazyValue === 0 ? '-' : `+${actualLazyValue}`;
             
             // 为懒标记添加高亮样式（当有值时）
@@ -343,32 +428,28 @@ function createTreeNodes() {
                 element: nodeElement,
                 start: start,
                 end: end,
-                level: level
+                level: level,
+                position: position
             });
             
             // Animate node appearance
             setTimeout(() => {
                 nodeElement.style.opacity = '1';
-                nodeElement.style.transform = 'scale(1) translateY(0)';
-            }, level * 100 + positionInLevel * 50); // Staggered animation
-            
-            // Create child nodes
-            if (start !== end) {
-                const mid = Math.floor((start + end) / 2);
-                createNodeElement(2 * node, start, mid, level + 1, positionInLevel * 2, totalInLevel * 2);
-                createNodeElement(2 * node + 1, mid + 1, end, level + 1, positionInLevel * 2 + 1, totalInLevel * 2);
-            }
+            }, level * 100); // Staggered animation by level
             
             return nodeElement;
         }
         
-        // Create the tree starting from root
-        createNodeElement(1, 0, segmentTree.n - 1, 0, 0, 1);
-        
-        // Add connecting lines after all nodes are created
+        // 按层级创建节点，保持父子位置关系
+        nodesByLevel.forEach((levelNodes, levelIndex) => {
+            levelNodes.forEach((nodeInfo) => {
+                createNodeElement(nodeInfo);
+            });
+        });
+          // Add connecting lines after all nodes are created
         setTimeout(() => {
             addConnectingLines();
-        }, levels * 100 + 500); // Wait for all animations to finish
+        }, nodesByLevel.length * 100 + 500); // Wait for all animations to finish
         
     }, 300); // Wait for fade out
 }
@@ -398,9 +479,7 @@ function addConnectingLines() {
         // Get theme colors for lines
         const isDark = document.body.classList.contains('dark');
         const isEyeCare = document.body.classList.contains('eye-care');
-        const lineColor = isDark ? '#7b68ee' : isEyeCare ? '#66bb6a' : '#a29bfe';
-        
-        // Draw connection lines
+        const lineColor = isDark ? '#7b68ee' : isEyeCare ? '#66bb6a' : '#a29bfe';        // Draw connection lines with precise positioning
         nodeElements.forEach(nodeData => {
             const { node, element, start, end, level } = nodeData;
             
@@ -411,21 +490,17 @@ function addConnectingLines() {
                 const leftChild = nodeElements.find(n => n.node === 2 * node);
                 const rightChild = nodeElements.find(n => n.node === 2 * node + 1);
                 
-                if (leftChild && rightChild) {
-                    const parentRect = element.getBoundingClientRect();
-                    const treeRect = treeContainer.getBoundingClientRect();
+                // Get parent element position
+                const parentRect = element.getBoundingClientRect();
+                const treeRect = treeContainer.getBoundingClientRect();
+                const parentX = parentRect.left + parentRect.width / 2 - treeRect.left;
+                const parentY = parentRect.bottom - treeRect.top;
+                
+                if (leftChild) {
                     const leftRect = leftChild.element.getBoundingClientRect();
-                    const rightRect = rightChild.element.getBoundingClientRect();
-                    
-                    // Calculate relative positions
-                    const parentX = parentRect.left + parentRect.width / 2 - treeRect.left;
-                    const parentY = parentRect.bottom - treeRect.top;
                     const leftX = leftRect.left + leftRect.width / 2 - treeRect.left;
                     const leftY = leftRect.top - treeRect.top;
-                    const rightX = rightRect.left + rightRect.width / 2 - treeRect.left;
-                    const rightY = rightRect.top - treeRect.top;
                     
-                    // Create line elements
                     const leftLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     leftLine.setAttribute('x1', parentX);
                     leftLine.setAttribute('y1', parentY);
@@ -434,6 +509,15 @@ function addConnectingLines() {
                     leftLine.setAttribute('stroke', lineColor);
                     leftLine.setAttribute('stroke-width', '3');
                     leftLine.setAttribute('stroke-linecap', 'round');
+                    leftLine.setAttribute('opacity', '0.8');
+                    
+                    svg.appendChild(leftLine);
+                }
+                
+                if (rightChild) {
+                    const rightRect = rightChild.element.getBoundingClientRect();
+                    const rightX = rightRect.left + rightRect.width / 2 - treeRect.left;
+                    const rightY = rightRect.top - treeRect.top;
                     
                     const rightLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     rightLine.setAttribute('x1', parentX);
@@ -443,8 +527,8 @@ function addConnectingLines() {
                     rightLine.setAttribute('stroke', lineColor);
                     rightLine.setAttribute('stroke-width', '3');
                     rightLine.setAttribute('stroke-linecap', 'round');
+                    rightLine.setAttribute('opacity', '0.8');
                     
-                    svg.appendChild(leftLine);
                     svg.appendChild(rightLine);
                 }
             }
