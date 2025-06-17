@@ -271,28 +271,37 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
           orderIndex++;
           activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, 50);
           return;
-      }
-        // 创建节点显示内容，不显示编号，显示区间信息和统计值
-      const nodeInfo = `[${l},${r}]\\\\nsum:${sum}\\\\nmax:${max}\\\\nmin:${min}\\\\nlazy:${lazy}`;
-      
+      }        // 创建节点显示内容，按新的布局格式
       const nodeDiv = document.createElement('div');
       nodeDiv.className = `modify-tree-node depth-${depth}`;
-      nodeDiv.innerHTML = nodeInfo.replace(/\\\\n/g, '<br>');
       nodeDiv.setAttribute('data-node-id', u);
+      
+      // 创建节点内容的HTML结构
+      nodeDiv.innerHTML = `
+        <div class="node-interval">[${l},${r}]</div>
+        <div class="node-row">
+          <span class="node-sum">sum:${sum}</span>
+          <span class="node-max">max:${max}</span>
+        </div>
+        <div class="node-row">
+          <span class="node-min">min:${min}</span>
+          <span class="node-lazy">lazy:${lazy}</span>
+        </div>
+      `;
       
       nodeDiv.style.position = 'absolute';
       nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
       nodeDiv.style.top = `${position.y}px`;
       nodeDiv.style.width = `${position.nodeWidth}px`;
       nodeDiv.style.zIndex = '10';
-      nodeDiv.style.minHeight = '80px'; // 增加高度以适应更多信息
+      nodeDiv.style.minHeight = '85px'; // 增加高度以适应3行布局
       nodeDiv.style.display = 'flex';
       nodeDiv.style.flexDirection = 'column';
       nodeDiv.style.justifyContent = 'center';
       nodeDiv.style.alignItems = 'center';
-      nodeDiv.style.fontSize = '11px'; // 稍微缩小字体
-      nodeDiv.style.lineHeight = '1.1';
-      nodeDiv.style.padding = '5px';
+      nodeDiv.style.fontSize = '10px'; // 稍微缩小字体以适应更多内容
+      nodeDiv.style.lineHeight = '1.2';
+      nodeDiv.style.padding = '4px';
       nodeDiv.style.boxSizing = 'border-box';
       nodeDiv.style.borderRadius = '8px';
       nodeDiv.style.border = '2px solid #74b9ff';
@@ -301,6 +310,30 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       nodeDiv.style.fontWeight = 'bold';
       nodeDiv.style.textAlign = 'center';
       nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+      
+      // 添加内部样式
+      const intervalDiv = nodeDiv.querySelector('.node-interval');
+      if (intervalDiv) {
+        intervalDiv.style.fontSize = '11px';
+        intervalDiv.style.fontWeight = 'bold';
+        intervalDiv.style.marginBottom = '2px';
+      }
+      
+      const rowDivs = nodeDiv.querySelectorAll('.node-row');
+      rowDivs.forEach(row => {
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.width = '100%';
+        row.style.fontSize = '9px';
+        row.style.marginBottom = '1px';
+      });
+      
+      // 为数值添加样式
+      const spans = nodeDiv.querySelectorAll('span');
+      spans.forEach(span => {
+        span.style.flex = '1';
+        span.style.textAlign = 'center';
+      });
       
       const nodeColor = window.nodeColor || '#74b9ff';
       if (nodeColor !== '#74b9ff') {
@@ -457,12 +490,14 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
         // 懒标记节点 - 红色
         nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
         nodeDiv.style.border = '2px solid #e74c3c';
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
-        
-        // 更新节点内容显示懒标记
-        const currentContent = nodeDiv.innerHTML;
-        const updatedContent = currentContent.replace(/lazy:\d+/, `lazy:${delta}`);
-        nodeDiv.innerHTML = updatedContent;
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 根据新的HTML结构
+        const lazySpan = nodeDiv.querySelector('.node-lazy');
+        if (lazySpan) {
+          lazySpan.textContent = `lazy:${delta}`;
+          // 重新应用样式确保格式正确
+          lazySpan.style.flex = '1';
+          lazySpan.style.textAlign = 'center';
+        }
       } else if (type === 'pushdown') {
         // 下推节点 - 橙色
         nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
