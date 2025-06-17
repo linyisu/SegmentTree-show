@@ -575,20 +575,21 @@ function initEventListeners() {
         
         // 高亮受影响的节点
         highlightAffectedNodes(left - 1, right - 1);
-        
-        // 转换为0-indexed进行计算
+          // 转换为0-indexed进行计算
         segmentTree.updateRange(1, 0, segmentTree.n - 1, left - 1, right - 1, value);
         
-        // 立即重绘以显示更新后的值
-        adjustContainerSize();
-        drawTree();
+        // 只更新节点值，保持布局和连线不变
+        updateNodeValuesOnly();
     });
-    
-    // 主题切换事件
+      // 主题切换事件
     document.querySelectorAll('.theme-option').forEach(button => {
         button.addEventListener('click', () => {
             if (currentTreeDisplayed) {
-                setTimeout(drawTree, 50);
+                // 只重绘连线以适应新主题，不重新生成整个树
+                setTimeout(() => {
+                    clearAllLines();
+                    setTimeout(drawAllConnectingLines, 100);
+                }, 50);
             }
         });
     });
@@ -599,12 +600,12 @@ function initEventListeners() {
         inputElement.value = exampleData;
         console.log('示例数据已设置，等待用户点击更新可视化按钮');
     }
-    
-    // 窗口大小变化监听
+      // 窗口大小变化监听
     window.addEventListener('resize', () => {
         if (segmentTree && currentTreeDisplayed) {
             adjustContainerSize();
-            setTimeout(drawTree, 150);
+            // 使用新的布局调整函数而不是完全重绘
+            setTimeout(adjustLayoutOnly, 150);
         }
     });
     
@@ -741,6 +742,111 @@ function drawNodeConnections(node, start, end) {
     }
 }
 
+// 绘制所有连接线（用于立即显示模式和重绘）
+function drawAllConnectingLines() {
+    if (!treeContainer || !nodeElements || nodeElements.length === 0) return;
+    
+    // 确保有SVG容器
+    let svg = treeContainer.querySelector('svg.connection-lines');
+    if (!svg) {
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('connection-lines');
+        svg.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        `;
+        treeContainer.appendChild(svg);
+    }
+    
+    // 检测当前主题
+    const isDarkTheme = document.body.classList.contains('dark');
+    const isEyeCareTheme = document.body.classList.contains('eye-care');
+    
+    let lineColor;
+    if (isDarkTheme) {
+        lineColor = 'rgba(255, 255, 255, 0.8)';
+    } else if (isEyeCareTheme) {
+        lineColor = 'rgba(74, 85, 104, 0.9)';
+    } else {
+        lineColor = 'rgba(74, 85, 104, 0.8)';
+    }
+    
+    // 为每个非叶子节点绘制连线
+    nodeElements.forEach(nodeData => {
+        const { node, start, end, element } = nodeData;
+        
+        // 跳过叶子节点
+        if (start === end) return;
+        
+        const leftChildNode = 2 * node;
+        const rightChildNode = 2 * node + 1;
+        
+        // 找到子节点元素
+        const leftChild = nodeElements.find(n => n.node === leftChildNode);
+        const rightChild = nodeElements.find(n => n.node === rightChildNode);
+        
+        // 获取父节点的位置（下底边中点）
+        const parentRect = element.getBoundingClientRect();
+        const containerRect = treeContainer.getBoundingClientRect();
+        
+        const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
+        const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
+        
+        // 绘制到左子节点的连线
+        if (leftChild && leftChild.element) {
+            // 检查是否已存在这条连线
+            const existingLine = svg.querySelector(`.line-${node}-${leftChildNode}`);
+            if (!existingLine) {
+                const childRect = leftChild.element.getBoundingClientRect();
+                const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+                const childTopY = childRect.top - containerRect.top;
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', parentCenterX);
+                line.setAttribute('y1', parentBottomY);
+                line.setAttribute('x2', childCenterX);
+                line.setAttribute('y2', childTopY);
+                line.setAttribute('stroke', lineColor);
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-linecap', 'round');
+                line.style.opacity = '1';
+                line.classList.add(`line-${node}-${leftChildNode}`);
+                
+                svg.appendChild(line);
+            }
+        }
+        
+        // 绘制到右子节点的连线
+        if (rightChild && rightChild.element) {
+            // 检查是否已存在这条连线
+            const existingLine = svg.querySelector(`.line-${node}-${rightChildNode}`);
+            if (!existingLine) {
+                const childRect = rightChild.element.getBoundingClientRect();
+                const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+                const childTopY = childRect.top - containerRect.top;
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', parentCenterX);
+                line.setAttribute('y1', parentBottomY);
+                line.setAttribute('x2', childCenterX);
+                line.setAttribute('y2', childTopY);
+                line.setAttribute('stroke', lineColor);
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-linecap', 'round');
+                line.style.opacity = '1';
+                line.classList.add(`line-${node}-${rightChildNode}`);
+                
+                svg.appendChild(line);
+            }
+        }
+    });
+}
+
 // 清理所有连接线
 function clearAllLines() {
     const svg = treeContainer?.querySelector('svg.connection-lines');
@@ -759,3 +865,108 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTreeContainer();
     initEventListeners();
 });
+
+// 调整布局而不重新生成（用于窗口resize等场景）
+function adjustLayoutOnly() {
+    if (!treeContainer || !segmentTree || !nodeElements || nodeElements.length === 0) return;
+    
+    // 重新计算响应式参数
+    const screenWidth = window.innerWidth;
+    let responsiveNodeWidth = 120;
+    let responsiveNodeHeight = 110;
+    const levelHeight = 140;
+    
+    if (screenWidth <= 480) {
+        responsiveNodeWidth = 80;
+        responsiveNodeHeight = 85;
+    } else if (screenWidth <= 768) {
+        responsiveNodeWidth = 95;
+        responsiveNodeHeight = 95;
+    }
+    
+    // 重新计算布局
+    const containerWidth = treeContainer.clientWidth - 40;
+    const leafNodes = nodeElements.filter(n => n.start === n.end);
+    const nodeSpacing = Math.max(10, (containerWidth - leafNodes.length * responsiveNodeWidth) / (leafNodes.length + 1));
+    
+    // 重新计算节点位置
+    const positions = new Map();
+    
+    // 先布局叶子节点
+    leafNodes.forEach((leaf, index) => {
+        const x = nodeSpacing + index * (responsiveNodeWidth + nodeSpacing);
+        positions.set(leaf.node, x);
+    });
+    
+    // 自底向上计算内部节点位置
+    const nodesByLevel = [];
+    nodeElements.forEach(nodeData => {
+        while (nodesByLevel.length <= nodeData.level) {
+            nodesByLevel.push([]);
+        }
+        nodesByLevel[nodeData.level].push(nodeData);
+    });
+    
+    for (let level = nodesByLevel.length - 2; level >= 0; level--) {
+        nodesByLevel[level].forEach(nodeData => {
+            const { node, start, end } = nodeData;
+            const mid = Math.floor((start + end) / 2);
+            
+            const leftChild = positions.get(2 * node);
+            const rightChild = positions.get(2 * node + 1);
+            
+            if (leftChild !== undefined && rightChild !== undefined) {
+                positions.set(node, (leftChild + rightChild) / 2);
+            } else if (leftChild !== undefined) {
+                positions.set(node, leftChild);
+            } else if (rightChild !== undefined) {
+                positions.set(node, rightChild);
+            }
+        });
+    }
+    
+    // 更新节点位置
+    nodeElements.forEach(nodeData => {
+        const position = positions.get(nodeData.node);
+        if (position !== undefined && nodeData.element) {
+            nodeData.element.style.left = `${position}px`;
+            nodeData.element.style.width = `${responsiveNodeWidth}px`;
+            nodeData.element.style.height = `${responsiveNodeHeight}px`;
+            nodeData.position = position;
+        }
+    });
+    
+    // 清除旧连线并重绘
+    clearAllLines();
+    setTimeout(() => {
+        drawAllConnectingLines();
+    }, 100);
+}
+
+// 只更新节点内容而不重新布局（用于应用修改等场景）
+function updateNodeValuesOnly() {
+    if (!segmentTree || !nodeElements || nodeElements.length === 0) return;
+    
+    nodeElements.forEach(nodeData => {
+        const { node, start, end, element } = nodeData;
+        
+        // 获取更新后的节点值
+        const sum = segmentTree.tree[node];
+        const minVal = segmentTree.minTree[node];
+        const maxVal = segmentTree.maxTree[node];
+        const lazyValue = segmentTree.lazy[node];
+        
+        // 更新节点内容
+        const responsiveFontSize = element.style.fontSize ? parseInt(element.style.fontSize) : 13;
+        const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
+        const lazyStyle = lazyValue === 0 ? '' : 'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
+        
+        element.innerHTML = `
+            <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
+            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${sum}</div>
+            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${minVal}</div>
+            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${maxVal}</div>
+            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
+        `;
+    });
+}
