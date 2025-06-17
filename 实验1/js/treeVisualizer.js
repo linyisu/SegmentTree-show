@@ -43,8 +43,10 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
 
     if (n < 1 || n > 8) {
       alert('请输入1-8');
-      return;
-    }    container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
+      return;    }
+    
+    // 清空容器内容并创建固定的结构
+    container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
     container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
     const treeVisual = document.createElement('div');
     treeVisual.className = 'tree-visual';
@@ -56,6 +58,7 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
     treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
     treeVisual.style.overflow = 'visible';
+    treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
     container.appendChild(treeVisual);
   }
 
@@ -308,12 +311,43 @@ function getAnimationDelay() {
   return speeds[animationSpeed] || 1000;
 }
 
+// 初始化显示构建过程可视化的容器
+function initializeTreeContainer(container) {
+  container.innerHTML = ''; // 不显示任何标题
+  
+  const treeVisual = document.createElement('div');
+  treeVisual.className = 'tree-visual';
+  treeVisual.style.position = 'relative';
+  treeVisual.style.width = '100%';
+  treeVisual.style.padding = '25px';
+  treeVisual.style.background = 'var(--card-bg)';
+  treeVisual.style.borderRadius = '12px';
+  treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
+  treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+  treeVisual.style.overflow = 'visible';
+  treeVisual.style.minHeight = '200px';
+  treeVisual.style.display = 'flex';
+  treeVisual.style.alignItems = 'center';
+  treeVisual.style.justifyContent = 'center';
+  treeVisual.style.color = 'var(--text-color)';
+  treeVisual.style.fontSize = '16px';
+  treeVisual.style.opacity = '0.7';
+  
+  treeVisual.innerHTML = '<div style="text-align: center;">📱 点击上方"开始构建"按钮查看线段树构建动画</div>';
+  
+  container.appendChild(treeVisual);
+}
 
 // Modified initTreeVisualizer
 function initTreeVisualizer() {
   const inputN = document.getElementById('input-n');
   const btnBuild = document.getElementById('btn-build');
   const treeContainer = document.getElementById('tree-container');
+  
+  // 初始化时显示构建过程可视化的盒子
+  if (treeContainer) {
+    initializeTreeContainer(treeContainer);
+  }
   
   if (btnBuild && treeContainer) {
     btnBuild.addEventListener('click', () => {
@@ -324,7 +358,7 @@ function initTreeVisualizer() {
         if (containerStyle.display !== 'none' && treeContainer.offsetParent !== null) {
             buildTreeVisualization(n, treeContainer, false); // false for initial build
         } else {
-            alert("请先切换到“基本操作”选项卡并确保其可见，然后再构建树。");
+            alert("请先切换到\"基本操作\"选项卡并确保其可见，然后再构建树。");
         }
       } else {
         alert('请输入1到8之间的数组长度。');
