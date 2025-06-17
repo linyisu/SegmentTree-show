@@ -24,6 +24,7 @@ SegmentTree.prototype.build = function(node, start, end) {
 };
 
 SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
+    // 先处理当前节点的懒标记
     if (this.lazy[node] !== 0) {
         this.tree[node] += (end - start + 1) * this.lazy[node];
         this.minTree[node] += this.lazy[node];
@@ -35,38 +36,45 @@ SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
         this.lazy[node] = 0;
     }
 
+    // 如果当前区间与修改区间没有交集，直接返回
     if (start > r || end < l) return;
 
+    // 如果当前区间完全被修改区间覆盖，打懒标记并返回
     if (l <= start && end <= r) {
+        this.lazy[node] += val;
         this.tree[node] += (end - start + 1) * val;
         this.minTree[node] += val;
         this.maxTree[node] += val;
-        if (start !== end) {
-            this.lazy[2 * node] += val;
-            this.lazy[2 * node + 1] += val;
-        }
         return;
     }
 
+    // 否则递归处理子区间
     const mid = Math.floor((start + end) / 2);
     this.updateRange(2 * node, start, mid, l, r, val);
     this.updateRange(2 * node + 1, mid + 1, end, l, r, val);
     
-    // 推送lazy propagation到子节点来获取正确的值
+    // 从子节点更新当前节点（需要考虑子节点的懒标记）
+    let leftSum = this.tree[2 * node];
+    let rightSum = this.tree[2 * node + 1];
+    let leftMin = this.minTree[2 * node];
+    let rightMin = this.minTree[2 * node + 1];
+    let leftMax = this.maxTree[2 * node];
+    let rightMax = this.maxTree[2 * node + 1];
+    
     if (this.lazy[2 * node] !== 0) {
-        this.tree[2 * node] += (mid - start + 1) * this.lazy[2 * node];
-        this.minTree[2 * node] += this.lazy[2 * node];
-        this.maxTree[2 * node] += this.lazy[2 * node];
+        leftSum += (mid - start + 1) * this.lazy[2 * node];
+        leftMin += this.lazy[2 * node];
+        leftMax += this.lazy[2 * node];
     }
     if (this.lazy[2 * node + 1] !== 0) {
-        this.tree[2 * node + 1] += (end - mid) * this.lazy[2 * node + 1];
-        this.minTree[2 * node + 1] += this.lazy[2 * node + 1];
-        this.maxTree[2 * node + 1] += this.lazy[2 * node + 1];
+        rightSum += (end - mid) * this.lazy[2 * node + 1];
+        rightMin += this.lazy[2 * node + 1];
+        rightMax += this.lazy[2 * node + 1];
     }
     
-    this.tree[node] = this.tree[2 * node] + this.tree[2 * node + 1];
-    this.minTree[node] = Math.min(this.minTree[2 * node], this.minTree[2 * node + 1]);
-    this.maxTree[node] = Math.max(this.maxTree[2 * node], this.maxTree[2 * node + 1]);
+    this.tree[node] = leftSum + rightSum;
+    this.minTree[node] = Math.min(leftMin, rightMin);
+    this.maxTree[node] = Math.max(leftMax, rightMax);
 };
 
 SegmentTree.prototype.querySum = function(l, r) {
@@ -265,16 +273,19 @@ function createTreeNodes() {
         
         function createNodeElement(node, start, end, level, positionInLevel, totalInLevel) {
             if (node >= segmentTree.tree.length) return null;
-            
-            // Calculate node values
+              // Calculate node values with lazy propagation
             let sum = segmentTree.tree[node];
             let minVal = segmentTree.minTree[node];
             let maxVal = segmentTree.maxTree[node];
             
-            if (segmentTree.lazy[node] !== 0) {
-                sum += (end - start + 1) * segmentTree.lazy[node];
-                minVal += segmentTree.lazy[node];
-                maxVal += segmentTree.lazy[node];
+            // 当前节点的实际懒标记值
+            const actualLazyValue = segmentTree.lazy[node];
+            
+            // 如果当前节点有懒标记，需要应用到显示的值上
+            if (actualLazyValue !== 0) {
+                sum += (end - start + 1) * actualLazyValue;
+                minVal += actualLazyValue;
+                maxVal += actualLazyValue;
             }
             
             // Create node element
@@ -307,11 +318,10 @@ function createTreeNodes() {
                 flex: 1;
                 max-width: ${responsiveNodeWidth}px;
             `;            // Add node content with lazy tag
-            const lazyValue = segmentTree.lazy[node];
-            const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
+            const lazyDisplay = actualLazyValue === 0 ? '-' : `+${actualLazyValue}`;
             
             // 为懒标记添加高亮样式（当有值时）
-            const lazyStyle = lazyValue === 0 ? 
+            const lazyStyle = actualLazyValue === 0 ? 
                 '' : 
                 'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
             
@@ -447,8 +457,7 @@ function addConnectingLines() {
     }, 50); // Small delay to ensure DOM is rendered
 }
 
-function initEventListeners() {
-    // 确保所有DOM元素都存在
+function initEventListeners() {    // 确保所有DOM元素都存在
     const randomBtn = document.getElementById('btn-random-data');
     const updateBtn = document.getElementById('btn-update-custom-data');
     const inputElement = document.getElementById('input-custom-data');
@@ -457,7 +466,7 @@ function initEventListeners() {
     if (!randomBtn || !updateBtn || !inputElement || !applyBtn) {
         console.error('某些必需的DOM元素不存在');
         return;
-    }    // 随机生成数据按钮
+    }// 随机生成数据按钮
     randomBtn.addEventListener('click', function() {
         const randomData = generateRandomData();
         inputElement.value = randomData;
@@ -538,8 +547,7 @@ function initEventListeners() {
         adjustContainerSize();
         drawTree();
     });
-    
-    // 主题切换事件
+      // 主题切换事件
     document.querySelectorAll('.theme-option').forEach(button => {
         button.addEventListener('click', () => {
             setTimeout(drawTree, 50);
