@@ -26,6 +26,11 @@ function debounceModify(func, wait) {
 
 // 线段树区间修改可视化 - 基于边界的智能布局算法（带初始数据）
 function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpdate = false) {
+  console.log('🌲 buildModifyTreeVisualizationWithData 被调用', { 
+    dataArray, 
+    containerExists: !!container, 
+    isResizeUpdate 
+  });
   const n = dataArray.length;
   
   if (!isResizeUpdate) {
@@ -65,14 +70,21 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
     container.appendChild(treeVisual);
   }
-
   const treeVisual = container.querySelector('.modify-tree-visual');
   if (!treeVisual) {
     console.error("Modify tree visual element not found.");
     return;
   }
 
-  const containerWidth = treeVisual.clientWidth - 50; // Effective drawing width after treeVisual's own 25px padding
+  // 确保容器有有效的宽度，如果没有则使用默认值
+  let containerWidth = treeVisual.clientWidth - 50;
+  if (containerWidth <= 0) {
+    // 如果clientWidth为0，使用容器的offsetWidth或默认值
+    containerWidth = Math.max(treeVisual.offsetWidth - 50, 600);
+    console.log('📏 使用fallback宽度:', containerWidth);
+  }
+  console.log('📐 容器有效宽度:', containerWidth);
+  
   const nodeMinWidth = 50;
   const levelHeight = 80;
   const padding = 25; // Internal padding within the containerWidth
@@ -104,12 +116,20 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       };
     }
   }
+    buildTree(dataArray, tree, 1, 1, n);
   
-  buildTree(dataArray, tree, 1, 1, n);
-
+  console.log('🌳 线段树构建完成:', {
+    n,
+    treeSize: tree.length,
+    rootNode: tree[1],
+    sampleNodes: [tree[2], tree[3]]
+  });
+  
   if (!isResizeUpdate) {
     // This is an initial build: collect tree levels data with actual values
-    currentModifyTreeLevelsData = []; // Clear for new build    function collectModifyLevelsWithData(l, r, u, depth = 0) {
+    currentModifyTreeLevelsData = []; // Clear for new build
+
+    function collectModifyLevelsWithData(l, r, u, depth = 0) {
       if (l > r) return; // Base case: invalid range, do not process
       if (!currentModifyTreeLevelsData[depth]) currentModifyTreeLevelsData[depth] = [];
       const treeNode = tree[u] || { sum: 0, max: 0, min: 0 };
@@ -127,9 +147,14 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         if (mid < r) { // Ensure right child is only processed if its range is valid
             collectModifyLevelsWithData(mid + 1, r, u * 2 + 1, depth + 1);
         }
-      }
-    }
+      }    }
     collectModifyLevelsWithData(1, n, 1);
+    
+    console.log('📊 层级数据收集完成:', {
+      totalLevels: currentModifyTreeLevelsData.length,
+      levelCounts: currentModifyTreeLevelsData.map(level => level.length),
+      sampleData: currentModifyTreeLevelsData[0]
+    });
 
     const totalLevels = currentModifyTreeLevelsData.length;
     const baseHeight = 60;
@@ -193,9 +218,14 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         }
     }
   }
-
   // 调用位置计算函数
   calculateModifyNodePositionsWithData(1, n, 1, 0, null, null);
+  
+  console.log('📍 节点位置计算完成:', {
+    totalPositions: nodePositions.size,
+    samplePositions: Array.from(nodePositions.entries()).slice(0, 3)
+  });
+  
     if (!isResizeUpdate) {
     // This is a new build: generate render order and start animation with actual data
     currentModifyTreeBuildOrderData = []; // Clear for new build
@@ -229,10 +259,10 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     generateModifyBuildOrderWithData(1, n, 1);
 
     let orderIndex = 0;
-    function renderNextModifyNodeWithData() {
-      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
+    function renderNextModifyNodeWithData() {      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
         isModifyTreeRendered = true;
-        activeModifyBuildAnimationTimeout = null;        return;
+        activeModifyBuildAnimationTimeout = null;
+        return;
       }
 
       const { l, r, u, depth, lazy, sum, max, min } = currentModifyTreeBuildOrderData[orderIndex];
@@ -283,11 +313,11 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       
       treeVisual.appendChild(nodeDiv);
       modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
-      
-      if (depth > 0) {
+        if (depth > 0) {
         addModifyConnectionLine(u, nodePositions, treeVisual); // This will also store the line in modifyDomLineElements
       }
-        setTimeout(() => {
+      
+      setTimeout(() => {
         nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
         nodeDiv.style.opacity = '1';
         nodeDiv.style.transform = 'translateY(0)';
@@ -319,14 +349,14 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         const deltaY = childPos.y - parentPos.y - 35;
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-        
-        line.style.width = `${length}px`;
+          line.style.width = `${length}px`;
         line.style.left = `${parentPos.x}px`;
         line.style.top = `${parentPos.y + 35}px`;
         line.style.transform = `rotate(${angle}deg)`;
       }
     });
-    isModifyTreeRendered = true; // Ensure flag is set after resize update  }
+    isModifyTreeRendered = true; // Ensure flag is set after resize update
+  }
 }
 
 // Modified to store line element for modify tree
@@ -512,6 +542,8 @@ function parseInputData(inputString) {
 
 // Modified initModifyTreeVisualizer
 function initModifyTreeVisualizer() {
+  console.log('🔧 初始化区间修改可视化模块...');
+  
   const inputCustomData = document.getElementById('input-custom-data');
   const btnRandomData = document.getElementById('btn-random-data');
   const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
@@ -521,20 +553,42 @@ function initModifyTreeVisualizer() {
   const inputModifyValue = document.getElementById('input-modify-value');
   const btnApplyModification = document.getElementById('btn-apply-modification');
   
-  // 初始化时显示区间修改可视化的盒子
+  console.log('🔍 查找到的HTML元素:', {
+    inputCustomData: !!inputCustomData,
+    btnRandomData: !!btnRandomData,
+    btnUpdateCustomData: !!btnUpdateCustomData,
+    treeContainer: !!treeContainer,
+    inputModifyLeft: !!inputModifyLeft,
+    inputModifyRight: !!inputModifyRight,
+    inputModifyValue: !!inputModifyValue,
+    btnApplyModification: !!btnApplyModification
+  });
+    // 初始化时显示区间修改可视化的盒子
   if (treeContainer) {
     initializeModifyTreeContainer(treeContainer);
   }
+  
   // 随机生成数据按钮
   if (btnRandomData && inputCustomData) {
+    console.log('✅ 绑定随机生成按钮事件');
     btnRandomData.addEventListener('click', () => {
+      console.log('🎲 点击随机生成按钮');
       const randomData = generateRandomData();
+      console.log('📊 生成的随机数据:', randomData);
       inputCustomData.value = randomData;
-    });
-  }  // 更新可视化按钮
+      console.log('✅ 数据已填入输入框');
+    });  } else {
+    console.log('❌ 无法绑定随机生成按钮，元素缺失:', { btnRandomData: !!btnRandomData, inputCustomData: !!inputCustomData });
+  }
+  
+  // 更新可视化按钮
   if (btnUpdateCustomData && treeContainer && inputCustomData) {
+    console.log('✅ 绑定更新可视化按钮事件');
     btnUpdateCustomData.addEventListener('click', () => {
+      console.log('🚀 点击更新可视化按钮');
+      console.log('📝 输入框内容:', `"${inputCustomData.value}"`);
       const inputData = parseInputData(inputCustomData.value);
+      console.log('🔍 解析结果:', inputData);
       if (!inputData) {
         if (!inputCustomData.value.trim()) {
           alert('请输入数组数据或点击随机生成');
@@ -543,7 +597,15 @@ function initModifyTreeVisualizer() {
       }
       
       const n = inputData.length;
-      buildModifyTreeVisualizationWithData(inputData, treeContainer, false); // false for initial build
+      console.log('📏 数组长度:', n);
+      console.log('🎨 开始构建树可视化...');
+      buildModifyTreeVisualizationWithData(inputData, treeContainer, false);
+    });
+  } else {
+    console.log('❌ 无法绑定更新可视化按钮，元素缺失:', { 
+      btnUpdateCustomData: !!btnUpdateCustomData, 
+      treeContainer: !!treeContainer, 
+      inputCustomData: !!inputCustomData 
     });
   }
 
@@ -583,3 +645,5 @@ window.ModifyTreeVisualizer = {
   generateRandomData,
   parseInputData
 };
+
+console.log('🌟 ModifyTreeVisualizer 模块已加载', window.ModifyTreeVisualizer);

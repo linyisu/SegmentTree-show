@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>完全独立测试</title>
+  <style>
+    :root {
+      --primary-color: #74b9ff;
+      --secondary-color: #0984e3;
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --text-color: #2d3748;
+    }
+    
+    body { 
+      margin: 20px; 
+      font-family: Arial, sans-serif; 
+      background: #f0f2f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .btn { 
+      padding: 10px 20px; 
+      margin: 5px; 
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .btn:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(116, 185, 255, 0.3);
+    }
+    
+    input { 
+      padding: 8px 12px; 
+      margin: 5px; 
+      border: 2px solid #e1e5e9;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    #custom-tree-visualizer-host { 
+      margin-top: 20px; 
+      min-height: 300px; 
+      border: 1px solid #ccc; 
+      border-radius: 8px;
+      padding: 10px;
+    }
+    
+    .controls {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #e1e5e9;
+    }
+    
+    .control-row {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    label {
+      font-weight: bold;
+      color: var(--text-color);
+      min-width: 80px;
+    }
+    
+    #console-output {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 完全独立的区间修改可视化测试</h1>
+    
+    <div class="controls">
+      <div class="control-row">
+        <label>数据输入:</label>
+        <input type="text" id="input-custom-data" placeholder="例如: 1 2 3 4" value="1 2 3 4" style="flex: 1;">
+        <button id="btn-random-data" class="btn">🎲 随机生成</button>
+        <button id="btn-update-custom-data" class="btn">🚀 更新可视化</button>
+      </div>
+      
+      <div class="control-row">
+        <label>区间修改:</label>
+        <input type="number" id="input-modify-left" value="1" placeholder="左边界" style="width: 80px;">
+        <span>到</span>
+        <input type="number" id="input-modify-right" value="2" placeholder="右边界" style="width: 80px;">
+        <span>增加</span>
+        <input type="number" id="input-modify-value" value="5" placeholder="修改值" style="width: 80px;">
+        <button id="btn-apply-modification" class="btn">⚡ 应用修改</button>
+      </div>
+    </div>
+    
+    <div id="custom-tree-visualizer-host"></div>
+    
+    <div id="console-output"></div>
+  </div>
+  
+  <script>
+    // 重定向console.log到页面显示
+    const originalLog = console.log;
+    const consoleOutput = document.getElementById('console-output');
+    
+    console.log = function(...args) {
+      originalLog(...args);
+      const timestamp = new Date().toLocaleTimeString();
+      consoleOutput.textContent += `[${timestamp}] ${args.join(' ')}\n`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    };
+    
+    console.log('🚀 完全独立测试页面启动...');
+    
+    // 检测脚本加载状态
+    let checkCount = 0;
+    const maxChecks = 20;
+    
+    function checkModuleLoaded() {
+      checkCount++;
+      console.log(`第${checkCount}次检查模块加载状态...`);
+      
+      if (window.ModifyTreeVisualizer) {
+        console.log('✅ ModifyTreeVisualizer 模块已加载!');
+        console.log('模块内容:', Object.keys(window.ModifyTreeVisualizer));
+        
+        try {
+          console.log('🔧 开始初始化...');
+          window.ModifyTreeVisualizer.initModifyTreeVisualizer();
+          console.log('✅ 初始化完成');
+          
+          // 自动测试基本可视化
+          setTimeout(() => {
+            console.log('🧪 开始自动可视化测试...');
+            const container = document.getElementById('custom-tree-visualizer-host');
+            const testData = [1, 2, 3, 4];
+            
+            if (container) {
+              console.log('📊 测试数据:', testData);
+              console.log('📦 目标容器:', container);
+              window.ModifyTreeVisualizer.buildModifyTreeVisualizationWithData(testData, container, false);
+              console.log('✅ 可视化函数已调用');
+            } else {
+              console.log('❌ 容器未找到');
+            }
+          }, 1000);
+          
+        } catch (error) {
+          console.log('❌ 初始化失败:', error.message);
+          console.log('错误详情:', error);
+        }
+        
+        return;
+      }
+      
+      if (checkCount < maxChecks) {
+        console.log('⏳ 模块尚未加载，等待中...');
+        setTimeout(checkModuleLoaded, 250);
+      } else {
+        console.log('❌ 模块加载超时');
+        console.log('window 对象上的可用属性:');
+        Object.keys(window).filter(key => key.includes('Tree') || key.includes('Modify')).forEach(key => {
+          console.log(`  - ${key}:`, typeof window[key]);
+        });
+      }
+    }
+    
+    // 页面加载完成后开始检查
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📄 DOM 加载完成');
+      checkModuleLoaded();
+    });
+    
+    // 脚本加载后也检查一次
+    window.addEventListener('load', () => {
+      console.log('🌟 页面完全加载完成');
+      if (!window.ModifyTreeVisualizer) {
+        setTimeout(checkModuleLoaded, 100);
+      }
+    });
+  </script>
+  
+  <!-- 最后加载我们的模块 -->
+  <script src="js/generate_Visualizer_modify.js"></script>
+</body>
+</html>
