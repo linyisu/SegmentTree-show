@@ -140,7 +140,7 @@ function adjustContainerSize() {
     // 根据是否有线段树来调整高度
     if (segmentTree && segmentTree.n > 0) {
         const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
-        const height = Math.max(400, levels * 120 + 100);
+        const height = Math.max(450, levels * 150 + 100); // 增加高度以适应新的节点尺寸
         treeContainer.style.minHeight = height + 'px';
     } else {
         treeContainer.style.minHeight = '200px';
@@ -213,8 +213,7 @@ function createTreeNodes() {
         // Clear container after fade out
         treeContainer.innerHTML = '';
         nodeElements = [];
-        
-        // Get theme colors
+          // Get theme colors
         const isDark = document.body.classList.contains('dark');
         const isEyeCare = document.body.classList.contains('eye-care');
         
@@ -226,22 +225,39 @@ function createTreeNodes() {
         // Tree layout parameters
         const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
         const nodeWidth = 120;
-        const nodeHeight = 95;
-        const levelHeight = 130;
+        const nodeHeight = 110; // 增加高度以容纳懒标记
+        const levelHeight = 140; // 增加层高
         const containerWidth = Math.min(1200, window.innerWidth - 80);
         
-        // Create level containers
+        // 响应式设计：根据屏幕尺寸调整节点大小
+        const screenWidth = window.innerWidth;
+        let responsiveNodeWidth = nodeWidth;
+        let responsiveNodeHeight = nodeHeight;
+        let responsiveFontSize = 13;
+        
+        if (screenWidth <= 480) {
+            responsiveNodeWidth = 85;
+            responsiveNodeHeight = 95;
+            responsiveFontSize = 10;
+        } else if (screenWidth <= 768) {
+            responsiveNodeWidth = 100;
+            responsiveNodeHeight = 100;
+            responsiveFontSize = 11;
+        }
+          // Create level containers
         const levelContainers = [];
         for (let i = 0; i < levels; i++) {
             const levelContainer = document.createElement('div');
             levelContainer.style.cssText = `
                 display: flex;
-                justify-content: center;
+                justify-content: space-around;
                 align-items: center;
                 width: 100%;
                 height: ${levelHeight}px;
                 position: relative;
                 margin-bottom: 10px;
+                padding: 0 20px;
+                box-sizing: border-box;
             `;
             treeContainer.appendChild(levelContainer);
             levelContainers.push(levelContainer);
@@ -263,10 +279,9 @@ function createTreeNodes() {
             
             // Create node element
             const nodeElement = document.createElement('div');
-            nodeElement.className = 'tree-node';
-            nodeElement.style.cssText = `
-                width: ${nodeWidth}px;
-                height: ${nodeHeight}px;
+            nodeElement.className = 'tree-node';            nodeElement.style.cssText = `
+                width: ${responsiveNodeWidth}px;
+                height: ${responsiveNodeHeight}px;
                 background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor} 30%, ${secondaryColor} 70%, ${secondaryColor} 100%);
                 border: 2px solid ${borderColor};
                 border-radius: 15px;
@@ -277,26 +292,31 @@ function createTreeNodes() {
                 align-items: center;
                 font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: ${responsiveFontSize}px;
                 text-align: center;
-                line-height: 1.3;
+                line-height: 1.2;
                 box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
                 position: relative;
-                margin: 0 10px;
+                margin: 0 5px;
                 transition: all 0.3s ease;
                 cursor: default;
                 text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
                 opacity: 0;
                 transform: scale(0.8) translateY(-20px);
                 z-index: 2;
-            `;
-            
-            // Add node content
-            const content = `
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
-                <div style="margin-bottom: 1px;">sum: ${sum}</div>
-                <div style="margin-bottom: 1px;">min: ${minVal}</div>
-                <div>max: ${maxVal}</div>
+                flex: 1;
+                max-width: ${responsiveNodeWidth}px;
+            `;            // Add node content with lazy tag
+            const lazyValue = segmentTree.lazy[node];
+            const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
+            const lazyStyle = lazyValue === 0 ? 
+                `color: #888; font-weight: normal;` : 
+                `color: #ffeb3b; font-weight: bold; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px;`;            const content = `
+                <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
+                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${sum}</div>
+                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${minVal}</div>
+                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${maxVal}</div>
+                <div class="lazy-tag" style="font-size: ${responsiveFontSize - 1}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
             `;
             nodeElement.innerHTML = content;
             
@@ -433,15 +453,11 @@ function initEventListeners() {
     if (!randomBtn || !updateBtn || !inputElement || !applyBtn) {
         console.error('某些必需的DOM元素不存在');
         return;
-    }
-    
-    // 随机生成数据按钮
+    }    // 随机生成数据按钮
     randomBtn.addEventListener('click', function() {
         const randomData = generateRandomData();
         inputElement.value = randomData;
-    });
-
-    // 更新自定义数据按钮
+    });    // 更新自定义数据按钮
     updateBtn.addEventListener('click', function() {
         const input = inputElement.value.trim();
         
@@ -459,7 +475,9 @@ function initEventListeners() {
         
         if (!validateArrayLength(arr)) {
             return;
-        }        try {
+        }
+        
+        try {
             segmentTree = new SegmentTree(arr);
             
             if (!treeContainer) {
@@ -476,7 +494,7 @@ function initEventListeners() {
             console.error('构建线段树时出错:', error);
             alert('构建线段树时出错，请检查输入数据。');
         }
-    });    // 应用修改按钮
+    });// 应用修改按钮
     document.getElementById('btn-apply-modification').addEventListener('click', function() {
         const left = parseInt(document.getElementById('input-modify-left').value);
         const right = parseInt(document.getElementById('input-modify-right').value);
@@ -516,14 +534,17 @@ function initEventListeners() {
         // 延迟重绘以显示动画效果
         setTimeout(() => {
             adjustContainerSize();
-            drawTree();
-        }, 800);
-    });    // 主题切换事件
+            drawTree();        }, 800);
+    });
+    
+    // 主题切换事件
     document.querySelectorAll('.theme-option').forEach(button => {
         button.addEventListener('click', () => {
             setTimeout(drawTree, 50);
         });
-    });    // 初始数据设置 - 提供示例数据并自动构建树
+    });
+    
+    // 初始数据设置 - 提供示例数据并自动构建树
     if (!inputElement.value) {
         // 如果没有初始值，生成示例数据
         const exampleData = "1 3 5 7 2 4 6 8";
@@ -539,10 +560,10 @@ function initEventListeners() {
                 drawTree();
             } catch (error) {
                 console.error('构建示例线段树时出错:', error);
-            }
-        }, 100);
+            }        }, 100);
     }
-      window.addEventListener('resize', () => {
+    
+    window.addEventListener('resize', () => {
         adjustContainerSize();
         if (segmentTree) {
             setTimeout(() => {
