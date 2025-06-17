@@ -69,9 +69,7 @@
         <ul>
           <li><strong>Info 结构体</strong>：每个节点维护区间的信息，比如区间和、最大值、最小值等；支持合并（<strong> operator+ </strong>）和更新（<strong> apply </strong>）。</li>
           <li><strong>Laz 结构体</strong>：用于记录对某一段区间的修改请求。它可作用于 <strong> Info </strong>的懒更新。</li>
-        </ul>
-
-        <pre class="code-block"><code>struct Laz 
+        </ul>        <pre class="code-block"><code>struct Laz 
 {
     int add = 0;
     void apply(const Laz &tag) 
@@ -91,9 +89,9 @@ struct Info
     {
         if (tag.add) 
         {
-          mn += tag.add;
-          mx += tag.add;
-          sum += tag.add * len;
+            mn += tag.add;
+            mx += tag.add;
+            sum += tag.add * len;
         }
     }
 

@@ -37,6 +37,18 @@ SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
     }
 
     // 只有在需要访问子节点时，才下推懒标记
+    this.pushDown(node, start, end);
+    
+    // 递归更新子节点
+    const mid = Math.floor((start + end) / 2);
+    this.updateRange(2 * node, start, mid, l, r, val);
+    this.updateRange(2 * node + 1, mid + 1, end, l, r, val);
+    
+    // 更新当前节点
+    this.pushUp(node);
+};
+
+SegmentTree.prototype.pushDown = function(node, start, end) {
     if (this.lazy[node] !== 0) {
         this.tree[node] += (end - start + 1) * this.lazy[node];
         this.minTree[node] += this.lazy[node];
@@ -47,31 +59,24 @@ SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
         }
         this.lazy[node] = 0;
     }
+};
 
-    // 递归处理子区间
-    const mid = Math.floor((start + end) / 2);
-    this.updateRange(2 * node, start, mid, l, r, val);
-    this.updateRange(2 * node + 1, mid + 1, end, l, r, val);
+SegmentTree.prototype.pushUp = function(node) {
+    // 确保子节点的信息是最新的（考虑懒标记）
+    const leftChild = 2 * node;
+    const rightChild = 2 * node + 1;
     
-    // 从子节点更新当前节点（需要考虑子节点的懒标记）
-    let leftSum = this.tree[2 * node];
-    let rightSum = this.tree[2 * node + 1];
-    let leftMin = this.minTree[2 * node];
-    let rightMin = this.minTree[2 * node + 1];
-    let leftMax = this.maxTree[2 * node];
-    let rightMax = this.maxTree[2 * node + 1];
+    // 获取左子节点的实际值
+    let leftSum = this.tree[leftChild];
+    let leftMin = this.minTree[leftChild];
+    let leftMax = this.maxTree[leftChild];
     
-    if (this.lazy[2 * node] !== 0) {
-        leftSum += (mid - start + 1) * this.lazy[2 * node];
-        leftMin += this.lazy[2 * node];
-        leftMax += this.lazy[2 * node];
-    }
-    if (this.lazy[2 * node + 1] !== 0) {
-        rightSum += (end - mid) * this.lazy[2 * node + 1];
-        rightMin += this.lazy[2 * node + 1];
-        rightMax += this.lazy[2 * node + 1];
-    }
+    // 获取右子节点的实际值
+    let rightSum = this.tree[rightChild];
+    let rightMin = this.minTree[rightChild];
+    let rightMax = this.maxTree[rightChild];
     
+    // 合并子节点信息
     this.tree[node] = leftSum + rightSum;
     this.minTree[node] = Math.min(leftMin, rightMin);
     this.maxTree[node] = Math.max(leftMax, rightMax);
@@ -392,28 +397,22 @@ function createTreeNodes() {
                 width: ${actualContentWidth}px;
                 height: ${levelHeight}px;
                 margin-bottom: 10px;
-                overflow: visible;
-            `;
+                overflow: visible;            `;
             treeContainer.appendChild(levelContainer);
             levelContainers.push(levelContainer);
-        }// 直接基于收集到的节点创建DOM元素，使用绝对定位
+        }
+
+        // 直接基于收集到的节点创建DOM元素，使用绝对定位
         function createNodeElement(nodeInfo) {
             const { node, start, end, level, position } = nodeInfo;
             
-            // Calculate node values with lazy propagation
+            // Calculate node values - 直接使用当前值，不要重复应用懒标记
             let sum = segmentTree.tree[node];
             let minVal = segmentTree.minTree[node];
             let maxVal = segmentTree.maxTree[node];
             
-            // 当前节点的实际懒标记值
+            // 当前节点的懒标记值（仅用于显示）
             const actualLazyValue = segmentTree.lazy[node];
-            
-            // 如果当前节点有懒标记，需要应用到显示的值上
-            if (actualLazyValue !== 0) {
-                sum += (end - start + 1) * actualLazyValue;
-                minVal += actualLazyValue;
-                maxVal += actualLazyValue;
-            }
             
             // Create node element
             const nodeElement = document.createElement('div');
@@ -485,14 +484,14 @@ function createTreeNodes() {
             
             return nodeElement;
         }
-        
-        // 按层级创建节点，保持父子位置关系
+          // 按层级创建节点，保持父子位置关系
         nodesByLevel.forEach((levelNodes, levelIndex) => {
             levelNodes.forEach((nodeInfo) => {
                 createNodeElement(nodeInfo);
             });
         });
-          // Add connecting lines after all nodes are created
+        
+        // Add connecting lines after all nodes are created
         setTimeout(() => {
             addConnectingLines();
         }, nodesByLevel.length * 100 + 500); // Wait for all animations to finish
