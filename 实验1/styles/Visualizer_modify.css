@@ -1,0 +1,80 @@
+/* 线段树可视化样式 */
+.tree-node {
+    transition: all 0.3s ease;
+}
+
+.tree-node:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.tree-node.active {
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 20px rgba(255, 235, 59, 0.8) !important;
+    border-color: #ffeb3b !important;
+    animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+/* 懒标记特殊样式 */
+.tree-node .lazy-tag {
+    background: rgba(255, 235, 59, 0.2);
+    border-radius: 4px;
+    padding: 1px 4px;
+    margin-top: 2px;
+}
+
+/* 不同主题下的懒标记颜色 */
+.dark .tree-node .lazy-tag {
+    color: #ffeb3b;
+    background: rgba(255, 235, 59, 0.15);
+}
+
+.eye-care .tree-node .lazy-tag {
+    color: #ffc107;
+    background: rgba(255, 193, 7, 0.15);
+}
+
+/* 确保每层容器正确布局 */
+#tree-container > div {
+    min-height: 140px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .tree-node {
+        font-size: 11px !important;
+        width: 100px !important;
+        height: 95px !important;
+    }
+    
+    #tree-container > div {
+        padding: 0 10px !important;
+        min-height: 120px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .tree-node {
+        font-size: 10px !important;
+        width: 85px !important;
+        height: 85px !important;
+        margin: 0 2px !important;
+    }
+    
+    #tree-container > div {
+        padding: 0 5px !important;
+        min-height: 100px !important;
+    }
+}
