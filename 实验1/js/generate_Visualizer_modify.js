@@ -221,20 +221,12 @@ function createTreeNodes() {
         node.style.opacity = '0';
         node.style.transform = 'scale(0.8)';
     });
-    
-    setTimeout(() => {
+      setTimeout(() => {
         // Clear container after fade out
         treeContainer.innerHTML = '';
         nodeElements = [];
-          // Get theme colors
-        const isDark = document.body.classList.contains('dark');
-        const isEyeCare = document.body.classList.contains('eye-care');
         
-        const primaryColor = isDark ? '#a2cbfe' : isEyeCare ? '#4caf50' : '#6c5ce7';
-        const secondaryColor = isDark ? '#7b68ee' : isEyeCare ? '#66bb6a' : '#a29bfe';
-        const textColor = '#ffffff';
-        const borderColor = '#ffffff';
-          // Tree layout parameters
+        // Tree layout parameters
         const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
         const nodeWidth = 120;
         const nodeHeight = 110; // 增加高度以容纳懒标记
@@ -472,17 +464,42 @@ function createTreeNodes() {
             let maxVal = segmentTree.maxTree[node];
             
             // 当前节点的懒标记值（仅用于显示）
-            const actualLazyValue = segmentTree.lazy[node];
-              // Create node element
+            const actualLazyValue = segmentTree.lazy[node];            // Create node element
             const nodeElement = document.createElement('div');
-            nodeElement.className = 'tree-node';
+            nodeElement.className = `tree-node depth-${level}`;
+            
+            // 根据深度设置不同的颜色，和前面线段树保持一致
+            let nodeBackground, nodeShadow;
+            switch (level) {
+                case 0:
+                    nodeBackground = '#6c5ce7';
+                    nodeShadow = '0 6px 16px rgba(108, 92, 231, 0.4)';
+                    break;
+                case 1:
+                    nodeBackground = '#fd79a8';
+                    nodeShadow = '0 5px 14px rgba(253, 121, 168, 0.3)';
+                    break;
+                case 2:
+                    nodeBackground = '#00b894';
+                    nodeShadow = '0 4px 12px rgba(0, 184, 148, 0.3)';
+                    break;
+                case 3:
+                    nodeBackground = '#fdcb6e';
+                    nodeShadow = '0 3px 10px rgba(253, 203, 110, 0.3)';
+                    break;
+                default:
+                    // 为更深层级使用循环颜色
+                    const colors = ['#6c5ce7', '#fd79a8', '#00b894', '#fdcb6e'];
+                    const colorIndex = level % colors.length;
+                    nodeBackground = colors[colorIndex];
+                    nodeShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+            }
               // 确保节点位置在容器边界内，并保持节点完整性
             const nodeHalfWidth = responsiveNodeWidth / 2;
             const minLeft = drawingPadding;
             const maxLeft = actualContentWidth - drawingPadding - responsiveNodeWidth;
             const nodeLeft = Math.max(minLeft, Math.min(position - nodeHalfWidth, maxLeft));
-            
-            // 使用绝对定位，将节点放在精确的位置
+              // 使用绝对定位，将节点放在精确的位置
             nodeElement.style.cssText = `
                 position: absolute;
                 left: ${nodeLeft}px;
@@ -490,25 +507,28 @@ function createTreeNodes() {
                 transform: translateY(-50%);
                 width: ${responsiveNodeWidth}px;
                 height: ${responsiveNodeHeight}px;
-                background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor} 30%, ${secondaryColor} 70%, ${secondaryColor} 100%);
-                border: 2px solid ${borderColor};
-                border-radius: 15px;
-                color: ${textColor};
+                background: ${nodeBackground};
+                border: 1px solid rgba(255, 255, 255, 0.8);
+                border-radius: 5px;
+                color: #ffffff;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
-                font-weight: bold;
+                font-weight: 640;
                 font-size: ${responsiveFontSize}px;
                 text-align: center;
-                line-height: 1.2;
-                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                line-height: 1.3;
+                box-shadow: ${nodeShadow};
                 transition: all 0.3s ease;
                 cursor: default;
                 text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
                 opacity: 0;
                 z-index: 2;
+                white-space: pre-line;
+                box-sizing: border-box;
+                backdrop-filter: blur(3px);
             `;
             
             // Add node content with lazy tag

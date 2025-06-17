@@ -129,12 +129,12 @@
 }
 
 .tree-node:hover {
-    transform: scale(1.05) !important;
+    /* 移除transform效果，只保留阴影变化 */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .tree-node.active {
-    transform: scale(1.1) !important;
+    /* 移除transform效果，只保留其他视觉效果 */
     box-shadow: 0 0 20px rgba(255, 235, 59, 0.8) !important;
     border-color: #ffeb3b !important;
     animation: pulse 0.6s ease-in-out;
