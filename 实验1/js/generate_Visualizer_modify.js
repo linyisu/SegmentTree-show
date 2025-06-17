@@ -680,22 +680,21 @@ function drawNodeConnections(node, start, end) {
     const leftChildNode = 2 * node;
     const rightChildNode = 2 * node + 1;
     
-    // 找到子节点元素（它们可能还没有创建完成）
+    // 找到子节点元素
     const leftChild = nodeElements.find(n => n.node === leftChildNode);
-    const rightChild = nodeElements.find(n => n.node === rightChildNode);
-    
-    // 获取父节点的位置（下底边中点）
+    const rightChild = nodeElements.find(n => n.node === rightChildNode);    // 获取容器的位置
+    const containerRect = treeContainer.getBoundingClientRect();    // 获取父节点的准确位置
     const parentRect = parentNodeData.element.getBoundingClientRect();
-    const containerRect = treeContainer.getBoundingClientRect();
-    
     const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-    const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
+    // 父节点底边：让连线稍微穿透边框，视觉效果更自然
+    const parentBottomY = parentRect.bottom - containerRect.top + 1;
     
     // 绘制到左子节点的连线
     if (leftChild && leftChild.element) {
         const childRect = leftChild.element.getBoundingClientRect();
         const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-        const childTopY = childRect.top - containerRect.top;
+        // 子节点顶边：让连线稍微穿透边框，视觉效果更自然
+        const childTopY = childRect.top - containerRect.top - 1;
         
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', parentCenterX);
@@ -707,20 +706,21 @@ function drawNodeConnections(node, start, end) {
         line.setAttribute('stroke-linecap', 'round');
         line.style.opacity = '0';
         line.style.transition = 'opacity 0.3s ease';
+        line.classList.add(`line-${node}-${leftChildNode}`);
         
         svg.appendChild(line);
-          // 延迟显示连线
+        
+        // 延迟显示连线
         const timing = getAnimationTiming();
         setTimeout(() => {
             line.style.opacity = '1';
         }, timing.fade / 4);
-    }
-    
-    // 绘制到右子节点的连线
+    }    // 绘制到右子节点的连线
     if (rightChild && rightChild.element) {
         const childRect = rightChild.element.getBoundingClientRect();
         const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-        const childTopY = childRect.top - containerRect.top;
+        // 子节点顶边：让连线稍微穿透边框，视觉效果更自然
+        const childTopY = childRect.top - containerRect.top - 1;
         
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', parentCenterX);
@@ -732,9 +732,11 @@ function drawNodeConnections(node, start, end) {
         line.setAttribute('stroke-linecap', 'round');
         line.style.opacity = '0';
         line.style.transition = 'opacity 0.3s ease';
+        line.classList.add(`line-${node}-${rightChildNode}`);
         
         svg.appendChild(line);
-          // 延迟显示连线
+        
+        // 延迟显示连线
         const timing = getAnimationTiming();
         setTimeout(() => {
             line.style.opacity = '1';
@@ -787,24 +789,21 @@ function drawAllConnectingLines() {
         const rightChildNode = 2 * node + 1;
         
         // 找到子节点元素
-        const leftChild = nodeElements.find(n => n.node === leftChildNode);
-        const rightChild = nodeElements.find(n => n.node === rightChildNode);
-        
-        // 获取父节点的位置（下底边中点）
+        const leftChild = nodeElements.find(n => n.node === leftChildNode);        // 获取容器的位置
+        const containerRect = treeContainer.getBoundingClientRect();        // 获取父节点的准确位置
         const parentRect = element.getBoundingClientRect();
-        const containerRect = treeContainer.getBoundingClientRect();
-        
         const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-        const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
+        // 父节点底边：让连线稍微穿透边框，视觉效果更自然
+        const parentBottomY = parentRect.bottom - containerRect.top + 1;
         
         // 绘制到左子节点的连线
         if (leftChild && leftChild.element) {
             // 检查是否已存在这条连线
             const existingLine = svg.querySelector(`.line-${node}-${leftChildNode}`);
-            if (!existingLine) {
-                const childRect = leftChild.element.getBoundingClientRect();
+            if (!existingLine) {                const childRect = leftChild.element.getBoundingClientRect();
                 const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-                const childTopY = childRect.top - containerRect.top;
+                // 子节点顶边：让连线稍微穿透边框，视觉效果更自然
+                const childTopY = childRect.top - containerRect.top - 1;
                 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', parentCenterX);
@@ -825,10 +824,10 @@ function drawAllConnectingLines() {
         if (rightChild && rightChild.element) {
             // 检查是否已存在这条连线
             const existingLine = svg.querySelector(`.line-${node}-${rightChildNode}`);
-            if (!existingLine) {
-                const childRect = rightChild.element.getBoundingClientRect();
+            if (!existingLine) {                const childRect = rightChild.element.getBoundingClientRect();
                 const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-                const childTopY = childRect.top - containerRect.top;
+                // 子节点顶边：让连线稍微穿透边框，视觉效果更自然
+                const childTopY = childRect.top - containerRect.top - 1;
                 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', parentCenterX);
@@ -969,4 +968,33 @@ function updateNodeValuesOnly() {
             <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
         `;
     });
+}
+
+// 获取节点的精确位置信息
+function getNodePosition(nodeData) {
+    const element = nodeData.element;
+    const offsetLeft = parseFloat(element.style.left) || 0;
+    const width = parseFloat(element.style.width) || 120;
+    const height = parseFloat(element.style.height) || 110;
+    
+    // 根据响应式设计计算层级高度
+    const screenWidth = window.innerWidth;
+    let levelHeight = 150;
+    let topOffset = 120;
+    
+    if (screenWidth <= 480) {
+        levelHeight = 130;
+        topOffset = 100;
+    } else if (screenWidth <= 768) {
+        levelHeight = 140;
+        topOffset = 110;
+    }
+    
+    return {
+        centerX: offsetLeft + width / 2,
+        topY: nodeData.level * levelHeight + topOffset,
+        bottomY: nodeData.level * levelHeight + topOffset + height,
+        width: width,
+        height: height
+    };
 }
