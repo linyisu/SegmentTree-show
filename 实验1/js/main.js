@@ -18,9 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.SettingsManager) {
     window.SettingsManager.initSettings();
   }
-  
-  if (window.TreeVisualizer) {
+    if (window.TreeVisualizer) {
     window.TreeVisualizer.initTreeVisualizer();
+  }
+  
+  if (window.ModifyTreeVisualizer) {
+    window.ModifyTreeVisualizer.initModifyTreeVisualizer();
   }
   
   if (window.Quiz) {

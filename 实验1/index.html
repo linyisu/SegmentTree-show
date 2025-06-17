@@ -183,7 +183,9 @@ void push_down(int u, int llen, int rlen)
     // 如果修改区间与右节点区间有交集，则递归修改右子节点
     if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
     push_up(u);
-}</code></pre>        <h3>🔧 可视化修改与数据维护</h3>
+}</code></pre>
+
+        <h3>🔧 可视化修改与数据维护</h3>
         <p>在此处输入新的数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p><div class="data-input-container card">            <h4>线段树可视化操作:</h4>            <!-- 输入控件在上方，左右各占一半并分别居中 -->
             <div class="settings-row" style="display: flex;">
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">

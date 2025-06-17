@@ -1,964 +1,853 @@
-// 线段树实现
-function SegmentTree(arr) {
-    this.arr = arr.slice();
-    this.n = arr.length;
-    this.tree = new Array(4 * this.n).fill(0);
-    this.lazy = new Array(4 * this.n).fill(0);
-    this.minTree = new Array(4 * this.n).fill(0);
-    this.maxTree = new Array(4 * this.n).fill(0);
-    if (this.n > 0) this.build(1, 0, this.n - 1);
-}
+/* 线段树区间修改可视化模块 */
 
-SegmentTree.prototype.build = function(node, start, end) {
-    if (start === end) {
-        this.tree[node] = this.arr[start];
-        this.minTree[node] = this.arr[start];
-        this.maxTree[node] = this.arr[start];
-        return;
-    }
-    const mid = Math.floor((start + end) / 2);
-    this.build(2 * node, start, mid);
-    this.build(2 * node + 1, mid + 1, end);
-    this.tree[node] = this.tree[2 * node] + this.tree[2 * node + 1];
-    this.minTree[node] = Math.min(this.minTree[2 * node], this.minTree[2 * node + 1]);
-    this.maxTree[node] = Math.max(this.maxTree[2 * node], this.maxTree[2 * node + 1]);
-};
+// --- Start of Adaptive Functionality State ---
+let lastModifyBuiltN = 0;
+let lastModifyBuiltContainer = null;
+let isModifyTreeRendered = false;
+let modifyDomNodeElements = new Map(); // Stores DOM node elements, keyed by 'u'
+let modifyDomLineElements = new Map(); // Stores DOM line elements, keyed by child 'u'
+let currentModifyTreeLevelsData = [];
+let currentModifyTreeBuildOrderData = [];
+let activeModifyBuildAnimationTimeout = null; // To cancel ongoing build animation
+// --- End of Adaptive Functionality State ---
 
-SegmentTree.prototype.updateRange = function(node, start, end, l, r, val) {
-    if (start > r || end < l) return;
-
-    if (l <= start && end <= r) {
-        this.lazy[node] += val;
-        this.tree[node] += (end - start + 1) * val;
-        this.minTree[node] += val;
-        this.maxTree[node] += val;
-        return;
-    }
-
-    this.pushDown(node, start, end);
-    
-    const mid = Math.floor((start + end) / 2);
-    this.updateRange(2 * node, start, mid, l, r, val);
-    this.updateRange(2 * node + 1, mid + 1, end, l, r, val);
-    
-    this.pushUp(node);
-};
-
-SegmentTree.prototype.pushDown = function(node, start, end) {
-    if (this.lazy[node] !== 0) {
-        const lazyValue = this.lazy[node];
-        
-        if (start !== end) {
-            this.lazy[2 * node] += lazyValue;
-            this.lazy[2 * node + 1] += lazyValue;
-            
-            const mid = Math.floor((start + end) / 2);
-            
-            this.tree[2 * node] += (mid - start + 1) * lazyValue;
-            this.minTree[2 * node] += lazyValue;
-            this.maxTree[2 * node] += lazyValue;
-            
-            this.tree[2 * node + 1] += (end - mid) * lazyValue;
-            this.minTree[2 * node + 1] += lazyValue;
-            this.maxTree[2 * node + 1] += lazyValue;
-        }
-        
-        this.lazy[node] = 0;
-    }
-};
-
-SegmentTree.prototype.pushUp = function(node) {
-    this.tree[node] = this.tree[2 * node] + this.tree[2 * node + 1];
-    this.minTree[node] = Math.min(this.minTree[2 * node], this.minTree[2 * node + 1]);
-    this.maxTree[node] = Math.max(this.maxTree[2 * node], this.maxTree[2 * node + 1]);
-};
-
-SegmentTree.prototype.querySum = function(l, r) {
-    return this.query(1, 0, this.n - 1, l, r);
-};
-
-SegmentTree.prototype.query = function(node, start, end, l, r) {
-    if (start > r || end < l) return 0;
-    
-    if (l <= start && end <= r) {
-        return this.tree[node];
-    }
-    
-    this.pushDown(node, start, end);
-    
-    const mid = Math.floor((start + end) / 2);
-    const leftSum = this.query(2 * node, start, mid, l, r);
-    const rightSum = this.query(2 * node + 1, mid + 1, end, l, r);
-    
-    return leftSum + rightSum;
-};
-
-// 全局变量
-let segmentTree = null;
-let treeContainer = null;
-let nodeElements = [];
-let isAnimating = false;
-let currentTreeDisplayed = false;
-
-function setupTreeContainer() {
-    treeContainer = document.getElementById('custom-tree-visualizer-host');
-    if (!treeContainer) {
-        console.error('未找到树容器元素（ID: custom-tree-visualizer-host）');
-        alert('未找到树容器元素，请确保HTML中包含ID为custom-tree-visualizer-host的div');
-        return false;
-    }
-    
-    treeContainer.style.cssText = `
-        width: 100%;
-        min-height: 200px;
-        padding: 20px;
-        box-sizing: border-box;
-        overflow: visible;
-        position: relative;
-        margin: 20px auto;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    `;
-    
-    console.log('树容器已设置');
-    return true;
-}
-
-function adjustContainerSize() {
-    if (!treeContainer || !segmentTree) {
-        console.warn('调整容器大小时，treeContainer或segmentTree未定义');
-        return;
-    }
-    
-    const screenWidth = window.innerWidth;
-    const levels = Math.ceil(Math.log2(segmentTree.n)) + 1;
-    const estimatedHeight = levels * 160 + 100;
-    treeContainer.style.minHeight = `${Math.max(200, estimatedHeight)}px`;
-    
-    if (screenWidth <= 768) {
-        treeContainer.style.padding = '10px';
-    } else {
-        treeContainer.style.padding = '20px';
-    }
-}
-
-function generateRandomData() {
-    const length = Math.floor(Math.random() * 6) + 3;
-    const data = [];
-    for (let i = 0; i < length; i++) {
-        data.push(Math.floor(Math.random() * 10) + 1);
-    }
-    return data.join(' ');
-}
-
-function validateArrayLength(arr) {
-    if (arr.length < 1) {
-        alert('数组长度不能为空');
-        return false;
-    }
-    if (arr.length > 16) {
-        alert('数组长度不能超过16个元素');
-        return false;
-    }
-    return true;
-}
-
-function updateRangeInputLimits(arrayLength) {
-    const leftInput = document.getElementById('input-modify-left');
-    const rightInput = document.getElementById('input-modify-right');
-    
-    if (leftInput && rightInput) {
-        leftInput.min = 1;
-        leftInput.max = arrayLength;
-        leftInput.value = 1;
-        
-        rightInput.min = 1;
-        rightInput.max = arrayLength;
-        rightInput.value = arrayLength;
-    } else {
-        console.warn('未找到范围输入元素');
-    }
-}
-
-function drawTree() {
-    if (!treeContainer || !segmentTree) {
-        console.error('drawTree: treeContainer或segmentTree未定义');
-        return;
-    }
-    
-    isAnimating = true;
-    createTreeNodes(false);
-    isAnimating = false;
-}
-
-function drawTreeWithAnimation() {
-    if (!treeContainer || !segmentTree) {
-        console.error('drawTreeWithAnimation: treeContainer或segmentTree未定义');
-        return;
-    }
-    
-    isAnimating = true;
-    currentTreeDisplayed = true;
-    createTreeNodes(true);
-    isAnimating = false;
-}
-
-function createTreeNodes(withAnimation = false) {
-    if (!treeContainer) {
-        console.error('createTreeNodes: treeContainer未定义');
-        return;
-    }
-    
-    const existingNodes = treeContainer.querySelectorAll('.tree-node, .connection-line');
-    existingNodes.forEach(node => {
-        node.style.opacity = '0';
-        node.style.transform = 'scale(0.8)';
-        if (node.classList.contains('active')) {
-            node.classList.remove('active');
-        }
-    });
-    
-    setTimeout(() => {
-        treeContainer.innerHTML = '';
-        nodeElements = [];
-        
-        const screenWidth = window.innerWidth;
-        let responsiveNodeWidth = 120;
-        let responsiveNodeHeight = 110;
-        let responsiveFontSize = 13;
-        const levelHeight = 160;
-        
-        if (screenWidth <= 480) {
-            responsiveNodeWidth = 80;
-            responsiveNodeHeight = 85;
-            responsiveFontSize = 10;
-        } else if (screenWidth <= 768) {
-            responsiveNodeWidth = 95;
-            responsiveNodeHeight = 95;
-            responsiveFontSize = 11;
-        }
-        
-        const nodesByLevel = [];
-        const leafNodes = [];
-        
-        function collectNodes(node, start, end, level) {
-            if (node >= segmentTree.tree.length) return;
-            
-            while (nodesByLevel.length <= level) {
-                nodesByLevel.push([]);
-            }
-            
-            const nodeInfo = {
-                node: node,
-                start: start,
-                end: end,
-                level: level
-            };
-            
-            nodesByLevel[level].push(nodeInfo);
-            
-            if (start === end) {
-                leafNodes.push(nodeInfo);
-            } else {
-                const mid = Math.floor((start + end) / 2);
-                collectNodes(2 * node, start, mid, level + 1);
-                collectNodes(2 * node + 1, mid + 1, end, level + 1);
-            }
-        }
-        
-        collectNodes(1, 0, segmentTree.n - 1, 0);
-        
-        const containerWidth = treeContainer.clientWidth - 40;
-        const nodeSpacing = Math.max(10, (containerWidth - leafNodes.length * responsiveNodeWidth) / (leafNodes.length + 1));
-        
-        treeContainer.style.height = `${nodesByLevel.length * levelHeight + 40}px`;
-        
-        const levelContainers = [];
-        for (let i = 0; i < nodesByLevel.length; i++) {
-            const levelContainer = document.createElement('div');
-            levelContainer.style.cssText = `
-                position: relative;
-                width: 100%;
-                height: ${levelHeight}px;
-                margin-bottom: 10px;
-                overflow: visible;
-            `;
-            treeContainer.appendChild(levelContainer);
-            levelContainers.push(levelContainer);
-        }
-        
-        function calculatePositions() {
-            const positions = new Map();
-            
-            leafNodes.forEach((leaf, index) => {
-                const x = nodeSpacing + index * (responsiveNodeWidth + nodeSpacing);
-                positions.set(leaf.node, x);
-            });
-            
-            for (let level = nodesByLevel.length - 2; level >= 0; level--) {
-                nodesByLevel[level].forEach(nodeInfo => {
-                    const { node, start, end } = nodeInfo;
-                    const mid = Math.floor((start + end) / 2);
-                    
-                    const leftChild = positions.get(2 * node);
-                    const rightChild = positions.get(2 * node + 1);
-                    
-                    if (leftChild !== undefined && rightChild !== undefined) {
-                        positions.set(node, (leftChild + rightChild) / 2);
-                    } else if (leftChild !== undefined) {
-                        positions.set(node, leftChild);
-                    } else if (rightChild !== undefined) {
-                        positions.set(node, rightChild);
-                    }
-                });
-            }
-            
-            return positions;
-        }
-        
-        const positions = calculatePositions();
-        
-        function createNodeElement(nodeInfo, delay = 0) {
-            const { node, start, end, level } = nodeInfo;
-            const position = positions.get(node);
-            
-            const sum = segmentTree.tree[node];
-            const minVal = segmentTree.minTree[node];
-            const maxVal = segmentTree.maxTree[node];
-            const lazyValue = segmentTree.lazy[node];
-            
-            const nodeWrapper = document.createElement('div');
-            nodeWrapper.style.cssText = `
-                position: absolute;
-                left: ${position}px;
-                top: 10px;
-                width: ${responsiveNodeWidth}px;
-                height: ${responsiveNodeHeight}px;
-                overflow: visible;
-                z-index: 2;
-            `;
-            
-            const nodeElement = document.createElement('div');
-            nodeElement.className = `tree-node depth-${level}`;
-            
-            let nodeBackground, nodeShadow;
-            switch (level) {
-                case 0:
-                    nodeBackground = '#6c5ce7';
-                    nodeShadow = '0 6px 16px rgba(108, 92, 231, 0.4)';
-                    break;
-                case 1:
-                    nodeBackground = '#fd79a8';
-                    nodeShadow = '0 5px 14px rgba(253, 121, 168, 0.3)';
-                    break;
-                case 2:
-                    nodeBackground = '#00b894';
-                    nodeShadow = '0 4px 12px rgba(0, 184, 148, 0.3)';
-                    break;
-                case 3:
-                    nodeBackground = '#fdcb6e';
-                    nodeShadow = '0 3px 10px rgba(253, 203, 110, 0.3)';
-                    break;
-                default:
-                    const colors = ['#6c5ce7', '#fd79a8', '#00b894', '#fdcb6e'];
-                    const colorIndex = level % colors.length;
-                    nodeBackground = colors[colorIndex];
-                    nodeShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
-            }
-            
-            nodeElement.style.cssText = `
-                width: 100%;
-                height: 100%;
-                background: ${nodeBackground};
-                border: 1px solid rgba(255, 255, 255, 0.8);
-                border-radius: 5px;
-                color: #ffffff;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
-                font-weight: 600;
-                font-size: ${responsiveFontSize}px;
-                text-align: center;
-                line-height: 1.3;
-                box-shadow: ${nodeShadow};
-                transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                cursor: default;
-                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-                opacity: ${withAnimation ? '0' : '1'};
-                transform: ${withAnimation ? 'scale(0)' : 'scale(1)'};
-                z-index: 2;
-                box-sizing: border-box;
-                overflow: visible;
-            `;
-            
-            const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
-            const lazyStyle = lazyValue === 0 ? '' : 'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
-            
-            nodeElement.innerHTML = `
-                <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${sum}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${minVal}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${maxVal}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
-            `;
-            
-            nodeWrapper.appendChild(nodeElement);
-            levelContainers[level].appendChild(nodeWrapper);
-            
-            nodeElements.push({
-                node: node,
-                element: nodeElement,
-                wrapper: nodeWrapper,
-                start: start,
-                end: end,
-                level: level,
-                position: position
-            });
-            
-            console.log(`创建节点 ${node}，位置: left=${position}px, 尺寸: ${responsiveNodeWidth}x${responsiveNodeHeight}`);
-            
-            if (withAnimation) {
-                setTimeout(() => {
-                    nodeElement.style.opacity = '1';
-                    nodeElement.style.transform = 'scale(1)';
-                    if (start !== end) {
-                        const timing = getAnimationTiming();
-                        setTimeout(() => {
-                            drawNodeConnections(node, start, end);
-                        }, timing.fade);
-                    }
-                }, delay);
-            }
-            
-            return nodeElement;
-        }
-        
-        if (withAnimation) {
-            const timing = getAnimationTiming();
-            
-            function animateNodeCreation(node, start, end, delay = 0) {
-                if (node >= segmentTree.tree.length) return delay;
-                
-                let currentDelay = delay;
-                
-                if (start === end) {
-                    const nodeInfo = nodesByLevel.flat().find(n => n.node === node);
-                    if (nodeInfo) {
-                        createNodeElement(nodeInfo, currentDelay);
-                        currentDelay += timing.step;
-                    }
-                } else {
-                    const mid = Math.floor((start + end) / 2);
-                    const leftDelay = animateNodeCreation(2 * node, start, mid, currentDelay);
-                    const rightDelay = animateNodeCreation(2 * node + 1, mid + 1, end, leftDelay + timing.step);
-                    currentDelay = rightDelay;
-                    const nodeInfo = nodesByLevel.flat().find(n => n.node === node);
-                    if (nodeInfo) {
-                        createNodeElement(nodeInfo, currentDelay + timing.step);
-                        currentDelay += timing.base;
-                    }
-                }
-                
-                return currentDelay;
-            }
-            
-            animateNodeCreation(1, 0, segmentTree.n - 1, 200);
-        } else {
-            nodesByLevel.forEach(levelNodes => {
-                levelNodes.forEach(nodeInfo => {
-                    createNodeElement(nodeInfo, 0);
-                });
-            });
-            
-            setTimeout(() => {
-                drawAllConnectingLines();
-            }, 100);
-        }
-    }, 300);
-}
-
-function getAnimationTiming() {
-    const speed = window.animationSpeed || 'normal';
-    const timings = {
-        'slow': { base: 600, step: 300, fade: 400 },
-        'normal': { base: 400, step: 200, fade: 300 },
-        'fast': { base: 200, step: 100, fade: 150 }
+// Debounce function
+function debounceModify(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
     };
-    return timings[speed] || timings['normal'];
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
-function initEventListeners() {
-    const randomBtn = document.getElementById('btn-random-data');
-    const updateBtn = document.getElementById('btn-update-custom-data');
-    const inputElement = document.getElementById('input-custom-data');
-    const applyBtn = document.getElementById('btn-apply-modification');
+// 线段树区间修改可视化 - 基于边界的智能布局算法（带初始数据）
+function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpdate = false) {
+  console.log('构建区间修改树可视化', { dataArray, container, isResizeUpdate });
+  const n = dataArray.length;
+  
+  if (!isResizeUpdate) {
+    // This is an initial build or a full rebuild
+    lastModifyBuiltN = n;
+    lastModifyBuiltContainer = container;
+    isModifyTreeRendered = false; // Mark as not rendered until animation completes
+    modifyDomNodeElements.clear();
+    modifyDomLineElements.clear();
+    currentModifyTreeLevelsData = [];
+    currentModifyTreeBuildOrderData = [];
+
+    if (activeModifyBuildAnimationTimeout) {
+      clearTimeout(activeModifyBuildAnimationTimeout);
+      activeModifyBuildAnimationTimeout = null;
+    }
+
+    if (n < 1 || n > 8) {
+      alert('请输入1-8个数字');
+      return;
+    }
     
-    if (!randomBtn || !updateBtn || !inputElement || !applyBtn) {
-        console.error('某些必需的DOM元素不存在');
-        alert('缺少必要的输入元素，请检查HTML结构');
+    // 清空容器内容并创建固定的结构
+    container.innerHTML = '<h4>🔧 线段树区间修改过程:</h4>';
+    container.innerHTML += `<p><strong>数组数据:</strong> [${dataArray.join(', ')}]</p>`;
+    container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
+    const treeVisual = document.createElement('div');
+    treeVisual.className = 'modify-tree-visual';
+    treeVisual.style.position = 'relative';
+    treeVisual.style.width = '100%';
+    treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
+    treeVisual.style.background = 'var(--card-bg)';
+    treeVisual.style.borderRadius = '12px'; // 改为12px圆角
+    treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
+    treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
+    treeVisual.style.overflow = 'visible';
+    treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
+    container.appendChild(treeVisual);
+  }
+
+  const treeVisual = container.querySelector('.modify-tree-visual');
+  if (!treeVisual) {
+    console.error("Modify tree visual element not found.");
+    return;
+  }
+
+  const containerWidth = treeVisual.clientWidth - 50; // Effective drawing width after treeVisual's own 25px padding
+  const nodeMinWidth = 50;
+  const levelHeight = 80;
+  const padding = 25; // Internal padding within the containerWidth
+
+  // 构建带初始值的线段树
+  const tree = new Array(4 * n).fill(0);
+  const lazy = new Array(4 * n).fill(0);
+  
+  // 构建初始线段树
+  function buildTree(arr, tree, node, start, end) {
+    if (start === end) {
+      tree[node] = arr[start - 1]; // 数组索引从0开始，区间从1开始
+    } else {
+      const mid = Math.floor((start + end) / 2);
+      buildTree(arr, tree, 2 * node, start, mid);
+      buildTree(arr, tree, 2 * node + 1, mid + 1, end);
+      tree[node] = tree[2 * node] + tree[2 * node + 1];
+    }
+  }
+  
+  buildTree(dataArray, tree, 1, 1, n);
+
+  if (!isResizeUpdate) {
+    // This is an initial build: collect tree levels data with actual values
+    currentModifyTreeLevelsData = []; // Clear for new build
+    function collectModifyLevelsWithData(l, r, u, depth = 0) {
+      if (l > r) return; // Base case: invalid range, do not process
+      if (!currentModifyTreeLevelsData[depth]) currentModifyTreeLevelsData[depth] = [];
+      const value = tree[u] || 0;
+      const lazyValue = lazy[u] || 0;
+      currentModifyTreeLevelsData[depth].push({ l, r, u, depth, lazy: lazyValue, value: value });
+      if (l < r) { // Only recurse if the range can be split further
+        const mid = Math.floor((l + r) / 2);
+        collectModifyLevelsWithData(l, mid, u * 2, depth + 1);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            collectModifyLevelsWithData(mid + 1, r, u * 2 + 1, depth + 1);
+        }
+      }
+    }
+    collectModifyLevelsWithData(1, n, 1);
+
+    const totalLevels = currentModifyTreeLevelsData.length;
+    const baseHeight = 60;
+    const calculatedHeight = totalLevels * levelHeight + baseHeight + 40;
+    const minHeight = Math.max(200, calculatedHeight);
+    treeVisual.style.minHeight = `${minHeight}px`;
+    treeVisual.style.height = `${minHeight}px`;  }
+  
+  const nodePositions = new Map();
+
+  // 修改后的位置计算函数调用
+  function calculateModifyNodePositionsWithData(l, r, u, depth = 0, parentX = null, parentW = null) {
+    // Check if this node should exist based on currentModifyTreeLevelsData
+    const levelNodes = currentModifyTreeLevelsData[depth];
+    if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+        return; // Do not calculate position for a node that doesn't exist in the collected levels
+    }
+
+    const y = depth * levelHeight + 30;
+    let x, nodeWidth;
+
+    if (u === 1) { // Root node
+        nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
+        nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+        x = containerWidth / 2; // Centered within containerWidth
+    } else { // Child Node
+        if (parentW == null || parentX == null) {
+            console.error(`Parent data not passed for node ${u}`);
+            nodeWidth = nodeMinWidth; // Fallback
+            const tempParentPos = nodePositions.get(Math.floor(u/2)); // Attempt to get from map if available
+            x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
+        } else {
+            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+
+            const isLeftChild = (u % 2 === 0);
+            if (isLeftChild) {
+                x = parentX - parentW / 4; // Center in parent's left half-width
+            } else { // Right child
+                x = parentX + parentW / 4; // Center in parent's right half-width
+            }
+        }
+    }
+
+    // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
+    const halfW = nodeWidth / 2;
+    if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
+        x = padding + halfW;
+    }
+    if (x + halfW > containerWidth - padding) { // Right edge should not exceed 'containerWidth - padding'
+        x = containerWidth - padding - halfW;
+    }
+    
+    nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
+
+    if (l < r) { // If not a data leaf, recurse for children
+        const mid = Math.floor((l + r) / 2);
+        calculateModifyNodePositionsWithData(l, mid, u * 2, depth + 1, x, nodeWidth);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            calculateModifyNodePositionsWithData(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
+        }
+    }
+  }
+
+  // 调用位置计算函数
+  calculateModifyNodePositionsWithData(1, n, 1, 0, null, null);
+  
+  if (!isResizeUpdate) {
+    // This is a new build: generate render order and start animation with actual data
+    currentModifyTreeBuildOrderData = []; // Clear for new build
+
+    function generateModifyBuildOrderWithData(l, r, u, depth = 0) {
+      if (l > r) return;
+      
+      const levelNodes = currentModifyTreeLevelsData[depth];
+      if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+          return; 
+      }
+
+      const value = tree[u] || 0;
+      const lazyValue = lazy[u] || 0;
+      currentModifyTreeBuildOrderData.push({ l, r, u, depth, lazy: lazyValue, value: value }); 
+      
+      if (l < r) {
+        const mid = Math.floor((l + r) / 2);
+        generateModifyBuildOrderWithData(l, mid, u * 2, depth + 1);
+        if (mid < r) {
+            generateModifyBuildOrderWithData(mid + 1, r, u * 2 + 1, depth + 1);
+        }
+      }
+    }
+    generateModifyBuildOrderWithData(1, n, 1);
+
+    let orderIndex = 0;
+    function renderNextModifyNodeWithData() {
+      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
+        isModifyTreeRendered = true;
+        activeModifyBuildAnimationTimeout = null;
         return;
+      }
+
+      const { l, r, u, depth, lazy, value } = currentModifyTreeBuildOrderData[orderIndex]; 
+      const position = nodePositions.get(u);
+      if (!position) {
+          orderIndex++;
+          activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, 50);
+          return;
+      }
+      
+      // 创建节点显示内容，包含实际值和懒标记
+      const nodeInfo = `${u}\\\\n[${l},${r}]\\\\nval:${value}\\\\nlazy:${lazy}`; 
+      
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = `modify-tree-node depth-${depth}`;
+      nodeDiv.innerHTML = nodeInfo.replace(/\\\\n/g, '<br>');
+      nodeDiv.setAttribute('data-node-id', u);
+      
+      nodeDiv.style.position = 'absolute';
+      nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+      nodeDiv.style.top = `${position.y}px`;
+      nodeDiv.style.width = `${position.nodeWidth}px`;
+      nodeDiv.style.zIndex = '10';
+      nodeDiv.style.minHeight = '60px';
+      nodeDiv.style.display = 'flex';
+      nodeDiv.style.flexDirection = 'column';
+      nodeDiv.style.justifyContent = 'center';
+      nodeDiv.style.alignItems = 'center';
+      nodeDiv.style.fontSize = '12px';
+      nodeDiv.style.lineHeight = '1.2';
+      nodeDiv.style.padding = '5px';
+      nodeDiv.style.boxSizing = 'border-box';
+      nodeDiv.style.borderRadius = '8px';
+      nodeDiv.style.border = '2px solid #74b9ff';
+      nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+      nodeDiv.style.color = 'white';
+      nodeDiv.style.fontWeight = 'bold';
+      nodeDiv.style.textAlign = 'center';
+      nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+      
+      const nodeColor = window.nodeColor || '#74b9ff';
+      if (nodeColor !== '#74b9ff') {
+        nodeDiv.style.background = nodeColor;
+        nodeDiv.style.border = `2px solid ${nodeColor}`;
+      }
+      
+      nodeDiv.style.opacity = '0';
+      nodeDiv.style.transform = 'translateY(-10px)';
+      
+      treeVisual.appendChild(nodeDiv);
+      modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
+      
+      if (depth > 0) {
+        addModifyConnectionLine(u, nodePositions, treeVisual); // This will also store the line in modifyDomLineElements
+      }
+      
+      setTimeout(() => {
+        nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        nodeDiv.style.opacity = '1';
+        nodeDiv.style.transform = 'translateY(0)';
+      }, 50);
+
+      orderIndex++;
+      const animationDelay = getModifyAnimationDelay();
+      activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, animationDelay / 6);
+    }
+    activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, 500); // Initial call for animation
+  } else {
+    // This is a resize update: update existing DOM elements
+    modifyDomNodeElements.forEach((nodeDiv, u) => {
+      const position = nodePositions.get(u);
+      if (position) {
+        nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+        nodeDiv.style.top = `${position.y}px`;
+        nodeDiv.style.width = `${position.nodeWidth}px`;
+      }
+    });
+
+    modifyDomLineElements.forEach((line, childId) => {
+      const parentId = Math.floor(childId / 2);
+      const childPos = nodePositions.get(childId);
+      const parentPos = nodePositions.get(parentId);
+      if (childPos && parentPos) {
+        const deltaX = childPos.x - parentPos.x;
+        const deltaY = childPos.y - parentPos.y - 35;
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+        
+        line.style.width = `${length}px`;
+        line.style.left = `${parentPos.x}px`;
+        line.style.top = `${parentPos.y + 35}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+      }
+    });
+    isModifyTreeRendered = true; // Ensure flag is set after resize update
+  }
+}
+
+// 线段树区间修改可视化 - 基于边界的智能布局算法
+function buildModifyTreeVisualization(n, container, isResizeUpdate = false) {
+  if (!isResizeUpdate) {
+    // This is an initial build or a full rebuild
+    lastModifyBuiltN = n;
+    lastModifyBuiltContainer = container;
+    isModifyTreeRendered = false; // Mark as not rendered until animation completes
+    modifyDomNodeElements.clear();
+    modifyDomLineElements.clear();
+    currentModifyTreeLevelsData = [];
+    currentModifyTreeBuildOrderData = [];
+
+    if (activeModifyBuildAnimationTimeout) {
+      clearTimeout(activeModifyBuildAnimationTimeout);
+      activeModifyBuildAnimationTimeout = null;
+    }
+
+    if (n < 1 || n > 8) {
+      alert('请输入1-8');
+      return;
     }
     
-    randomBtn.addEventListener('click', function() {
-        const randomData = generateRandomData();
-        inputElement.value = randomData;
-    });
-    
-    updateBtn.addEventListener('click', function() {
-        const input = inputElement.value.trim();
-        
-        if (!input) {
-            alert('请输入以空格分隔的有效数字。');
-            return;
+    // 清空容器内容并创建固定的结构
+    container.innerHTML = '<h4>🔧 线段树区间修改过程:</h4>';
+    container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
+    const treeVisual = document.createElement('div');
+    treeVisual.className = 'modify-tree-visual';
+    treeVisual.style.position = 'relative';
+    treeVisual.style.width = '100%';
+    treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
+    treeVisual.style.background = 'var(--card-bg)';
+    treeVisual.style.borderRadius = '12px'; // 改为12px圆角
+    treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
+    treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
+    treeVisual.style.overflow = 'visible';
+    treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
+    container.appendChild(treeVisual);
+  }
+
+  const treeVisual = container.querySelector('.modify-tree-visual');
+  if (!treeVisual) {
+    console.error("Modify tree visual element not found.");
+    return;
+  }
+
+  const containerWidth = treeVisual.clientWidth - 50; // Effective drawing width after treeVisual's own 25px padding
+  const nodeMinWidth = 50;
+  const levelHeight = 80;
+  const padding = 25; // Internal padding within the containerWidth
+
+  if (!isResizeUpdate) {
+    // This is an initial build: collect tree levels data
+    currentModifyTreeLevelsData = []; // Clear for new build
+    function collectModifyLevels(l, r, u, depth = 0) {
+      if (l > r) return; // Base case: invalid range, do not process
+      if (!currentModifyTreeLevelsData[depth]) currentModifyTreeLevelsData[depth] = [];
+      currentModifyTreeLevelsData[depth].push({ l, r, u, depth, lazy: 0, value: 0 });
+      if (l < r) { // Only recurse if the range can be split further
+        const mid = Math.floor((l + r) / 2);
+        collectModifyLevels(l, mid, u * 2, depth + 1);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            collectModifyLevels(mid + 1, r, u * 2 + 1, depth + 1);
         }
-        
-        const arr = input.split(/\s+/).map(Number).filter(n => !isNaN(n));
-        
-        if (arr.length === 0) {
-            alert('请输入以空格分隔的有效数字。');
-            return;
-        }
-        
-        if (!validateArrayLength(arr)) {
-            return;
-        }
-        
-        try {
-            segmentTree = new SegmentTree(arr);
-            
-            if (!treeContainer && !setupTreeContainer()) {
-                return;
+      }
+    }
+    collectModifyLevels(1, n, 1);
+
+    const totalLevels = currentModifyTreeLevelsData.length;
+    const baseHeight = 60;
+    const calculatedHeight = totalLevels * levelHeight + baseHeight + 40;
+    const minHeight = Math.max(200, calculatedHeight);
+    treeVisual.style.minHeight = `${minHeight}px`;
+    treeVisual.style.height = `${minHeight}px`;
+  }
+  
+  const nodePositions = new Map();
+
+  // 修改后的 calculateModifyNodePositions 函数
+  function calculateModifyNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
+    // Check if this node should exist based on currentModifyTreeLevelsData
+    const levelNodes = currentModifyTreeLevelsData[depth];
+    if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+        return; // Do not calculate position for a node that doesn't exist in the collected levels
+    }
+
+    const y = depth * levelHeight + 30;
+    let x, nodeWidth;
+
+    if (u === 1) { // Root node
+        nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
+        nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+        x = containerWidth / 2; // Centered within containerWidth
+    } else { // Child Node
+        if (parentW == null || parentX == null) {
+            console.error(`Parent data not passed for node ${u}`);
+            nodeWidth = nodeMinWidth; // Fallback
+            const tempParentPos = nodePositions.get(Math.floor(u/2)); // Attempt to get from map if available
+            x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
+        } else {
+            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+
+            const isLeftChild = (u % 2 === 0);
+            if (isLeftChild) {
+                x = parentX - parentW / 4; // Center in parent's left half-width
+            } else { // Right child
+                x = parentX + parentW / 4; // Center in parent's right half-width
             }
-            
-            updateRangeInputLimits(arr.length);
-            adjustContainerSize();
-            
-            drawTreeWithAnimation();
-        } catch (error) {
-            console.error('构建线段树时出错:', error);
-            alert('构建线段树时出错，请检查输入数据。');
         }
-    });
-    
-    applyBtn.addEventListener('click', function() {
-        const left = parseInt(document.getElementById('input-modify-left').value);
-        const right = parseInt(document.getElementById('input-modify-right').value);
-        const value = parseInt(document.getElementById('input-modify-value').value);
+    }
 
-        if (!segmentTree || !currentTreeDisplayed) {
-            alert('请先构建并显示树。');
-            return;
-        }
-
-        if (isNaN(left) || isNaN(right) || isNaN(value)) {
-            alert('请输入有效的数字。');
-            return;
-        }
-        
-        if (left < 1 || left > segmentTree.n) {
-            alert(`左端点必须在 1 到 ${segmentTree.n} 之间。`);
-            return;
-        }
-        
-        if (right < 1 || right > segmentTree.n) {
-            alert(`右端点必须在 1 到 ${segmentTree.n} 之间。`);
-            return;
-        }
-        
-        if (left > right) {
-            alert('左端点不能大于右端点。');
-            return;
-        }
-        
-        highlightAffectedNodes(left - 1, right - 1);
-        segmentTree.updateRange(1, 0, segmentTree.n - 1, left - 1, right - 1, value);
-        updateNodeValuesOnly();
-    });
-    
-    document.querySelectorAll('.theme-option').forEach(button => {
-        button.addEventListener('click', () => {
-            if (currentTreeDisplayed) {
-                setTimeout(() => {
-                    clearAllLines();
-                    setTimeout(drawAllConnectingLines, 100);
-                }, 50);
-            }
-        });
-    });
-    
-    if (!inputElement.value) {
-        const exampleData = "1 3 5 7 2 4 6 8";
-        inputElement.value = exampleData;
-        console.log('示例数据已设置，等待用户点击更新可视化按钮');
+    // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
+    const halfW = nodeWidth / 2;
+    if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
+        x = padding + halfW;
+    }
+    if (x + halfW > containerWidth - padding) { // Right edge should not exceed 'containerWidth - padding'
+        x = containerWidth - padding - halfW;
     }
     
-    window.addEventListener('resize', () => {
-        if (segmentTree && currentTreeDisplayed) {
-            adjustContainerSize();
-            setTimeout(adjustLayoutOnly, 150);
+    nodePositions.set(u, { x, y, l, r, depth, nodeWidth, lazy: 0, value: 0 });
+
+    if (l < r) { // If not a data leaf, recurse for children
+        const mid = Math.floor((l + r) / 2);
+        calculateModifyNodePositions(l, mid, u * 2, depth + 1, x, nodeWidth);
+        if (mid < r) { // Ensure right child is only processed if its range is valid
+            calculateModifyNodePositions(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
         }
-    });
-    
-    const animSpeedSelect = document.getElementById('animation-speed');
-    if (animSpeedSelect) {
-        animSpeedSelect.addEventListener('change', () => {
-            console.log('动画速度已更新为:', animSpeedSelect.value);
-            if (currentTreeDisplayed) {
-                console.log('下次更新可视化时将使用新的动画速度');
-            }
-        });
     }
+  }
+  
+  // Initial call to the modified calculateModifyNodePositions
+  calculateModifyNodePositions(1, n, 1, 0, null, null); 
+  
+  if (!isResizeUpdate) {
+    // This is a new build: generate render order and start animation
+    currentModifyTreeBuildOrderData = []; // Clear for new build
+
+    function generateModifyBuildOrder(l, r, u, depth = 0) {
+      if (l > r) return;
+      
+      const levelNodes = currentModifyTreeLevelsData[depth];
+      if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+          return; 
+      }
+
+      currentModifyTreeBuildOrderData.push({ l, r, u, depth, lazy: 0, value: 0 }); 
+      
+      if (l < r) {
+        const mid = Math.floor((l + r) / 2);
+        generateModifyBuildOrder(l, mid, u * 2, depth + 1);
+        if (mid < r) {
+            generateModifyBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+        }
+      }
+    }
+    generateModifyBuildOrder(1, n, 1);
+
+    let orderIndex = 0;
+    function renderNextModifyNode() {
+      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
+        isModifyTreeRendered = true;
+        activeModifyBuildAnimationTimeout = null;
+        return;
+      }
+
+      const { l, r, u, depth, lazy, value } = currentModifyTreeBuildOrderData[orderIndex]; 
+      const position = nodePositions.get(u);
+      if (!position) {
+          orderIndex++;
+          activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNode, 50);
+          return;
+      }
+      
+      // 创建节点显示内容，包含懒标记
+      const nodeInfo = `${u}\\\\n[${l},${r}]\\\\nval:${value}\\\\nlazy:${lazy}`; 
+      
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = `modify-tree-node depth-${depth}`;
+      nodeDiv.innerHTML = nodeInfo.replace(/\\\\n/g, '<br>');
+      nodeDiv.setAttribute('data-node-id', u);
+      
+      nodeDiv.style.position = 'absolute';
+      nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+      nodeDiv.style.top = `${position.y}px`;
+      nodeDiv.style.width = `${position.nodeWidth}px`;
+      nodeDiv.style.zIndex = '10';
+      nodeDiv.style.minHeight = '60px';
+      nodeDiv.style.display = 'flex';
+      nodeDiv.style.flexDirection = 'column';
+      nodeDiv.style.justifyContent = 'center';
+      nodeDiv.style.alignItems = 'center';
+      nodeDiv.style.fontSize = '12px';
+      nodeDiv.style.lineHeight = '1.2';
+      nodeDiv.style.padding = '5px';
+      nodeDiv.style.boxSizing = 'border-box';
+      nodeDiv.style.borderRadius = '8px';
+      nodeDiv.style.border = '2px solid #74b9ff';
+      nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+      nodeDiv.style.color = 'white';
+      nodeDiv.style.fontWeight = 'bold';
+      nodeDiv.style.textAlign = 'center';
+      nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+      
+      const nodeColor = window.nodeColor || '#74b9ff';
+      if (nodeColor !== '#74b9ff') {
+        nodeDiv.style.background = nodeColor;
+        nodeDiv.style.border = `2px solid ${nodeColor}`;
+      }
+      
+      nodeDiv.style.opacity = '0';
+      nodeDiv.style.transform = 'translateY(-10px)';
+      
+      treeVisual.appendChild(nodeDiv);
+      modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
+      
+      if (depth > 0) {
+        addModifyConnectionLine(u, nodePositions, treeVisual); // This will also store the line in modifyDomLineElements
+      }
+      
+      setTimeout(() => {
+        nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        nodeDiv.style.opacity = '1';
+        nodeDiv.style.transform = 'translateY(0)';
+      }, 50);
+
+      orderIndex++;
+      const animationDelay = getModifyAnimationDelay();
+      activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNode, animationDelay / 6);
+    }
+    activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNode, 500); // Initial call for animation
+  } else {
+    // This is a resize update: update existing DOM elements
+    modifyDomNodeElements.forEach((nodeDiv, u) => {
+      const position = nodePositions.get(u);
+      if (position) {
+        nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+        nodeDiv.style.top = `${position.y}px`;
+        nodeDiv.style.width = `${position.nodeWidth}px`;
+      }
+    });
+
+    modifyDomLineElements.forEach((line, childId) => {
+      const parentId = Math.floor(childId / 2);
+      const childPos = nodePositions.get(childId);
+      const parentPos = nodePositions.get(parentId);
+      if (childPos && parentPos) {
+        const deltaX = childPos.x - parentPos.x;
+        const deltaY = childPos.y - parentPos.y - 35;
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+        
+        line.style.width = `${length}px`;
+        line.style.left = `${parentPos.x}px`;
+        line.style.top = `${parentPos.y + 35}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+      }
+    });
+    isModifyTreeRendered = true; // Ensure flag is set after resize update
+  }
 }
 
-function highlightAffectedNodes(left, right) {
-    if (!nodeElements || nodeElements.length === 0) return;
+// Modified to store line element for modify tree
+function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
+  const parentId = Math.floor(nodeId / 2);
+  const childPos = nodePositions.get(nodeId);
+  const parentPos = nodePositions.get(parentId);
+  
+  if (!childPos || !parentPos) return;
+  
+  const line = document.createElement('div');
+  line.className = 'modify-tree-connection-line';
+  line.style.position = 'absolute';
+  line.style.background = 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))';
+  line.style.zIndex = '5';
+  line.style.opacity = '0';
+  line.style.borderRadius = '1px';
+  
+  const deltaX = childPos.x - parentPos.x;
+  const deltaY = childPos.y - parentPos.y - 35; 
+  const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+  
+  line.style.width = `${length}px`;
+  line.style.height = '2px';
+  line.style.left = `${parentPos.x}px`;
+  line.style.top = `${parentPos.y + 35}px`;
+  line.style.transformOrigin = '0 50%';
+  line.style.transform = `rotate(${angle}deg)`;
+  
+  treeVisual.appendChild(line);
+  modifyDomLineElements.set(nodeId, line); // Store DOM element for the line
+
+  setTimeout(() => {
+    line.style.transition = 'opacity 0.4s ease-in-out';
+    line.style.opacity = '0.8';
+  }, 200);
+}
+
+// 获取区间修改动画延迟
+function getModifyAnimationDelay() {
+  const animationSpeed = window.animationSpeed || 'fast'; // Assuming animationSpeed might be set globally
+  const speeds = { slow: 2000, normal: 1000, fast: 500 };
+  return speeds[animationSpeed] || 1000;
+}
+
+// 区间修改操作
+function performRangeUpdate(modifyL, modifyR, delta, container) {
+  if (!isModifyTreeRendered || !lastModifyBuiltContainer) {
+    alert('请先构建线段树！');
+    return;
+  }
+
+  // 清除之前的高亮
+  modifyDomNodeElements.forEach((nodeDiv) => {
+    nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+    nodeDiv.style.border = '2px solid #74b9ff';
+    nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+  });
+
+  const affectedNodes = [];
+  
+  // 模拟区间修改过程
+  function updateRange(l, r, u, tl, tr, delta) {
+    if (modifyL > tr || modifyR < tl) {
+      return; // 完全不相交
+    }
     
-    nodeElements.forEach(nodeData => {
-        nodeData.element.classList.remove('active');
-    });
+    if (modifyL <= tl && tr <= modifyR) {
+      // 完全包含，懒标记
+      affectedNodes.push({ u, type: 'lazy', tl, tr });
+      return;
+    }
     
-    nodeElements.forEach(nodeData => {
-        const { start, end, element } = nodeData;
+    // 部分相交，需要下推
+    affectedNodes.push({ u, type: 'pushdown', tl, tr });
+    const mid = Math.floor((tl + tr) / 2);
+    updateRange(l, r, u * 2, tl, mid, delta);
+    if (mid < tr) {
+      updateRange(l, r, u * 2 + 1, mid + 1, tr, delta);
+    }
+  }
+
+  updateRange(modifyL, modifyR, 1, 1, lastModifyBuiltN, delta);
+
+  // 动画显示受影响的节点
+  let animationIndex = 0;
+  function animateNextNode() {
+    if (animationIndex >= affectedNodes.length) {
+      return;
+    }
+
+    const { u, type } = affectedNodes[animationIndex];
+    const nodeDiv = modifyDomNodeElements.get(u);
+    
+    if (nodeDiv) {
+      if (type === 'lazy') {
+        // 懒标记节点 - 红色
+        nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
+        nodeDiv.style.border = '2px solid #e74c3c';
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
         
-        if (start <= right && end >= left) {
-            element.classList.add('active');
-            
-            setTimeout(() => {
-                element.classList.remove('active');
-            }, 600);
+        // 更新节点内容显示懒标记
+        const currentContent = nodeDiv.innerHTML;
+        const updatedContent = currentContent.replace(/lazy:\d+/, `lazy:${delta}`);
+        nodeDiv.innerHTML = updatedContent;
+      } else if (type === 'pushdown') {
+        // 下推节点 - 橙色
+        nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+        nodeDiv.style.border = '2px solid #e67e22';
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+      }
+    }
+
+    animationIndex++;
+    setTimeout(animateNextNode, 600);
+  }
+
+  setTimeout(animateNextNode, 300);
+}
+
+// 初始化显示区间修改可视化的容器
+function initializeModifyTreeContainer(container) {
+  container.innerHTML = ''; // 不显示任何标题
+  
+  const treeVisual = document.createElement('div');
+  treeVisual.className = 'modify-tree-visual';
+  treeVisual.style.position = 'relative';
+  treeVisual.style.width = '100%';
+  treeVisual.style.padding = '25px';
+  treeVisual.style.background = 'var(--card-bg)';
+  treeVisual.style.borderRadius = '12px';
+  treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
+  treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+  treeVisual.style.overflow = 'visible';
+  treeVisual.style.minHeight = '200px';
+  treeVisual.style.display = 'flex';
+  treeVisual.style.alignItems = 'center';
+  treeVisual.style.justifyContent = 'center';
+  treeVisual.style.color = 'var(--text-color)';
+  treeVisual.style.fontSize = '16px';
+  treeVisual.style.opacity = '0.7';
+  
+  treeVisual.innerHTML = '<div style="text-align: center;">🔧 请输入数组数据并点击"更新可视化"按钮查看线段树区间修改动画</div>';
+  
+  container.appendChild(treeVisual);
+}
+
+// 随机生成数组数据
+function generateRandomData() {
+  const length = Math.floor(Math.random() * 8) + 1; // 1-8个数字
+  const data = [];
+  for (let i = 0; i < length; i++) {
+    data.push(Math.floor(Math.random() * 10) + 1); // 1-10之间的数字
+  }
+  return data.join(' ');
+}
+
+// 解析输入的数组数据
+function parseInputData(inputString) {
+  if (!inputString.trim()) {
+    return null;
+  }
+  
+  const numbers = inputString.trim().split(/\s+/).map(num => parseInt(num)).filter(num => !isNaN(num));
+  
+  if (numbers.length === 0) {
+    return null;
+  }
+  
+  if (numbers.length > 8) {
+    alert('数组长度不能超过8个数字');
+    return null;
+  }
+  
+  if (numbers.some(num => num < 1 || num > 100)) {
+    alert('数字应该在1-100范围内');
+    return null;
+  }
+  
+  return numbers;
+}
+
+// Modified initModifyTreeVisualizer
+function initModifyTreeVisualizer() {
+  console.log('初始化区间修改可视化模块...');
+  
+  const inputCustomData = document.getElementById('input-custom-data');
+  const btnRandomData = document.getElementById('btn-random-data');
+  const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
+  const treeContainer = document.getElementById('custom-tree-visualizer-host');
+  const inputModifyLeft = document.getElementById('input-modify-left');
+  const inputModifyRight = document.getElementById('input-modify-right');
+  const inputModifyValue = document.getElementById('input-modify-value');
+  const btnApplyModification = document.getElementById('btn-apply-modification');
+  
+  console.log('找到的元素:', {
+    inputCustomData: !!inputCustomData,
+    btnRandomData: !!btnRandomData,
+    btnUpdateCustomData: !!btnUpdateCustomData,
+    treeContainer: !!treeContainer,
+    inputModifyLeft: !!inputModifyLeft,
+    inputModifyRight: !!inputModifyRight,
+    inputModifyValue: !!inputModifyValue,
+    btnApplyModification: !!btnApplyModification
+  });
+  
+  // 初始化时显示区间修改可视化的盒子
+  if (treeContainer) {
+    initializeModifyTreeContainer(treeContainer);
+  }
+    // 随机生成数据按钮
+  if (btnRandomData && inputCustomData) {
+    console.log('绑定随机生成按钮事件');
+    btnRandomData.addEventListener('click', () => {
+      console.log('点击随机生成按钮');
+      const randomData = generateRandomData();
+      console.log('生成的随机数据:', randomData);
+      inputCustomData.value = randomData;
+    });
+  }
+  // 更新可视化按钮
+  if (btnUpdateCustomData && treeContainer && inputCustomData) {
+    console.log('绑定更新可视化按钮事件');
+    btnUpdateCustomData.addEventListener('click', () => {
+      console.log('点击更新可视化按钮');
+      console.log('输入的数据:', inputCustomData.value);
+      const inputData = parseInputData(inputCustomData.value);
+      console.log('解析后的数据:', inputData);
+      if (!inputData) {
+        if (!inputCustomData.value.trim()) {
+          alert('请输入数组数据或点击随机生成');
         }
+        return;
+      }
+      
+      const n = inputData.length;
+      console.log('数组长度:', n);
+      console.log('开始构建树可视化');
+      buildModifyTreeVisualizationWithData(inputData, treeContainer, false); // false for initial build
     });
+  }
+
+  // 应用修改按钮
+  if (btnApplyModification && treeContainer) {
+    btnApplyModification.addEventListener('click', () => {
+      const l = parseInt(inputModifyLeft?.value || '1');
+      const r = parseInt(inputModifyRight?.value || '1');
+      const delta = parseInt(inputModifyValue?.value || '1');
+      
+      if (!lastModifyBuiltN || lastModifyBuiltN === 0) {
+        alert('请先构建线段树！');
+        return;
+      }
+      
+      if (l < 1 || r > lastModifyBuiltN || l > r) {
+        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]`);
+        return;
+      }
+      
+      performRangeUpdate(l, r, delta, treeContainer);
+    });
+  }
+  window.addEventListener('resize', debounceModify(() => {
+    if (isModifyTreeRendered && lastModifyBuiltContainer && lastModifyBuiltN > 0) {
+      // 直接重绘，不检查可见性
+      buildModifyTreeVisualizationWithData([], lastModifyBuiltContainer, true); // true for resize update
+    }
+  }, 250));
 }
 
-function drawNodeConnections(node, start, end) {
-    if (!treeContainer || start === end) return;
-    
-    const parentNodeData = nodeElements.find(n => n.node === node);
-    if (!parentNodeData || !parentNodeData.element || !parentNodeData.wrapper) return;
-    
-    const containerRect = treeContainer.getBoundingClientRect();
-    const parentRect = parentNodeData.element.getBoundingClientRect();
-    const parentOffsetY = parentNodeData.level * 160; // 基于层级高度
-    
-    const leftChildNode = 2 * node;
-    const rightChildNode = 2 * node + 1;
-    
-    const leftChild = nodeElements.find(n => n.node === leftChildNode);
-    const rightChild = nodeElements.find(n => n.node === rightChildNode);
-    
-    const isDarkTheme = document.body.classList.contains('dark');
-    const isEyeCareTheme = document.body.classList.contains('eye-care');
-    let lineColor = isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : 
-                    isEyeCareTheme ? 'rgba(74, 85, 104, 0.9)' : 
-                    'rgba(74, 85, 104, 0.8)';
-    
-    if (leftChild && leftChild.element) {
-        const childRect = leftChild.element.getBoundingClientRect();
-        
-        const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-        const parentBottomY = parentRect.top - containerRect.top + parentRect.height + parentOffsetY;
-        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-        const childTopY = childRect.top - containerRect.top + (leftChild.level * 160);
-        
-        const line = document.createElement('div');
-        line.className = `connection-line line-${node}-${leftChildNode}`;
-        
-        const dx = childCenterX - parentCenterX;
-        const dy = childTopY - parentBottomY;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        
-        line.style.cssText = `
-            position: absolute;
-            width: ${length}px;
-            height: 2px;
-            background: ${lineColor};
-            transform: rotate(${angle}deg);
-            transform-origin: 0 0;
-            left: ${parentCenterX}px;
-            top: ${parentBottomY}px;
-            opacity: 0;
-            transition: opacity 0.3s ease, width 0.3s ease, left 0.3s ease, top 0.3s ease, transform 0.3s ease;
-            z-index: 1;
-            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-        `;
-        
-        parentNodeData.wrapper.appendChild(line);
-        
-        const timing = getAnimationTiming();
-        setTimeout(() => {
-            line.style.opacity = '1';
-        }, timing.fade / 4);
-        
-        console.log(`绘制连线 ${node} -> ${leftChildNode}, 长度: ${length}px, 角度: ${angle}deg, 起点: (${parentCenterX}, ${parentBottomY}), 终点: (${childCenterX}, ${childTopY})`);
-    }
-    
-    if (rightChild && rightChild.element) {
-        const childRect = rightChild.element.getBoundingClientRect();
-        
-        const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-        const parentBottomY = parentRect.top - containerRect.top + parentRect.height + parentOffsetY;
-        const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-        const childTopY = childRect.top - containerRect.top + (rightChild.level * 160);
-        
-        const line = document.createElement('div');
-        line.className = `connection-line line-${node}-${rightChildNode}`;
-        
-        const dx = childCenterX - parentCenterX;
-        const dy = childTopY - parentBottomY;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        
-        line.style.cssText = `
-            position: absolute;
-            width: ${length}px;
-            height: 2px;
-            background: ${lineColor};
-            transform: rotate(${angle}deg);
-            transform-origin: 0 0;
-            left: ${parentCenterX}px;
-            top: ${parentBottomY}px;
-            opacity: 0;
-            transition: opacity 0.3s ease, width 0.3s ease, left 0.3s ease, top 0.3s ease, transform 0.3s ease;
-            z-index: 1;
-            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-        `;
-        
-        parentNodeData.wrapper.appendChild(line);
-        
-        const timing = getAnimationTiming();
-        setTimeout(() => {
-            line.style.opacity = '1';
-        }, timing.fade / 2);
-        
-        console.log(`绘制连线 ${node} -> ${rightChildNode}, 长度: ${length}px, 角度: ${angle}deg, 起点: (${parentCenterX}, ${parentBottomY}), 终点: (${childCenterX}, ${childTopY})`);
-    }
-}
-
-function drawAllConnectingLines() {
-    if (!treeContainer || !nodeElements || nodeElements.length === 0) return;
-    
-    clearAllLines();
-    
-    const isDarkTheme = document.body.classList.contains('dark');
-    const isEyeCareTheme = document.body.classList.contains('eye-care');
-    let lineColor = isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : 
-                    isEyeCareTheme ? 'rgba(74, 85, 104, 0.9)' : 
-                    'rgba(74, 85, 104, 0.8)';
-    
-    nodeElements.forEach(nodeData => {
-        const { node, start, end, element, wrapper } = nodeData;
-        
-        if (start === end) return;
-        
-        const leftChildNode = 2 * node;
-        const rightChildNode = 2 * node + 1;
-        
-        const leftChild = nodeElements.find(n => n.node === leftChildNode);
-        const rightChild = nodeElements.find(n => n.node === rightChildNode);
-        
-        const containerRect = treeContainer.getBoundingClientRect();
-        const parentRect = element.getBoundingClientRect();
-        const parentOffsetY = nodeData.level * 160;
-        
-        if (leftChild && leftChild.element) {
-            const childRect = leftChild.element.getBoundingClientRect();
-            
-            const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-            const parentBottomY = parentRect.top - containerRect.top + parentRect.height + parentOffsetY;
-            const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-            const childTopY = childRect.top - containerRect.top + (leftChild.level * 160);
-            
-            const line = document.createElement('div');
-            line.className = `connection-line line-${node}-${leftChildNode}`;
-            
-            const dx = childCenterX - parentCenterX;
-            const dy = childTopY - parentBottomY;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            
-            line.style.cssText = `
-                position: absolute;
-                width: ${length}px;
-                height: 2px;
-                background: ${lineColor};
-                transform: rotate(${angle}deg);
-                transform-origin: 0 0;
-                left: ${parentCenterX}px;
-                top: ${parentBottomY}px;
-                opacity: 1;
-                transition: opacity 0.3s ease, width 0.3s ease, left 0.3s ease, top 0.3s ease, transform 0.3s ease;
-                z-index: 1;
-                box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-            `;
-            
-            wrapper.appendChild(line);
-        }
-        
-        if (rightChild && rightChild.element) {
-            const childRect = rightChild.element.getBoundingClientRect();
-            
-            const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
-            const parentBottomY = parentRect.top - containerRect.top + parentRect.height + parentOffsetY;
-            const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
-            const childTopY = childRect.top - containerRect.top + (rightChild.level * 160);
-            
-            const line = document.createElement('div');
-            line.className = `connection-line line-${node}-${rightChildNode}`;
-            
-            const dx = childCenterX - parentCenterX;
-            const dy = childTopY - parentBottomY;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            
-            line.style.cssText = `
-                position: absolute;
-                width: ${length}px;
-                height: 2px;
-                background: ${lineColor};
-                transform: rotate(${angle}deg);
-                transform-origin: 0 0;
-                left: ${parentCenterX}px;
-                top: ${parentBottomY}px;
-                opacity: 1;
-                transition: opacity 0.3s ease, width 0.3s ease, left 0.3s ease, top 0.3s ease, transform 0.3s ease;
-                z-index: 1;
-                box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-            `;
-            
-            wrapper.appendChild(line);
-        }
-    });
-}
-
-function clearAllLines() {
-    const lines = treeContainer?.querySelectorAll('.connection-line');
-    if (lines) {
-        lines.forEach(line => {
-            line.style.transition = 'opacity 0.3s ease';
-            line.style.opacity = '0';
-            setTimeout(() => {
-                line.remove();
-            }, 300);
-        });
-    }
-}
-
-function adjustLayoutOnly() {
-    if (!treeContainer || !segmentTree || !nodeElements || nodeElements.length === 0) return;
-    
-    const screenWidth = window.innerWidth;
-    let responsiveNodeWidth = 120;
-    let responsiveNodeHeight = 110;
-    let responsiveFontSize = 13;
-    
-    if (screenWidth <= 480) {
-        responsiveNodeWidth = 80;
-        responsiveNodeHeight = 85;
-        responsiveFontSize = 10;
-    } else if (screenWidth <= 768) {
-        responsiveNodeWidth = 95;
-        responsiveNodeHeight = 95;
-        responsiveFontSize = 11;
-    }
-    
-    const containerWidth = treeContainer.clientWidth - 40;
-    const leafNodes = nodeElements.filter(n => n.start === n.end);
-    const nodeSpacing = Math.max(10, (containerWidth - leafNodes.length * responsiveNodeWidth) / (leafNodes.length + 1));
-    
-    const positions = new Map();
-    
-    leafNodes.forEach((leaf, index) => {
-        const x = nodeSpacing + index * (responsiveNodeWidth + nodeSpacing);
-        positions.set(leaf.node, x);
-    });
-    
-    const nodesByLevel = [];
-    nodeElements.forEach(nodeData => {
-        while (nodesByLevel.length <= nodeData.level) {
-            nodesByLevel.push([]);
-        }
-        nodesByLevel[nodeData.level].push(nodeData);
-    });
-    
-    for (let level = nodesByLevel.length - 2; level >= 0; level--) {
-        nodesByLevel[level].forEach(nodeData => {
-            const { node, start, end } = nodeData;
-            const mid = Math.floor((start + end) / 2);
-            
-            const leftChild = positions.get(2 * node);
-            const rightChild = positions.get(2 * node + 1);
-            
-            if (leftChild !== undefined && rightChild !== undefined) {
-                positions.set(node, (leftChild + rightChild) / 2);
-            } else if (leftChild !== undefined) {
-                positions.set(node, leftChild);
-            } else if (rightChild !== undefined) {
-                positions.set(node, rightChild);
-            }
-        });
-    }
-    
-    nodeElements.forEach(nodeData => {
-        const position = positions.get(nodeData.node);
-        if (position !== undefined && nodeData.wrapper) {
-            nodeData.wrapper.style.left = `${position}px`;
-            nodeData.wrapper.style.width = `${responsiveNodeWidth}px`;
-            nodeData.wrapper.style.height = `${responsiveNodeHeight}px`;
-            nodeData.element.style.width = `${responsiveNodeWidth}px`;
-            nodeData.element.style.height = `${responsiveNodeHeight}px`;
-            nodeData.element.style.fontSize = `${responsiveFontSize}px`;
-            nodeData.position = position;
-            
-            const lazyValue = segmentTree.lazy[nodeData.node];
-            const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
-            const lazyStyle = lazyValue === 0 ? '' : 'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
-            
-            nodeData.element.innerHTML = `
-                <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${nodeData.start + 1}, ${nodeData.end + 1}]</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${segmentTree.tree[nodeData.node]}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${segmentTree.minTree[nodeData.node]}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${segmentTree.maxTree[nodeData.node]}</div>
-                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
-            `;
-        }
-    });
-    
-    setTimeout(() => {
-        drawAllConnectingLines();
-    }, 100);
-}
-
-function updateNodeValuesOnly() {
-    if (!segmentTree || !nodeElements || nodeElements.length === 0) return;
-    
-    nodeElements.forEach(nodeData => {
-        const { node, start, end, element } = nodeData;
-        
-        const sum = segmentTree.tree[node];
-        const minVal = segmentTree.minTree[node];
-        const maxVal = segmentTree.maxTree[node];
-        const lazyValue = segmentTree.lazy[node];
-        
-        const responsiveFontSize = parseInt(element.style.fontSize) || 13;
-        const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
-        const lazyStyle = lazyValue === 0 ? '' : 'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
-        
-        element.innerHTML = `
-            <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
-            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${sum}</div>
-            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${minVal}</div>
-            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${maxVal}</div>
-            <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
-        `;
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (setupTreeContainer()) {
-        initEventListeners();
-    }
-});
+// Export functions
+window.ModifyTreeVisualizer = {
+  buildModifyTreeVisualization,
+  buildModifyTreeVisualizationWithData,
+  initModifyTreeVisualizer,
+  performRangeUpdate,
+  generateRandomData,
+  parseInputData
+};
