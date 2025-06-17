@@ -112,6 +112,7 @@ struct Info
           否则将该区间对半划分为两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong> push_up </strong>）。</p>
         <pre class="code-block"><code>void build(int l, int r, int u)
 {
+    // 对 [l, r] 区间简历线段树，当前根的编号为 u
     if (l == r)
     {
         info[u] = Info(arr[l]);
@@ -119,8 +120,10 @@ struct Info
     }
 
     int mid = (l + r) >> 1;
+    // 递归对左右区间建树
     build(l, mid, u << 1);
     build(mid + 1, r, u << 1 | 1);
+    // 合并左右子节点的信息
     push_up(u);
 }</code></pre>
 
@@ -153,6 +156,7 @@ void push_down(int u, int llen, int rlen)
 {
     apply(u << 1, laz[u], llen);
     apply(u << 1 | 1, laz[u], rlen);
+    // 清空当前节点的懒标记
     laz[u] = Laz();
 }</code></pre>
 
@@ -166,15 +170,20 @@ void push_down(int u, int llen, int rlen)
         </ul>
         <pre class="code-block"><code>void modify(int jobl, int jobr, Laz tag, int l, int r, int u) 
 {
+    // [jobl, jobr] 为修改区间，[l, r] 为当前节点包含的区间，u 为当前节点编号
     if (jobl <= l && jobr >= r) 
     {
+        // 当前区间为查询区间的子集时直接修改当前节点的值，然后打标记，结束修改
         apply(u, tag, r - l + 1);
         return;
     }
 
     int mid = (l + r) >> 1;
+    // 下传懒标记到左右子节点
     push_down(u, mid - l + 1, r - mid);
+    // 如果修改区间与左节点区间有交集，则递归修改左子节点
     if (jobl <= mid) modify(jobl, jobr, tag, l, mid, u << 1);
+    // 如果修改区间与右节点区间有交集，则递归修改右子节点
     if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
     push_up(u);
 }</code></pre>        <h3>🔧 可视化修改与数据维护</h3>
@@ -208,15 +217,20 @@ void push_down(int u, int llen, int rlen)
         <p>查询指定区间的合并结果：</p>
         <pre class="code-block"><code>Info query(int jobl, int jobr, int l, int r, int u) 
 {
+    // [jobl, jobr] 为查询区间，[l, r] 为当前节点包含的区间，u 为当前节点编号
     if (jobl <= l && jobr >= r) 
+        // 当前区间为查询区间的子集时直接返回当前节点的信息
         return info[u];
 
     int mid = (l + r) >> 1;
     push_down(u, mid - l + 1, r - mid);
+    // 如果查询区间与左右子节点区间均有交集，则递归查询左右子节点，并合并二者信息
     if (jobl <= mid && jobr > mid) 
         return query(jobl, jobr, l, mid, u << 1) + query(jobl, jobr, mid + 1, r, u << 1 | 1);
+    // 如果查询区间与左子节点区间有交集，则递归查询左子节点
     else if (jobl <= mid) 
         return query(jobl, jobr, l, mid, u << 1);
+    // 如果查询区间与右子节点区间有交集，则递归查询右子节点
     else
         return query(jobl, jobr, mid + 1, r, u << 1 | 1);
 }</code></pre>
@@ -264,15 +278,15 @@ void push_down(int u, int llen, int rlen)
             <div class="quiz-options">
               <div class="quiz-option-item">
                 <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: 输入规模的1倍">
-                <label for="q2a">A. 输入规模的1倍</label>
+                <label for="q2a">A. 输入规模的 1 倍</label>
               </div>
               <div class="quiz-option-item">
                 <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: 输入规模的2倍">
-                <label for="q2b">B. 输入规模的2倍</label>
+                <label for="q2b">B. 输入规模的 2 倍</label>
               </div>
               <div class="quiz-option-item">
                 <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: 空输入规模的4倍">
-                <label for="q2c">C. 输入规模的4倍</label>
+                <label for="q2c">C. 输入规模的 4 倍</label>
               </div>
               <div class="quiz-option-item">
                 <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: 输入规模的 n log n 倍">
