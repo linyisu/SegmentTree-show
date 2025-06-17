@@ -309,14 +309,18 @@ function createTreeNodes() {
             `;            // Add node content with lazy tag
             const lazyValue = segmentTree.lazy[node];
             const lazyDisplay = lazyValue === 0 ? '-' : `+${lazyValue}`;
+            
+            // 为懒标记添加高亮样式（当有值时）
             const lazyStyle = lazyValue === 0 ? 
-                `color: #888; font-weight: normal;` : 
-                `color: #ffeb3b; font-weight: bold; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px;`;            const content = `
+                '' : 
+                'color: #ffeb3b; background: rgba(255, 235, 59, 0.2); border-radius: 3px; padding: 1px 3px; font-weight: bold;';
+            
+            const content = `
                 <div style="font-size: ${responsiveFontSize + 1}px; font-weight: bold; margin-bottom: 2px;">[${start + 1}, ${end + 1}]</div>
                 <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">sum: ${sum}</div>
                 <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">min: ${minVal}</div>
                 <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px;">max: ${maxVal}</div>
-                <div class="lazy-tag" style="font-size: ${responsiveFontSize - 1}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
+                <div style="margin-bottom: 1px; font-size: ${responsiveFontSize}px; ${lazyStyle}">Laz: ${lazyDisplay}</div>
             `;
             nodeElement.innerHTML = content;
             
@@ -527,14 +531,12 @@ function initEventListeners() {
         
         // 高亮受影响的节点
         highlightAffectedNodes(left - 1, right - 1);
-        
-        // 转换为0-indexed进行计算
+          // 转换为0-indexed进行计算
         segmentTree.updateRange(1, 0, segmentTree.n - 1, left - 1, right - 1, value);
         
-        // 延迟重绘以显示动画效果
-        setTimeout(() => {
-            adjustContainerSize();
-            drawTree();        }, 800);
+        // 立即重绘以显示更新后的懒标记高亮
+        adjustContainerSize();
+        drawTree();
     });
     
     // 主题切换事件
