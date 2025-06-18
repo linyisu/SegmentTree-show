@@ -103,18 +103,36 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   const nodeMinWidth = 50;
   const levelHeight = 100;
   const padding = 25;
-  
-  console.log('📏 容器信息 (强制更新尺寸):', {
+    console.log('📏 容器信息 (强制更新尺寸):', {
     isResize: isResizeUpdate,
     clientWidth: treeVisualElement.clientWidth,
     containerWidth,
-    effectiveWidth: containerWidth - (2 * padding)  });// 构建带初始值的线段树 - 维护最大值、最小值、区间和
-  globalTree = new Array(4 * n);
-  globalLazy = new Array(4 * n).fill(0);
+    effectiveWidth: containerWidth - (2 * padding)
+  });
+  
+  // 构建带初始值的线段树 - 维护最大值、最小值、区间和
+  // 🔧 确保全局数组总是被正确初始化
+  if (!globalTree || globalTree.length < 4 * n) {
+    console.log('🔧 初始化 globalTree 数组，大小:', 4 * n);
+    globalTree = new Array(4 * n);
+  }
+  
+  if (!globalLazy || globalLazy.length < 4 * n) {
+    console.log('🔧 初始化 globalLazy 数组，大小:', 4 * n);
+    globalLazy = new Array(4 * n).fill(0);
+  }
+  
+  console.log('🔍 globalLazy 初始化后状态:', {
+    length: globalLazy.length,
+    sample: globalLazy.slice(0, 10),
+    isArray: Array.isArray(globalLazy)
+  });
   
   // 初始化树节点
   for (let i = 0; i < 4 * n; i++) {
-    globalTree[i] = { sum: 0, max: -Infinity, min: Infinity };
+    if (!globalTree[i]) {
+      globalTree[i] = { sum: 0, max: -Infinity, min: Infinity };
+    }
   }
   
   // 🔧 修复：只在非resize更新时构建树数据
@@ -502,15 +520,18 @@ function pushUp(u) {
 // 区间修改函数
 function updateRange(l, r, tl, tr, u, delta) {
   console.log(`🔧 updateRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}] 增加 ${delta}`);
-  
-  // 下推懒标记
-  pushDown(u, tl, tr);
-  
-  // 如果当前区间完全包含在修改区间内
+    // 如果当前区间完全包含在修改区间内
   if (l <= tl && tr <= r) {
+    // 对于完全包含的节点，只添加懒标记，不立即下推
+    console.log(`🎯 节点 u=${u} [${tl},${tr}] 完全包含在修改区间 [${l},${r}] 内`);
+    console.log(`🏷️ 修改前: globalLazy[${u}] = ${globalLazy[u]} (类型: ${typeof globalLazy[u]})`);
+    console.log(`🏷️ globalLazy 数组状态:`, globalLazy.slice(0, 20));
+    
     globalLazy[u] += delta;
-    pushDown(u, tl, tr);
-    console.log(`✅ 节点 u=${u} [${tl},${tr}] 完全包含，添加懒标记 ${delta}`);
+    
+    console.log(`🏷️ 修改后: globalLazy[${u}] = ${globalLazy[u]} (类型: ${typeof globalLazy[u]})`);
+    console.log(`🏷️ 新的 globalLazy 数组状态:`, globalLazy.slice(0, 20));
+    console.log(`✅ 节点 u=${u} [${tl},${tr}] 完全包含，添加懒标记 ${globalLazy[u]}，不立即下推`);
     return;
   }
   
@@ -519,16 +540,49 @@ function updateRange(l, r, tl, tr, u, delta) {
     console.log(`❌ 节点 u=${u} [${tl},${tr}] 与修改区间无交集`);
     return;
   }
+    // 部分相交的情况：先下推当前节点的懒标记，然后递归处理子节点
+  console.log(`🔄 节点 u=${u} [${tl},${tr}] 部分相交，需要下推并递归处理`);
+  pushDown(u, tl, tr);
   
   // 递归修改子节点
   const mid = Math.floor((tl + tr) / 2);
   updateRange(l, r, tl, mid, u * 2, delta);
   updateRange(l, r, mid + 1, tr, u * 2 + 1, delta);
   
-  // 下推子节点的懒标记，然后向上更新
-  pushDown(u * 2, tl, mid);
-  pushDown(u * 2 + 1, mid + 1, tr);
-  pushUp(u);
+  // 🔧 修复：不要立即下推子节点的懒标记，因为它们可能刚刚被设置
+  // pushDown(u * 2, tl, mid);
+  // pushDown(u * 2 + 1, mid + 1, tr);
+  
+  // 向上更新节点信息（需要先获取子节点的实际值）
+  // 但是，如果子节点有懒标记，我们需要计算它们的"有效值"
+  const leftChild = globalTree[u * 2];
+  const rightChild = globalTree[u * 2 + 1];
+  
+  // 计算子节点的有效值（包括懒标记）
+  let leftSum = leftChild.sum;
+  let leftMax = leftChild.max;
+  let leftMin = leftChild.min;
+  if (globalLazy[u * 2] !== 0) {
+    const leftLen = mid - tl + 1;
+    leftSum += globalLazy[u * 2] * leftLen;
+    leftMax += globalLazy[u * 2];
+    leftMin += globalLazy[u * 2];
+  }
+  
+  let rightSum = rightChild.sum;
+  let rightMax = rightChild.max;
+  let rightMin = rightChild.min;
+  if (globalLazy[u * 2 + 1] !== 0) {
+    const rightLen = tr - (mid + 1) + 1;
+    rightSum += globalLazy[u * 2 + 1] * rightLen;
+    rightMax += globalLazy[u * 2 + 1];
+    rightMin += globalLazy[u * 2 + 1];
+  }
+  
+  // 更新当前节点的值
+  globalTree[u].sum = leftSum + rightSum;
+  globalTree[u].max = Math.max(leftMax, rightMax);
+  globalTree[u].min = Math.min(leftMin, rightMin);
   
   console.log(`🔄 节点 u=${u} [${tl},${tr}] 更新完成，新值:`, globalTree[u]);
 }
@@ -556,11 +610,25 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     console.warn('线段树状态检查失败');
     return;
   }
-
   console.log(`⚡ 开始直接完成修改: 区间[${modifyL}, ${modifyR}] 增加 ${delta}`);
 
   // 1. 执行实际的区间更新
+  console.log('🔧 执行区间更新前，检查懒标记状态:');
+  for (let i = 1; i <= 20; i++) {
+    if (globalLazy[i] !== 0) {
+      console.log(`  - globalLazy[${i}] = ${globalLazy[i]}`);
+    }
+  }
+  
   updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+  
+  console.log('🔧 执行区间更新后，检查懒标记状态:');
+  for (let i = 1; i <= 20; i++) {
+    if (globalLazy[i] !== 0) {
+      console.log(`  - globalLazy[${i}] = ${globalLazy[i]}`);
+    }
+  }
+  
   console.log('✅ 区间更新完成');
 
   // 2. 重置所有节点样式
@@ -615,46 +683,18 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
           // 下推节点 - 橙色
           nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
           nodeDiv.style.border = '2px solid #e67e22';
-          nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
-          console.log(`🟠 高亮下推节点 u=${u} [${tl},${tr}]`);
+          nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';          console.log(`🟠 高亮下推节点 u=${u} [${tl},${tr}]`);
         }
-          // 立即更新节点显示的数值
-        updateNodeDisplayWithLazyPush(u, tl, tr);
+        
+        // 立即更新节点显示的数值（使用安全更新）
+        updateNodeDisplaySafe(u, tl, tr);
       }, index * 200); // 错开动画时间
     }
   });
-
-  // 5. 立即更新所有相关节点显示（确保数据同步）
-  console.log('🔄 立即更新所有相关节点显示');
-  setTimeout(() => {
-    // 遍历整个树，更新所有可能受影响的节点
-    function updateAllRelatedNodes(u, tl, tr) {
-      // 如果这个节点存在于DOM中，就更新它
-      if (modifyDomNodeElements.has(u)) {
-        updateNodeDisplayWithLazyPush(u, tl, tr);
-      }
-      
-      // 如果当前节点区间与修改区间有交集，递归更新子节点
-      if (tl < tr && (modifyL <= tr && modifyR >= tl)) {
-        const mid = Math.floor((tl + tr) / 2);
-        updateAllRelatedNodes(u * 2, tl, mid);
-        updateAllRelatedNodes(u * 2 + 1, mid + 1, tr);
-      }
-    }
-    
-    updateAllRelatedNodes(1, 1, lastModifyBuiltN);
-    console.log('✅ 所有相关节点显示更新完成');
-  }, 100); // 很快执行，确保数据同步
-
-  // 6. 最终确保所有节点都是最新状态
-  setTimeout(() => {
-    console.log('🎯 直接完成修改 - 最终确保所有节点状态正确');
-    modifyDomNodeElements.forEach((nodeDiv, u) => {
-      const nodeInfo = findNodeRange(u, 1, 1, lastModifyBuiltN);
-      if (nodeInfo) {
-        updateNodeDisplayWithLazyPush(u, nodeInfo.tl, nodeInfo.tr);
-      }
-    });}, affectedNodes.length * 200 + 500);
+  
+  // 5. 仅更新高亮节点的显示，不要触发全树更新
+  console.log('🔄 仅更新受影响节点的显示');
+  // 不要调用全树更新，避免意外下推懒标记
 }
 
 // 辅助函数：根据节点编号找到对应的区间范围
@@ -1060,7 +1100,8 @@ function initModifyTreeVisualizer() {
 // 导出模块
 window.ModifyTreeVisualizer = {
   buildModifyTreeVisualizationWithData,
-  initModifyTreeVisualizer
+  initModifyTreeVisualizer,
+  testLazyMarkingSetting // 添加测试函数
 };
 
 // 更新节点显示信息（包括懒标记和树节点值）
@@ -1073,31 +1114,132 @@ function updateNodeDisplayWithLazyPush(u, tl, tr) {
     return;
   }
   
-  // 确保懒标记已经下推到当前节点
-  pushDown(u, tl, tr);
-  
-  const treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+  // 获取当前的懒标记值（不要立即下推）
   const lazyValue = globalLazy[u] || 0;
+  console.log(`🏷️ 节点 u=${u} 的懒标记值: ${lazyValue} (globalLazy[${u}] = ${globalLazy[u]})`);
+  
   const lazyDisplay = lazyValue === 0 ? '-' : lazyValue;
+  
+  // 获取当前树节点的值
+  let treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+  console.log(`🌳 节点 u=${u} 的树节点值:`, treeNode);
+  
+  // 如果有懒标记，需要计算应用懒标记后的显示值（但不修改原数据）
+  let displaySum = treeNode.sum;
+  let displayMax = treeNode.max;
+  let displayMin = treeNode.min;
+  
+  if (lazyValue !== 0) {
+    const len = tr - tl + 1;
+    displaySum += lazyValue * len;
+    displayMax += lazyValue;
+    displayMin += lazyValue;
+    console.log(`📊 节点 u=${u} 有懒标记 ${lazyValue}，区间长度 ${len}，显示计算后的值`);
+    console.log(`📊 显示值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+  } else {
+    console.log(`📊 节点 u=${u} 无懒标记，显示原始值`);
+  }
   
   // 更新节点的HTML内容
   nodeDiv.innerHTML = `
     <div class="node-interval">[${tl},${tr}]</div>
     <div class="node-row">
-      <span class="node-sum">sum:${treeNode.sum}</span>
-      <span class="node-min">min:${treeNode.min}</span>
+      <span class="node-sum">sum:${displaySum}</span>
+      <span class="node-min">min:${displayMin}</span>
     </div>
     <div class="node-row">
       <span class="node-lazy">lazy:${lazyDisplay}</span>
-      <span class="node-max">max:${treeNode.max}</span>
+      <span class="node-max">max:${displayMax}</span>
+    </div>
+  `;
+    console.log(`✅ 节点 u=${u} 显示已更新:`, {
+    原始sum: treeNode.sum,
+    显示sum: displaySum,
+    原始min: treeNode.min,
+    显示min: displayMin,
+    原始max: treeNode.max,
+    显示max: displayMax,
+    lazy显示: lazyDisplay,
+    原始lazy: lazyValue
+  });
+}
+
+// 安全更新节点显示信息（不触发懒标记下推）
+function updateNodeDisplaySafe(u, tl, tr) {
+  console.log(`🔄 updateNodeDisplaySafe: 安全更新节点 u=${u} [${tl},${tr}]`);
+  console.log(`🔍 调试: globalLazy[${u}] = ${globalLazy[u]}, 类型: ${typeof globalLazy[u]}`);
+  console.log(`🔍 调试: globalLazy 数组长度: ${globalLazy.length}`);
+  
+  const nodeDiv = modifyDomNodeElements.get(u);
+  if (!nodeDiv) {
+    console.log(`❌ 节点 u=${u} 的DOM元素未找到`);
+    return;
+  }
+  
+  // 直接获取当前状态，不执行任何修改操作
+  const lazyValue = globalLazy[u] || 0;
+  console.log(`🏷️ 节点 u=${u} 懒标记原始值: ${globalLazy[u]}, 处理后值: ${lazyValue}`);
+  const lazyDisplay = lazyValue === 0 ? '-' : lazyValue;
+  
+  let treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+  
+  // 如果有懒标记，计算显示值（但不修改原数据）
+  let displaySum = treeNode.sum;
+  let displayMax = treeNode.max;
+  let displayMin = treeNode.min;
+  
+  if (lazyValue !== 0) {
+    const len = tr - tl + 1;
+    displaySum += lazyValue * len;
+    displayMax += lazyValue;
+    displayMin += lazyValue;
+    console.log(`📊 节点 u=${u} 应用懒标记 ${lazyValue} 到显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+  } else {
+    console.log(`📊 节点 u=${u} 无懒标记，显示原始值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+  }
+  
+  // 更新节点的HTML内容
+  nodeDiv.innerHTML = `
+    <div class="node-interval">[${tl},${tr}]</div>
+    <div class="node-row">
+      <span class="node-sum">sum:${displaySum}</span>
+      <span class="node-min">min:${displayMin}</span>
+    </div>
+    <div class="node-row">
+      <span class="node-lazy">lazy:${lazyDisplay}</span>
+      <span class="node-max">max:${displayMax}</span>
     </div>
   `;
   
-  console.log(`✅ 节点 u=${u} 显示已更新:`, {
-    sum: treeNode.sum,
-    min: treeNode.min,
-    max: treeNode.max,
-    lazy: lazyDisplay,
-    原始lazy: lazyValue
+  console.log(`✅ 节点 u=${u} 安全显示更新完成: lazy显示=${lazyDisplay}, 原始值=${globalLazy[u]}`);
+}
+
+// 简单测试懒标记设置的函数
+function testLazyMarkingSetting(modifyL, modifyR, delta) {
+  console.log('🧪 测试懒标记设置开始');
+  console.log(`📊 修改区间: [${modifyL}, ${modifyR}], delta: ${delta}`);
+  console.log('📊 修改前 globalLazy 状态:', globalLazy.slice(0, 20));
+  
+  // 直接调用 updateRange，不做其他任何操作
+  updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+  
+  console.log('📊 修改后 globalLazy 状态:', globalLazy.slice(0, 20));
+  
+  // 检查哪些节点有懒标记
+  console.log('📊 有懒标记的节点:');
+  for (let u = 1; u < globalLazy.length; u++) {
+    if (globalLazy[u] !== 0) {
+      console.log(`  - 节点 u=${u}: lazy=${globalLazy[u]}`);
+    }
+  }
+  
+  // 立即更新所有节点的显示，看看懒标记是否正确显示
+  console.log('📊 更新所有节点显示:');
+  modifyDomNodeElements.forEach((nodeDiv, u) => {
+    // 找到对应的区间
+    const range = findNodeRange(u, 1, 1, lastModifyBuiltN);
+    if (range) {
+      updateNodeDisplaySafe(u, range.tl, range.tr);
+    }
   });
 }
