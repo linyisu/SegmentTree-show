@@ -80,25 +80,10 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   if (!treeVisual) {
     console.error("Modify tree visual element not found.");
     return;
-  }  const containerWidth = treeVisual.clientWidth - 50;
-  const nodeMinWidth = 50; // 最小节点宽度
-  const levelHeight = 100;
-  const padding = 25;
-  
-  // 🎯 新增：计算每层节点的自适应宽度
-  function calculateAdaptiveNodeWidth(depth) {
-    const levelNodes = currentModifyTreeLevelsData[depth];
-    if (!levelNodes || levelNodes.length === 0) return nodeMinWidth;
-    
-    const nodesInLevel = levelNodes.length;
-    const availableWidth = containerWidth - (2 * padding);
-    const nodeGap = 10; // 节点间隙
-    const totalGapWidth = (nodesInLevel - 1) * nodeGap;
-    const calculatedWidth = (availableWidth - totalGapWidth) / nodesInLevel;
-    
-    // 确保节点宽度不小于最小值，但允许超过原来的限制以占满空间
-    return Math.max(nodeMinWidth, calculatedWidth);
-  }
+  }  const containerWidth = treeVisual.clientWidth - 50; // 与原始实现相同
+  const nodeMinWidth = 50; // 与原始实现相同
+  const levelHeight = 100; // 增加层级间距，从80px增加到100px
+  const padding = 25; // 与原始实现相同
   // 构建带初始值的线段树 - 维护最大值、最小值、区间和
   const tree = new Array(4 * n);
   const lazy = new Array(4 * n).fill(0);
@@ -175,7 +160,8 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     treeVisual.style.height = `${minHeight}px`;  }
   
   const nodePositions = new Map();
-  // 修改后的位置计算函数调用 - 使用自适应宽度
+
+  // 修改后的位置计算函数调用
   function calculateModifyNodePositionsWithData(l, r, u, depth = 0, parentX = null, parentW = null) {
     // Check if this node should exist based on currentModifyTreeLevelsData
     const levelNodes = currentModifyTreeLevelsData[depth];
@@ -184,32 +170,29 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     }
 
     const y = depth * levelHeight + 30;
-    
-    // 🎯 使用自适应宽度计算
-    const adaptiveNodeWidth = calculateAdaptiveNodeWidth(depth);
-    
-    // 🎯 新的水平位置计算策略 - 均匀分布占满整层
-    const currentLevelNodes = levelNodes;
-    const nodesInLevel = currentLevelNodes.length;
-    const availableWidth = containerWidth - (2 * padding);
-    const nodeGap = 10;
-    
-    // 找到当前节点在当前层中的索引
-    const nodeIndexInLevel = currentLevelNodes.findIndex(node => node.u === u && node.l === l && node.r === r);
-    
-    let x, nodeWidth = adaptiveNodeWidth;
-    
-    if (nodesInLevel === 1) {
-      // 单节点居中
-      x = containerWidth / 2;
-    } else {
-      // 多节点均匀分布
-      const totalNodesWidth = nodesInLevel * nodeWidth;
-      const totalGapWidth = (nodesInLevel - 1) * nodeGap;
-      const startX = padding + nodeWidth / 2;
-      const stepX = (availableWidth - nodeWidth) / (nodesInLevel - 1);
-      
-      x = startX + nodeIndexInLevel * stepX;
+    let x, nodeWidth;
+
+    if (u === 1) { // Root node
+        nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
+        nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+        x = containerWidth / 2; // Centered within containerWidth
+    } else { // Child Node
+        if (parentW == null || parentX == null) {
+            console.error(`Parent data not passed for node ${u}`);
+            nodeWidth = nodeMinWidth; // Fallback
+            const tempParentPos = nodePositions.get(Math.floor(u/2)); // Attempt to get from map if available
+            x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
+        } else {
+            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+
+            const isLeftChild = (u % 2 === 0);
+            if (isLeftChild) {
+                x = parentX - parentW / 4; // Center in parent's left half-width
+            } else { // Right child
+                x = parentX + parentW / 4; // Center in parent's right half-width
+            }
+        }
     }
 
     // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
