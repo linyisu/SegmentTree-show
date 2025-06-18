@@ -734,23 +734,38 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
     modifyL, modifyR, delta,
     isModifyTreeRendered,
     lastModifyBuiltContainer: !!lastModifyBuiltContainer,
-    modifyDomNodeElements_size: modifyDomNodeElements.size
+    modifyDomNodeElements_size: modifyDomNodeElements.size,
+    stepModifyState
   });
   
   if (!isModifyTreeRendered || !lastModifyBuiltContainer) {
     alert('请先构建线段树！');
-    if (!isModifyTreeRendered)
-      console.warn('线段树尚未渲染，请先构建线段树');
-    if (!lastModifyBuiltContainer)
-      console.warn('线段树容器未找到，请先构建线段树');
     return;
   }
 
-  // 如果已经在步进模式中，重置状态
-  if (stepModifyState.isActive) {
+  // 如果是新的步进操作，初始化状态
+  if (!stepModifyState.isActive || 
+      stepModifyState.modifyL !== modifyL || 
+      stepModifyState.modifyR !== modifyR || 
+      stepModifyState.delta !== delta) {
+    
+    console.log('👣 初始化新的步进操作');
+    initializeStepModify(modifyL, modifyR, delta, container);
+    
+  } else if (stepModifyState.currentIndex < stepModifyState.affectedNodes.length) {
+    // 如果是同样的操作且还有步骤，执行下一步
+    console.log('👣 执行下一步');
+    executeNextStep();
+    
+  } else {
+    // 所有步骤已完成，重新开始
+    console.log('👣 步进已完成，重新开始');
     resetStepModifyState();
+    initializeStepModify(modifyL, modifyR, delta, container);
   }
+}
 
+function initializeStepModify(modifyL, modifyR, delta, container) {
   // 清除之前的高亮
   modifyDomNodeElements.forEach((nodeDiv) => {
     nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
@@ -762,13 +777,12 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
   stepModifyState.isActive = true;
   stepModifyState.affectedNodes = [];
   stepModifyState.currentIndex = 0;
-  stepModifyState.modifyL = modifyL;  stepModifyState.modifyR = modifyR;
+  stepModifyState.modifyL = modifyL;
+  stepModifyState.modifyR = modifyR;
   stepModifyState.delta = delta;
   stepModifyState.container = container;
   
-  // 🔧 不要立即执行修改，而是在步进过程中逐步执行
-  // updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
-    // 模拟收集受影响的节点用于步进显示
+  // 模拟收集受影响的节点用于步进显示
   function collectAffectedNodes(modifyL, modifyR, u, tl, tr) {
     if (modifyL > tr || modifyR < tl) {
       return; // 完全不相交
@@ -790,96 +804,11 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
   }
 
   collectAffectedNodes(modifyL, modifyR, 1, 1, lastModifyBuiltN);
-
-  // 显示步进控制提示
-  showStepControls();
+    console.log(`👣 步进修改初始化完成，受影响节点数: ${stepModifyState.affectedNodes.length}`);
+  console.log(`👣 提示: 继续点击"步进修改"按钮来逐步执行`);
   
-  console.log('👣 步进修改初始化完成，受影响节点数:', stepModifyState.affectedNodes.length);
-}
-
-function showStepControls() {
-  // 创建步进控制面板
-  let controlPanel = document.getElementById('step-control-panel');
-  if (!controlPanel) {
-    controlPanel = document.createElement('div');
-    controlPanel.id = 'step-control-panel';
-    controlPanel.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: white;
-      border: 2px solid #74b9ff;
-      border-radius: 12px;
-      padding: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-      text-align: center;
-      min-width: 280px;
-      max-width: 320px;
-    `;
-    document.body.appendChild(controlPanel);
-  }
-
-  updateStepControlPanel();
-}
-
-function updateStepControlPanel() {
-  const controlPanel = document.getElementById('step-control-panel');
-  if (!controlPanel) return;
-
-  const totalSteps = stepModifyState.affectedNodes.length;
-  const currentStep = stepModifyState.currentIndex + 1;
-  const isFinished = stepModifyState.currentIndex >= totalSteps;
-  
-  console.log(`🎮 updateStepControlPanel: currentIndex=${stepModifyState.currentIndex}, totalSteps=${totalSteps}, currentStep=${currentStep}, isFinished=${isFinished}`);
-  
-  controlPanel.innerHTML = `
-    <h4 style="margin: 0 0 10px 0; font-size: 16px;">👣 步进修改模式</h4>
-    <p style="margin: 5px 0; font-size: 14px;"><strong>区间:</strong> [${stepModifyState.modifyL}, ${stepModifyState.modifyR}] <strong>值:</strong> +${stepModifyState.delta}</p>
-    <p style="margin: 5px 0; font-size: 14px;"><strong>进度:</strong> ${Math.min(currentStep, totalSteps)} / ${totalSteps}</p>
-    <div style="margin: 10px 0;">
-      <button id="btn-next-step" ${isFinished ? 'disabled' : ''} 
-              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
-                     background: ${isFinished ? '#ccc' : '#74b9ff'}; color: white; cursor: ${isFinished ? 'not-allowed' : 'pointer'};">
-        ${isFinished ? '✅ 完成' : '👣 下一步'}
-      </button><br>
-      <button id="btn-finish-steps" ${isFinished ? 'disabled' : ''}
-              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
-                     background: ${isFinished ? '#ccc' : '#e74c3c'}; color: white; cursor: ${isFinished ? 'not-allowed' : 'pointer'};">
-        ⚡ 直接完成
-      </button>
-      <button id="btn-close-steps"
-              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
-                     background: #95a5a6; color: white; cursor: pointer;">
-        ❌ 关闭
-      </button>
-    </div>  `;
-  
-  // 绑定按钮事件（使用onclick属性直接绑定）
-  const btnNextStep = document.getElementById('btn-next-step');
-  const btnFinishSteps = document.getElementById('btn-finish-steps');
-  const btnCloseSteps = document.getElementById('btn-close-steps');
-
-  if (btnNextStep && !isFinished) {
-    btnNextStep.onclick = function() {
-      console.log('🖱️ "下一步" 按钮被点击');
-      executeNextStep();
-    };
-  }
-
-  if (btnFinishSteps && !isFinished) {
-    btnFinishSteps.onclick = function() {
-      console.log('🖱️ "直接完成" 按钮被点击');
-      finishAllSteps();
-    };
-  }
-
-  if (btnCloseSteps) {
-    btnCloseSteps.onclick = function() {
-      console.log('🖱️ "关闭" 按钮被点击');
-      closeStepControls();
-    };
-  }
+  // 立即执行第一步
+  executeNextStep();
 }
 
 function executeNextStep() {
@@ -889,7 +818,6 @@ function executeNextStep() {
     console.log('👣 所有步骤已完成');
     return;
   }
-
   const { u, type, tl, tr } = stepModifyState.affectedNodes[stepModifyState.currentIndex];
   const nodeDiv = modifyDomNodeElements.get(u);
   
@@ -902,51 +830,48 @@ function executeNextStep() {
       nodeDiv.style.border = '2px solid #e74c3c';
       nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
       
-      // 添加懒标记并下推
+      // 🔧 对于完全包含的节点，只添加懒标记，不要立即下推！
+      console.log(`🏷️ 步进修改前: globalLazy[${u}] = ${globalLazy[u]}`);
       globalLazy[u] += stepModifyState.delta;
-      pushDown(u, tl, tr);
+      console.log(`🏷️ 步进修改后: globalLazy[${u}] = ${globalLazy[u]}`);
       
-      console.log(`👣🔴 步进：懒标记节点 u=${u} [${tl},${tr}] 添加懒标记 ${stepModifyState.delta}`);
-      updateNodeDisplayWithLazyPush(u, tl, tr);
+      console.log(`👣🔴 步进：懒标记节点 u=${u} [${tl},${tr}] 添加懒标记 ${stepModifyState.delta}，不立即下推`);
+      
+      // 更新显示（会考虑懒标记的影响）
+      updateNodeDisplaySafe(u, tl, tr);
+      
     } else if (type === 'pushdown') {
       // 下推节点 - 橙色，这种节点部分相交，需要下推到子节点
       nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
       nodeDiv.style.border = '2px solid #e67e22';
       nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
-      
-      // 下推懒标记到子节点
+        // 🔧 先下推当前节点的懒标记
+      console.log(`👣🟠 步进：下推节点 u=${u} [${tl},${tr}] 执行下推操作`);
       pushDown(u, tl, tr);
       
-      console.log(`👣🟠 步进：下推节点 u=${u} [${tl},${tr}] 执行下推操作`);
-      updateNodeDisplayWithLazyPush(u, tl, tr);
+      // 🔧 按照递归回溯的顺序，逐步向上更新所有祖先节点
+      console.log(`👣⬆️ 开始递归回溯更新，从节点 u=${u} 向上到根节点`);
+      updateAncestors(u);
+      
+      // 更新显示
+      updateNodeDisplaySafe(u, tl, tr);
     }
   } else {
     console.log(`❌ 节点 u=${u} 的DOM元素未找到`);
   }
-  
-  stepModifyState.currentIndex++;
+    stepModifyState.currentIndex++;
   console.log(`👣 步骤完成，currentIndex 更新为: ${stepModifyState.currentIndex}`);
   
-  // 立即更新面板
-  setTimeout(() => {
-    updateStepControlPanel();
-  }, 100);
-}
-
-function finishAllSteps() {
-  // 快速执行剩余所有步骤
-  while (stepModifyState.currentIndex < stepModifyState.affectedNodes.length) {
-    executeNextStep();
+  // 如果所有步骤完成，显示完成消息
+  if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
+    console.log('✅ 所有步进修改步骤已完成！');
+  } else {
+    console.log(`👣 还有 ${stepModifyState.affectedNodes.length - stepModifyState.currentIndex} 步待执行，继续点击"步进修改"按钮`);
   }
 }
 
-function closeStepControls() {
-  resetStepModifyState();
-  const controlPanel = document.getElementById('step-control-panel');
-  if (controlPanel) {
-    controlPanel.remove();
-  }
-}
+// 移除所有弹窗相关函数，因为改为直接点击方式
+// finishAllSteps, closeStepControls 等函数已不需要
 
 function resetStepModifyState() {
   stepModifyState.isActive = false;
