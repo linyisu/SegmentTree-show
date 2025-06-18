@@ -366,14 +366,15 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       const parentId = Math.floor(childId / 2);
       const childPos = nodePositions.get(childId);
       const parentPos = nodePositions.get(parentId);      if (childPos && parentPos) {
+        const nodeHalfHeight = 40;
         const deltaX = childPos.x - parentPos.x;
-        const deltaY = childPos.y - parentPos.y - 40; // 增加偏移量以适应更高的节点
+        const deltaY = (childPos.y - nodeHalfHeight) - (parentPos.y + nodeHalfHeight);
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
         
         line.style.width = `${length}px`;
         line.style.left = `${parentPos.x}px`;
-        line.style.top = `${parentPos.y + 40}px`; // 增加偏移量以适应更高的节点
+        line.style.top = `${parentPos.y + nodeHalfHeight}px`;
         line.style.transform = `rotate(${angle}deg)`;
       }
     });
@@ -388,28 +389,33 @@ function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
   const parentPos = nodePositions.get(parentId);
   
   if (!childPos || !parentPos) return;
-  
-  const line = document.createElement('div');
+    const line = document.createElement('div');
   line.className = 'modify-tree-connection-line';
   line.style.position = 'absolute';
   line.style.background = 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))';
   line.style.zIndex = '5';
   line.style.opacity = '0';
   line.style.borderRadius = '1px';
-    const deltaX = childPos.x - parentPos.x;
-  const deltaY = childPos.y - parentPos.y - 40; // 增加偏移量以适应更高的节点
+  
+  // 计算从父节点底边中点到子节点顶边中点的连线
+  // position.x, position.y 表示节点中心位置
+  // 节点高度约为80px，所以半高度为40px
+  const nodeHalfHeight = 40;
+  
+  const deltaX = childPos.x - parentPos.x;
+  const deltaY = (childPos.y - nodeHalfHeight) - (parentPos.y + nodeHalfHeight);
   const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
   const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
   
   line.style.width = `${length}px`;
-  line.style.height = '2px'; // 与原始实现相同的高度
+  line.style.height = '2px';
   line.style.left = `${parentPos.x}px`;
-  line.style.top = `${parentPos.y + 40}px`; // 增加偏移量以适应更高的节点
+  line.style.top = `${parentPos.y + nodeHalfHeight}px`; // 父节点底边中点
   line.style.transformOrigin = '0 50%';
   line.style.transform = `rotate(${angle}deg)`;
   
   treeVisual.appendChild(line);
-  modifyDomLineElements.set(nodeId, line); // Store DOM element for the line
+  modifyDomLineElements.set(nodeId, line);
 
   setTimeout(() => {
     line.style.transition = 'opacity 0.4s ease-in-out';
