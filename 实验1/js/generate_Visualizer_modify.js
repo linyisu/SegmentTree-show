@@ -80,17 +80,32 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   if (!treeVisual) {
     console.error("Modify tree visual element not found.");
     return;
-  }  // 🎯 保持原始节点宽度结构，只优化自适应响应
-  const containerWidth = treeVisual.clientWidth; // 实时获取容器宽度
-  const nodeMinWidth = 50; // 与原始实现相同
-  const levelHeight = 100; // 与原始实现相同
-  const padding = 25; // 与原始实现相同
+  }  // 🔧 强制重新获取容器宽度，特别是在resize时
+  const treeVisualElement = isResizeUpdate ? 
+    lastModifyBuiltContainer.querySelector('.modify-tree-visual') : treeVisual;
+    
+  if (!treeVisualElement) {
+    console.error("Modify tree visual element not found.");
+    return;
+  }
   
-  console.log('📏 容器信息 (保持原始宽度结构):', {
+  // 强制重新计算尺寸，确保获取最新值
+  if (isResizeUpdate) {
+    // 触发重流以获取准确的最新尺寸
+    treeVisualElement.offsetHeight; // 强制重新计算
+  }
+  
+  const containerWidth = treeVisualElement.clientWidth - 50;
+  const nodeMinWidth = 50;
+  const levelHeight = 100;
+  const padding = 25;
+  
+  console.log('📏 容器信息 (强制更新尺寸):', {
+    isResize: isResizeUpdate,
+    clientWidth: treeVisualElement.clientWidth,
     containerWidth,
     effectiveWidth: containerWidth - (2 * padding)
-  });
-  // 构建带初始值的线段树 - 维护最大值、最小值、区间和
+  });// 构建带初始值的线段树 - 维护最大值、最小值、区间和
   const tree = new Array(4 * n);
   const lazy = new Array(4 * n).fill(0);
   
@@ -99,33 +114,38 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     tree[i] = { sum: 0, max: -Infinity, min: Infinity };
   }
   
-  // 构建初始线段树
-  function buildTree(arr, tree, node, start, end) {
-    if (start === end) {
-      const value = arr[start - 1]; // 数组索引从0开始，区间从1开始
-      tree[node] = { sum: value, max: value, min: value };
-    } else {
-      const mid = Math.floor((start + end) / 2);
-      buildTree(arr, tree, 2 * node, start, mid);
-      buildTree(arr, tree, 2 * node + 1, mid + 1, end);
-      // 合并左右子节点的信息
-      const leftChild = tree[2 * node];
-      const rightChild = tree[2 * node + 1];
-      tree[node] = {
-        sum: leftChild.sum + rightChild.sum,
-        max: Math.max(leftChild.max, rightChild.max),
-        min: Math.min(leftChild.min, rightChild.min)
-      };
+  // 🔧 修复：只在非resize更新时构建树数据
+  if (!isResizeUpdate && dataArray) {
+    // 构建初始线段树
+    function buildTree(arr, tree, node, start, end) {
+      if (start === end) {
+        const value = arr[start - 1]; // 数组索引从0开始，区间从1开始
+        tree[node] = { sum: value, max: value, min: value };
+      } else {
+        const mid = Math.floor((start + end) / 2);
+        buildTree(arr, tree, 2 * node, start, mid);
+        buildTree(arr, tree, 2 * node + 1, mid + 1, end);
+        // 合并左右子节点的信息
+        const leftChild = tree[2 * node];
+        const rightChild = tree[2 * node + 1];
+        tree[node] = {
+          sum: leftChild.sum + rightChild.sum,
+          max: Math.max(leftChild.max, rightChild.max),
+          min: Math.min(leftChild.min, rightChild.min)
+        };
+      }
     }
-  }
     buildTree(dataArray, tree, 1, 1, n);
-  
-  console.log('🌳 线段树构建完成:', {
-    n,
-    treeSize: tree.length,
-    rootNode: tree[1],
-    sampleNodes: [tree[2], tree[3]]
-  });
+    
+    console.log('🌳 线段树构建完成:', {
+      n,
+      treeSize: tree.length,
+      rootNode: tree[1],
+      sampleNodes: [tree[2], tree[3]]
+    });
+  } else if (isResizeUpdate) {
+    console.log('🔄 Resize更新：跳过树数据重建，仅更新布局');
+  }
   
   if (!isResizeUpdate) {
     // This is an initial build: collect tree levels data with actual values
@@ -175,14 +195,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     }
 
     const y = depth * levelHeight + 30;
-    let x, nodeWidth;
-
-    if (u === 1) { // Root node - 保持原始超长宽度
+    let x, nodeWidth;    if (u === 1) { // Root node - 保持原始超长宽度
         nodeWidth = containerWidth - (2 * padding); // 原始逻辑：根节点横跨整个容器
-        nodeWidth = Math.max(nodeMinWidth, nodeWidth);
-        x = containerWidth / 2; // 居中
+        nodeWidth = Math.max(nodeMinWidth, nodeWidth);        x = (containerWidth + 50) / 2; // 修复居中：基于实际treeVisual宽度居中
         
-        console.log('🌳 根节点 (原始超长宽度):', { 
+        console.log('🌳 根节点 (强制更新尺寸):', { 
+          treeVisualWidth: treeVisualElement.clientWidth,
           containerWidth, 
           nodeWidth: Math.round(nodeWidth), 
           x: Math.round(x) 
@@ -211,15 +229,14 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
               x: Math.round(x) 
             });
         }
-    }
-
-    // 原始边界检查逻辑
+    }    // 修复边界检查逻辑 - 使用实际容器边界
+    const actualContainerWidth = containerWidth + 50; // 实际treeVisual宽度
     const halfW = nodeWidth / 2;
     if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
         x = padding + halfW;
     }
-    if (x + halfW > containerWidth - padding) { // Right edge should not exceed 'containerWidth - padding'
-        x = containerWidth - padding - halfW;
+    if (x + halfW > actualContainerWidth - padding) { // Right edge should not exceed actual container width
+        x = actualContainerWidth - padding - halfW;
     }
     
     nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
@@ -373,18 +390,81 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       orderIndex++;
       const animationDelay = getModifyAnimationDelay();
       activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, animationDelay / 6);
-    }
-    
+    }    
     activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, 500); // Initial call for animation
   } else {
-    // This is a resize update: update existing DOM elements
-    modifyDomNodeElements.forEach((nodeDiv, u) => {      const position = nodePositions.get(u);
+    // This is a resize update: update existing DOM elements with smooth animation
+    console.log('🔄 RESIZE更新: 开始更新现有DOM元素位置和大小');
+    console.log('📊 当前nodePositions Map内容:', Array.from(nodePositions.entries()));
+    let updateCount = 0;
+    
+    modifyDomNodeElements.forEach((nodeDiv, u) => {
+      const position = nodePositions.get(u);
       if (position) {
-        nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
-        nodeDiv.style.top = `${position.y}px`;
-        nodeDiv.style.width = `${position.nodeWidth}px`;
+        // 记录更新前的状态
+        const oldLeft = nodeDiv.style.left;
+        const oldWidth = nodeDiv.style.width;
+        
+        // 直接计算新值，确保使用最新的位置信息
+        const newLeft = `${position.x - position.nodeWidth / 2}px`;
+        const newTop = `${position.y}px`;
+        const newWidth = `${position.nodeWidth}px`;
+        
+        console.log(`🔍 节点 u=${u} 详细对比:`, {
+          positionData: position,
+          calculated: {
+            left: position.x - position.nodeWidth / 2,
+            width: position.nodeWidth
+          },
+          old: { left: oldLeft, width: oldWidth },
+          new: { left: newLeft, width: newWidth }
+        });
+        
+        // 强制清除现有样式并重新设置
+        nodeDiv.style.transition = '';
+        nodeDiv.style.left = '';
+        nodeDiv.style.width = '';
+        
+        // 强制重流
+        nodeDiv.offsetHeight;
+        
+        // 重新设置样式
+        nodeDiv.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        nodeDiv.style.left = newLeft;
+        nodeDiv.style.top = newTop;
+        nodeDiv.style.width = newWidth;
+        
+        // 再次强制触发重绘
+        nodeDiv.offsetHeight;
+        
+        updateCount++;
+      } else {
+        console.warn(`❌ 节点 u=${u} 没有找到位置信息`);
       }
     });
+    
+    console.log(`✅ RESIZE更新完成: 更新了${updateCount}个节点`);
+    
+    // 验证DOM更新是否生效
+    setTimeout(() => {
+      console.log('🔍 验证DOM更新结果:');
+      modifyDomNodeElements.forEach((nodeDiv, u) => {
+        const computedStyle = window.getComputedStyle(nodeDiv);
+        console.log(`节点 u=${u} 最终样式:`, {
+          left: nodeDiv.style.left,
+          width: nodeDiv.style.width,
+          computedLeft: computedStyle.left,
+          computedWidth: computedStyle.width
+        });
+      });
+    }, 100);
+    
+    // 清除过渡动画以避免影响后续操作
+    setTimeout(() => {
+      modifyDomNodeElements.forEach((nodeDiv) => {
+        nodeDiv.style.transition = '';
+      });
+    }, 300);
     
     isModifyTreeRendered = true; // Ensure flag is set after resize update
   }
@@ -652,13 +732,46 @@ function initModifyTreeVisualizer() {
       btnApplyModification: !!btnApplyModification, 
       treeContainer: !!treeContainer 
     });
-  }  window.addEventListener('resize', debounceModify(() => {
+  }  
+  // Optimized resize handler
+  window.addEventListener('resize', debounceModify(() => {
+    console.log('🚨 RESIZE事件被触发！');
+    console.log('📊 当前状态:', {
+      isModifyTreeRendered,
+      hasContainer: !!lastModifyBuiltContainer,
+      lastModifyBuiltN,
+      containerExists: !!document.querySelector('.modify-tree-visual')
+    });
+    
     if (isModifyTreeRendered && lastModifyBuiltContainer && lastModifyBuiltN > 0) {
-      // 直接重绘，使用保存的 lastModifyBuiltN 重新生成数据或跳过数据重新设置
-      console.log('🔄 Resize 事件触发，重新布局现有节点');
-      buildModifyTreeVisualizationWithData(null, lastModifyBuiltContainer, true); // 传入 null 表示 resize 更新
+      console.log('✅ 条件满足，开始重新布局');
+      // 获取外部容器的宽度
+      const outerContainer = lastModifyBuiltContainer.parentElement || lastModifyBuiltContainer;
+      const outerWidth = outerContainer.getBoundingClientRect().width;
+      console.log('📏 外部容器宽度:', outerWidth);
+      
+      // 设置 tree-visual 宽度为外部容器的宽度
+      const treeVisual = lastModifyBuiltContainer.querySelector('.modify-tree-visual');
+      if (treeVisual) {
+        treeVisual.style.width = `${outerWidth}px`;
+        treeVisual.style.boxSizing = 'border-box'; // 确保宽度包含 padding 和 border
+        treeVisual.style.padding = '25px'; // 确保 padding 不影响宽度
+        console.log('✅ 设置 tree-visual 宽度:', outerWidth, '实际 clientWidth:', treeVisual.clientWidth);
+        
+        // 强制重绘
+        treeVisual.style.display = 'none';
+        treeVisual.offsetHeight; // 强制重排
+        treeVisual.style.display = '';
+        
+        // 调用可视化更新函数，传入 null 表示 resize 更新
+        buildModifyTreeVisualizationWithData(null, lastModifyBuiltContainer, true);
+      } else {
+        console.error('❌ 未找到 tree-visual 元素，无法更新宽度');
+      }
+    } else {
+      console.log('❌ 条件不满足，跳过resize更新');
     }
-  }, 250));
+  }, 100)); // 防抖时间 100ms
 }
 
 // Export functions
