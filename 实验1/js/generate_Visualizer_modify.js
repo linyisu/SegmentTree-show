@@ -329,25 +329,23 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       const lazyDisplay = lazy === 0 ? '-' : lazy;
       nodeDiv.innerHTML = `
         <div class="node-interval">[${l},${r}]</div>
-        <div class="node-row">
-          <span class="node-sum">sum:${sum}</span>
-          <span class="node-min">min:${min}</span>
+        <div class="node-info">
+          sum:${sum} min:${min}
         </div>
-        <div class="node-row">
-          <span class="node-lazy">lazy:${lazyDisplay}</span>
-          <span class="node-max">max:${max}</span>
+        <div class="node-info">
+          lazy:${lazyDisplay} max:${max}
         </div>
-      `;
-        nodeDiv.style.position = 'absolute';
+      `;      nodeDiv.style.position = 'absolute';
       nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
       nodeDiv.style.top = `${position.y}px`;
       nodeDiv.style.width = `${position.nodeWidth}px`;
-      nodeDiv.style.zIndex = '10';      nodeDiv.style.minHeight = '80px'; // 增加节点高度以容纳更大字体
+      nodeDiv.style.zIndex = '10';      
+      nodeDiv.style.minHeight = '80px'; // 恢复原始高度
       nodeDiv.style.display = 'flex';
       nodeDiv.style.flexDirection = 'column';
       nodeDiv.style.justifyContent = 'center';
       nodeDiv.style.alignItems = 'center';
-      nodeDiv.style.fontSize = '13px'; // 增大字体到与原始实现相同
+      nodeDiv.style.fontSize = '13px'; // 恢复原始字体大小
       nodeDiv.style.lineHeight = '1.3';
       nodeDiv.style.padding = '6px';
       nodeDiv.style.boxSizing = 'border-box';
@@ -981,7 +979,7 @@ function initModifyTreeVisualizer() {
     btnRandomData.addEventListener('click', () => {
       console.log('🎲 随机生成数据按钮被点击');
       const randomArray = [];
-      const length = Math.floor(Math.random() * 6) + 3; // 3-8个数字
+      const length = Math.floor(Math.random() * 4) + 5; // 5-8个数字
       for (let i = 0; i < length; i++) {
         randomArray.push(Math.floor(Math.random() * 10) + 1); // 1-10的随机数
       }
@@ -1030,14 +1028,18 @@ function initModifyTreeVisualizer() {
         alert('请先构建线段树！');
         return;
       }
-      
-      // 获取修改参数
+        // 获取修改参数
       const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
       const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
       const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
       
       if (isNaN(modifyL) || isNaN(modifyR) || isNaN(modifyValue)) {
         alert('请输入有效的修改参数！');
+        return;
+      }
+      
+      if (modifyValue < -50 || modifyValue > 50) {
+        alert('修改值必须在 -50 到 +50 之间！');
         return;
       }
       
@@ -1060,14 +1062,18 @@ function initModifyTreeVisualizer() {
         alert('请先构建线段树！');
         return;
       }
-      
-      // 获取修改参数
+        // 获取修改参数
       const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
       const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
       const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
       
       if (isNaN(modifyL) || isNaN(modifyR) || isNaN(modifyValue)) {
         alert('请输入有效的修改参数！');
+        return;
+      }
+      
+      if (modifyValue < -50 || modifyValue > 50) {
+        alert('修改值必须在 -50 到 +50 之间！');
         return;
       }
       
@@ -1135,21 +1141,17 @@ function updateNodeDisplayWithLazyPush(u, tl, tr) {
     displayMax += lazyValue;
     displayMin += lazyValue;
     console.log(`📊 节点 u=${u} 有懒标记 ${lazyValue}，区间长度 ${len}，显示计算后的值`);
-    console.log(`📊 显示值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
-  } else {
-    console.log(`📊 节点 u=${u} 无懒标记，显示原始值`);
+    console.log(`📊 显示值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);  } else {    console.log(`📊 节点 u=${u} 无懒标记，显示原始值`);
   }
   
   // 更新节点的HTML内容
   nodeDiv.innerHTML = `
     <div class="node-interval">[${tl},${tr}]</div>
-    <div class="node-row">
-      <span class="node-sum">sum:${displaySum}</span>
-      <span class="node-min">min:${displayMin}</span>
+    <div class="node-info">
+      sum:${displaySum} min:${displayMin}
     </div>
-    <div class="node-row">
-      <span class="node-lazy">lazy:${lazyDisplay}</span>
-      <span class="node-max">max:${displayMax}</span>
+    <div class="node-info">
+      lazy:${lazyDisplay} max:${displayMax}
     </div>
   `;
     console.log(`✅ 节点 u=${u} 显示已更新:`, {
@@ -1193,21 +1195,17 @@ function updateNodeDisplaySafe(u, tl, tr) {
     displaySum += lazyValue * len;
     displayMax += lazyValue;
     displayMin += lazyValue;
-    console.log(`📊 节点 u=${u} 应用懒标记 ${lazyValue} 到显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
-  } else {
-    console.log(`📊 节点 u=${u} 无懒标记，显示原始值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+    console.log(`📊 节点 u=${u} 应用懒标记 ${lazyValue} 到显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);  } else {    console.log(`📊 节点 u=${u} 无懒标记，显示原始值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
   }
   
   // 更新节点的HTML内容
   nodeDiv.innerHTML = `
     <div class="node-interval">[${tl},${tr}]</div>
-    <div class="node-row">
-      <span class="node-sum">sum:${displaySum}</span>
-      <span class="node-min">min:${displayMin}</span>
+    <div class="node-info">
+      sum:${displaySum} min:${displayMin}
     </div>
-    <div class="node-row">
-      <span class="node-lazy">lazy:${lazyDisplay}</span>
-      <span class="node-max">max:${displayMax}</span>
+    <div class="node-info">
+      lazy:${lazyDisplay} max:${displayMax}
     </div>
   `;
   
