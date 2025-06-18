@@ -115,12 +115,11 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   }
   
   // 🔧 修复：只在非resize更新时构建树数据
-  if (!isResizeUpdate && dataArray) {
-    // 构建初始线段树
+  if (!isResizeUpdate && dataArray) {    // 构建初始线段树
     function buildTree(arr, tree, node, start, end) {
       if (start === end) {
         const value = arr[start - 1]; // 数组索引从0开始，区间从1开始
-        tree[node] = { sum: value, max: value, min: value };
+        tree[node] = { sum: value, max: value, min: value, lazy: 0 };
       } else {
         const mid = Math.floor((start + end) / 2);
         buildTree(arr, tree, 2 * node, start, mid);
@@ -131,7 +130,8 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         tree[node] = {
           sum: leftChild.sum + rightChild.sum,
           max: Math.max(leftChild.max, rightChild.max),
-          min: Math.min(leftChild.min, rightChild.min)
+          min: Math.min(leftChild.min, rightChild.min),
+          lazy: 0 // 初始化懒标记为0
         };
       }
     }
@@ -310,13 +310,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       }        // 创建节点显示内容，按新的布局格式
       const nodeDiv = document.createElement('div');
       nodeDiv.className = `modify-tree-node depth-${depth}`;
-      nodeDiv.setAttribute('data-node-id', u);
-        // 创建节点内容的HTML结构
+      nodeDiv.setAttribute('data-node-id', u);      // 创建节点内容的HTML结构
       nodeDiv.innerHTML = `
         <div class="node-interval">[${l},${r}]</div>
         <div class="node-row">
           <span class="node-sum">sum:${sum}</span>
-          <span class="node-lazy">lazy:-</span>
+          <span class="node-lazy">lazy:${lazy || 0}</span>
         </div>
         <div class="node-row">
           <span class="node-min">min:${min}</span>
@@ -334,32 +333,17 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       nodeDiv.style.alignItems = 'center';
       nodeDiv.style.fontSize = '13px'; // 增大字体到与原始实现相同
       nodeDiv.style.lineHeight = '1.3';
-      nodeDiv.style.padding = '6px';      nodeDiv.style.boxSizing = 'border-box';      // 🎨 按层级分配颜色
-      const layerColors = [
-        '#6c5ce7', // 第0层 - 紫色
-        '#fd79a8', // 第1层 - 粉色  
-        '#00b894', // 第2层 - 绿色
-        '#e17055'  // 第3层 - 橙红色（替代原来的黄色 #fdcb6e）
-      ];
-      
-      // 创建稍微深一些的边框颜色
-      const layerBorderColors = [
-        '#5a4fcf', // 第0层边框 - 深紫色
-        '#e85d96', // 第1层边框 - 深粉色  
-        '#00a085', // 第2层边框 - 深绿色
-        '#d45a3e'  // 第3层边框 - 深橙红色
-      ];
-      
-      const layerColor = layerColors[depth] || '#74b9ff'; // 超过4层使用默认蓝色
-      const borderColor = layerBorderColors[depth] || '#5a9bd4'; // 超过4层使用默认深蓝色
+      nodeDiv.style.padding = '6px';      nodeDiv.style.boxSizing = 'border-box';      // 🎨 强制使用深蓝色配色系统
+      const nodeColor = '#4a90e2'; // 深蓝色背景
+      const borderColor = '#3a7bc8'; // 更深的蓝色边框
       
       nodeDiv.style.borderRadius = '8px';
       nodeDiv.style.border = `1px solid ${borderColor}`;
-      nodeDiv.style.background = layerColor;
+      nodeDiv.style.background = nodeColor;
       nodeDiv.style.color = 'white';
       nodeDiv.style.fontWeight = 'bold';
       nodeDiv.style.textAlign = 'center';
-      nodeDiv.style.boxShadow = `0 2px 8px ${layerColor}40`; // 使用对应颜色的半透明阴影
+      nodeDiv.style.boxShadow = `0 2px 8px ${nodeColor}40`; // 使用对应颜色的半透明阴影
       
       // 添加内部样式
       const intervalDiv = nodeDiv.querySelector('.node-interval');
@@ -510,38 +494,19 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     if (!lastModifyBuiltContainer)
       console.warn('线段树容器未找到，请先构建线段树');
     return;
-  }
-
-  // 清除之前的高亮 - 恢复层级颜色
-  const layerColors = [
-    '#6c5ce7', // 第0层 - 紫色
-    '#fd79a8', // 第1层 - 粉色  
-    '#00b894', // 第2层 - 绿色
-    '#e17055'  // 第3层 - 橙红色
-  ];
-  
-  // 创建稍微深一些的边框颜色
-  const layerBorderColors = [
-    '#5a4fcf', // 第0层边框 - 深紫色
-    '#e85d96', // 第1层边框 - 深粉色  
-    '#00a085', // 第2层边框 - 深绿色
-    '#d45a3e'  // 第3层边框 - 深橙红色
-  ];
+  }  // 清除之前的高亮 - 强制使用深蓝色
+  const nodeColor = '#4a90e2'; // 深蓝色背景  
+  const borderColor = '#3a7bc8'; // 更深的蓝色边框
   
   modifyDomNodeElements.forEach((nodeDiv, u) => {
-    // 根据节点类获取其深度
-    const depthClass = nodeDiv.className.match(/depth-(\d+)/);
-    const depth = depthClass ? parseInt(depthClass[1]) : 0;
-    const originalColor = layerColors[depth] || '#74b9ff';
-    const originalBorderColor = layerBorderColors[depth] || '#5a9bd4';
-      nodeDiv.style.background = originalColor;
-    nodeDiv.style.border = `1px solid ${originalBorderColor}`;
-    nodeDiv.style.boxShadow = `0 2px 8px ${originalColor}40`;
+    nodeDiv.style.background = nodeColor;
+    nodeDiv.style.border = `1px solid ${borderColor}`;
+    nodeDiv.style.boxShadow = `0 2px 8px ${nodeColor}40`;
     
-    // 恢复lazy值的默认样式和内容
+    // 恢复lazy值的默认样式，但保持当前数值
     const lazySpan = nodeDiv.querySelector('.node-lazy');
     if (lazySpan) {
-      lazySpan.textContent = 'lazy:-';
+      // 不重置lazy值，保持当前数值
       lazySpan.style.background = '';
       lazySpan.style.color = '';
       lazySpan.style.borderRadius = '';
@@ -551,15 +516,22 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
   });
 
   const affectedNodes = [];
-  
-  // 模拟区间修改过程
+    // 模拟区间修改过程
   function updateRange(l, r, u, tl, tr, delta) {
     if (modifyL > tr || modifyR < tl) {
       return; // 完全不相交
     }
     
     if (modifyL <= tl && tr <= modifyR) {
-      // 完全包含，懒标记
+      // 完全包含，设置懒标记
+      if (tree[u]) {
+        tree[u].lazy = (tree[u].lazy || 0) + delta;
+        // 更新当前节点的值
+        const range = tr - tl + 1;
+        tree[u].sum += delta * range;
+        tree[u].max += delta;
+        tree[u].min += delta;
+      }
       affectedNodes.push({ u, type: 'lazy', tl, tr });
       return;
     }
@@ -570,6 +542,13 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     updateRange(l, r, u * 2, tl, mid, delta);
     if (mid < tr) {
       updateRange(l, r, u * 2 + 1, mid + 1, tr, delta);
+    }
+    
+    // 更新当前节点（从子节点合并）
+    if (tree[u * 2] && tree[u * 2 + 1]) {
+      tree[u].sum = tree[u * 2].sum + tree[u * 2 + 1].sum;
+      tree[u].max = Math.max(tree[u * 2].max, tree[u * 2 + 1].max);
+      tree[u].min = Math.min(tree[u * 2].min, tree[u * 2 + 1].min);
     }
   }
 
@@ -589,19 +568,32 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
         // 懒标记节点 - 纯红色
         nodeDiv.style.background = '#e74c3c';
         nodeDiv.style.border = '1px solid #c0392b'; // 深红色边框
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 根据新的HTML结构
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 显示实际的累积lazy值
         const lazySpan = nodeDiv.querySelector('.node-lazy');
-        if (lazySpan) {
-          lazySpan.textContent = `lazy:${delta}`;
+        if (lazySpan && tree[u]) {
+          const currentLazy = tree[u].lazy || 0;
+          lazySpan.textContent = `lazy:${currentLazy}`;
           // 为有改动的lazy值添加高亮效果
-          lazySpan.style.background = '#ffeb3b'; // 黄色高亮背景
-          lazySpan.style.color = '#000'; // 黑色文字
-          lazySpan.style.borderRadius = '3px';
-          lazySpan.style.padding = '2px 4px';
-          lazySpan.style.fontWeight = 'bold';
+          if (currentLazy !== 0) {
+            lazySpan.style.background = '#ffeb3b'; // 黄色高亮背景
+            lazySpan.style.color = '#000'; // 黑色文字
+            lazySpan.style.borderRadius = '3px';
+            lazySpan.style.padding = '2px 4px';
+            lazySpan.style.fontWeight = 'bold';
+          }
           // 重新应用样式确保格式正确
           lazySpan.style.flex = '1';
           lazySpan.style.textAlign = 'center';
+        }
+        
+        // 同时更新其他数值
+        const sumSpan = nodeDiv.querySelector('.node-sum');
+        const maxSpan = nodeDiv.querySelector('.node-max');
+        const minSpan = nodeDiv.querySelector('.node-min');
+        if (tree[u]) {
+          if (sumSpan) sumSpan.textContent = `sum:${tree[u].sum}`;
+          if (maxSpan) maxSpan.textContent = `max:${tree[u].max}`;
+          if (minSpan) minSpan.textContent = `min:${tree[u].min}`;
         }} else if (type === 'pushdown') {
         // 下推节点 - 纯橙色
         nodeDiv.style.background = '#e67e22';
