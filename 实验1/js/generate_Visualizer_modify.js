@@ -311,17 +311,16 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       const nodeDiv = document.createElement('div');
       nodeDiv.className = `modify-tree-node depth-${depth}`;
       nodeDiv.setAttribute('data-node-id', u);
-      
-      // 创建节点内容的HTML结构
+        // 创建节点内容的HTML结构
       nodeDiv.innerHTML = `
         <div class="node-interval">[${l},${r}]</div>
         <div class="node-row">
           <span class="node-sum">sum:${sum}</span>
-          <span class="node-max">max:${max}</span>
+          <span class="node-lazy">lazy:-</span>
         </div>
         <div class="node-row">
           <span class="node-min">min:${min}</span>
-          <span class="node-lazy">lazy:${lazy}</span>
+          <span class="node-max">max:${max}</span>
         </div>
       `;
         nodeDiv.style.position = 'absolute';
@@ -335,18 +334,27 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       nodeDiv.style.alignItems = 'center';
       nodeDiv.style.fontSize = '13px'; // 增大字体到与原始实现相同
       nodeDiv.style.lineHeight = '1.3';
-      nodeDiv.style.padding = '6px';      nodeDiv.style.boxSizing = 'border-box';
-        // 🎨 按层级分配颜色
+      nodeDiv.style.padding = '6px';      nodeDiv.style.boxSizing = 'border-box';      // 🎨 按层级分配颜色
       const layerColors = [
         '#6c5ce7', // 第0层 - 紫色
         '#fd79a8', // 第1层 - 粉色  
         '#00b894', // 第2层 - 绿色
         '#e17055'  // 第3层 - 橙红色（替代原来的黄色 #fdcb6e）
       ];
-        const layerColor = layerColors[depth] || '#74b9ff'; // 超过4层使用默认蓝色
+      
+      // 创建稍微深一些的边框颜色
+      const layerBorderColors = [
+        '#5a4fcf', // 第0层边框 - 深紫色
+        '#e85d96', // 第1层边框 - 深粉色  
+        '#00a085', // 第2层边框 - 深绿色
+        '#d45a3e'  // 第3层边框 - 深橙红色
+      ];
+      
+      const layerColor = layerColors[depth] || '#74b9ff'; // 超过4层使用默认蓝色
+      const borderColor = layerBorderColors[depth] || '#5a9bd4'; // 超过4层使用默认深蓝色
       
       nodeDiv.style.borderRadius = '8px';
-      nodeDiv.style.border = `1px solid ${layerColor}`;
+      nodeDiv.style.border = `1px solid ${borderColor}`;
       nodeDiv.style.background = layerColor;
       nodeDiv.style.color = 'white';
       nodeDiv.style.fontWeight = 'bold';
@@ -502,7 +510,9 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     if (!lastModifyBuiltContainer)
       console.warn('线段树容器未找到，请先构建线段树');
     return;
-  }  // 清除之前的高亮 - 恢复层级颜色
+  }
+
+  // 清除之前的高亮 - 恢复层级颜色
   const layerColors = [
     '#6c5ce7', // 第0层 - 紫色
     '#fd79a8', // 第1层 - 粉色  
@@ -510,14 +520,34 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     '#e17055'  // 第3层 - 橙红色
   ];
   
+  // 创建稍微深一些的边框颜色
+  const layerBorderColors = [
+    '#5a4fcf', // 第0层边框 - 深紫色
+    '#e85d96', // 第1层边框 - 深粉色  
+    '#00a085', // 第2层边框 - 深绿色
+    '#d45a3e'  // 第3层边框 - 深橙红色
+  ];
+  
   modifyDomNodeElements.forEach((nodeDiv, u) => {
-    // 根据节点类获取其深度    const depthClass = nodeDiv.className.match(/depth-(\d+)/);
+    // 根据节点类获取其深度
+    const depthClass = nodeDiv.className.match(/depth-(\d+)/);
     const depth = depthClass ? parseInt(depthClass[1]) : 0;
     const originalColor = layerColors[depth] || '#74b9ff';
-    
-    nodeDiv.style.background = originalColor;
-    nodeDiv.style.border = `1px solid ${originalColor}`;
+    const originalBorderColor = layerBorderColors[depth] || '#5a9bd4';
+      nodeDiv.style.background = originalColor;
+    nodeDiv.style.border = `1px solid ${originalBorderColor}`;
     nodeDiv.style.boxShadow = `0 2px 8px ${originalColor}40`;
+    
+    // 恢复lazy值的默认样式和内容
+    const lazySpan = nodeDiv.querySelector('.node-lazy');
+    if (lazySpan) {
+      lazySpan.textContent = 'lazy:-';
+      lazySpan.style.background = '';
+      lazySpan.style.color = '';
+      lazySpan.style.borderRadius = '';
+      lazySpan.style.padding = '';
+      lazySpan.style.fontWeight = '';
+    }
   });
 
   const affectedNodes = [];
@@ -555,20 +585,27 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     const { u, type } = affectedNodes[animationIndex];
     const nodeDiv = modifyDomNodeElements.get(u);
     
-    if (nodeDiv) {      if (type === 'lazy') {        // 懒标记节点 - 纯红色
+    if (nodeDiv) {      if (type === 'lazy') {
+        // 懒标记节点 - 纯红色
         nodeDiv.style.background = '#e74c3c';
-        nodeDiv.style.border = '1px solid #e74c3c';
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';// 更新节点内容显示懒标记 - 根据新的HTML结构
+        nodeDiv.style.border = '1px solid #c0392b'; // 深红色边框
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 根据新的HTML结构
         const lazySpan = nodeDiv.querySelector('.node-lazy');
         if (lazySpan) {
           lazySpan.textContent = `lazy:${delta}`;
+          // 为有改动的lazy值添加高亮效果
+          lazySpan.style.background = '#ffeb3b'; // 黄色高亮背景
+          lazySpan.style.color = '#000'; // 黑色文字
+          lazySpan.style.borderRadius = '3px';
+          lazySpan.style.padding = '2px 4px';
+          lazySpan.style.fontWeight = 'bold';
           // 重新应用样式确保格式正确
           lazySpan.style.flex = '1';
           lazySpan.style.textAlign = 'center';
-        }      } else if (type === 'pushdown') {
+        }} else if (type === 'pushdown') {
         // 下推节点 - 纯橙色
         nodeDiv.style.background = '#e67e22';
-        nodeDiv.style.border = '1px solid #e67e22';
+        nodeDiv.style.border = '1px solid #d35400'; // 深橙色边框
         nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
       }
     }
