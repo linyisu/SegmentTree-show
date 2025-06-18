@@ -1,4 +1,4 @@
-/* 线段树区间修改可视化模块（修复懒标记下发） */
+/* 线段树区间修改可视化模块（修复懒标记下发，延迟上层节点更新） */
 
 // --- 状态管理 ---
 let lastBuiltN = 0; // 上次构建的数组长度
@@ -269,7 +269,7 @@ function buildTreeVisualizationWithData(dataArray, container, isResizeUpdate = f
   }
 }
 
-// 下推懒标记（修复：确保懒标记正确传给两个子节点）
+// 下推懒标记
 function pushDown(u, tl, tr) {
   if (globalLazy[u] !== 0) {
     const delta = globalLazy[u];
@@ -300,31 +300,9 @@ function pushDown(u, tl, tr) {
 }
 
 // 向上更新
-function pushUp(u) {
-  const left = globalTree[u * 2];
-  const right = globalTree[u * 2 + 1];
-  globalTree[u].sum = left.sum + right.sum;
-  globalTree[u].max = Math.max(left.max, right.max);
-  globalTree[u].min = Math.min(left.min, right.min);
-}
-
-// 区间修改
-function updateRange(l, r, tl, tr, u, delta) {
-  console.log(`🔧 updateRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}] 增加 ${delta}`);
-  if (l <= tl && tr <= r) {
-    globalLazy[u] += delta;
-    console.log(`✅ 完全包含，节点 u=${u} 添加懒标记 ${globalLazy[u]}`);
-    updateNodeDisplaySafe(u, tl, tr);
-    return;
-  }
-  if (r < tl || l > tr) {
-    console.log(`❌ 无交集，节点 u=${u} 跳过`);
-    return;
-  }
-  pushDown(u, tl, tr);
+function pushUp(u, tl, tr) {
+  if (tl === tr) return;
   const mid = Math.floor((tl + tr) / 2);
-  updateRange(l, r, tl, mid, u * 2, delta);
-  updateRange(l, r, mid + 1, tr, u * 2 + 1, delta);
   let leftSum = globalTree[u * 2].sum;
   let leftMax = globalTree[u * 2].max;
   let leftMin = globalTree[u * 2].min;
@@ -346,7 +324,29 @@ function updateRange(l, r, tl, tr, u, delta) {
   globalTree[u].sum = leftSum + rightSum;
   globalTree[u].max = Math.max(leftMax, rightMax);
   globalTree[u].min = Math.min(leftMin, rightMin);
+  console.log(`🔼 pushUp 节点 u=${u} [${tl},${tr}] sum=${globalTree[u].sum}, max=${globalTree[u].max}, min=${globalTree[u].min}`);
   updateNodeDisplaySafe(u, tl, tr);
+}
+
+// 区间修改
+function updateRange(l, r, tl, tr, u, delta) {
+  console.log(`🔧 updateRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}] 增加 ${delta}`);
+  if (l <= tl && tr <= r) {
+    globalLazy[u] += delta;
+    console.log(`✅ 完全包含，节点 u=${u} 添加懒标记 ${globalLazy[u]}`);
+    updateNodeDisplaySafe(u, tl, tr);
+    return;
+  }
+  if (r < tl || l > tr) {
+    console.log(`❌ 无交集，节点 u=${u} 跳过`);
+    return;
+  }
+  pushDown(u, tl, tr);
+  const mid = Math.floor((tl + tr) / 2);
+  updateRange(l, r, tl, mid, u * 2, delta);
+  updateRange(l, r, mid + 1, tr, u * 2 + 1, delta);
+  // 回溯时调用 pushUp 更新当前节点
+  pushUp(u, tl, tr);
 }
 
 // 直接修改
@@ -390,13 +390,33 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
           nodeDiv.style.border = '2px solid #e74c3c';
           nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
           console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}] lazy=${globalLazy[u]}`);
+          updateNodeDisplaySafe(u, tl, tr);
         } else {
           nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
           nodeDiv.style.border = '2px solid #e67e22';
           nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
           console.log(`🟠 高亮过程节点 u=${u} [${tl},${tr}]`);
+          updateNodeDisplaySafe(u, tl, tr);
+          // 回溯更新祖先节点
+          let currentU = Math.floor(u / 2);
+          let parentTl = tl;
+          let parentTr = tr;
+          while (currentU >= 1) {
+            const range = findNodeRange(currentU, 1, 1, lastBuiltN);
+            if (range) {
+              parentTl = range.tl;
+              parentTr = range.tr;
+              pushUp(currentU, parentTl, parentTr);
+              const parentDiv = domNodeElements.get(currentU);
+              if (parentDiv) {
+                parentDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+                parentDiv.style.border = '2px solid #e67e22';
+                parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+              }
+            }
+            currentU = Math.floor(currentU / 2);
+          }
         }
-        updateNodeDisplaySafe(u, tl, tr);
       }, index * 200);
     }
   });
@@ -468,13 +488,24 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
       nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
       console.log(`🟠 步进：过程节点 u=${u} [${tl},${tr}]`);
       pushDown(u, tl, tr);
-      if (tl < tr) {
-        let currentU = u;
-        while (currentU > 1) {
-          updateSingleNode(currentU);
-          currentU = Math.floor(currentU / 2);
+      // 回溯更新祖先节点
+      let currentU = Math.floor(u / 2);
+      let parentTl = tl;
+      let parentTr = tr;
+      while (currentU >= 1) {
+        const range = findNodeRange(currentU, 1, 1, lastBuiltN);
+        if (range) {
+          parentTl = range.tl;
+          parentTr = range.tr;
+          pushUp(currentU, parentTl, parentTr);
+          const parentDiv = domNodeElements.get(currentU);
+          if (parentDiv) {
+            parentDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+            parentDiv.style.border = '2px solid #e67e22';
+            parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+          }
         }
-        updateSingleNode(1);
+        currentU = Math.floor(currentU / 2);
       }
       updateNodeDisplaySafe(u, tl, tr);
     }
@@ -484,36 +515,6 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
 
   stepModifyState.currentIndex++;
   console.log(`👣 步骤完成，currentIndex=${stepModifyState.currentIndex}`);
-}
-
-// 更新单个节点
-function updateSingleNode(u) {
-  const range = findNodeRange(u, 1, 1, lastBuiltN);
-  if (!range || range.tl === range.tr) return;
-  const { tl, tr } = range;
-  const mid = Math.floor((tl + tr) / 2);
-  let leftSum = globalTree[u * 2].sum;
-  let leftMax = globalTree[u * 2].max;
-  let leftMin = globalTree[u * 2].min;
-  if (globalLazy[u * 2] !== 0) {
-    const leftLen = mid - tl + 1;
-    leftSum += globalLazy[u * 2] * leftLen;
-    leftMax += globalLazy[u * 2];
-    leftMin += globalLazy[u * 2];
-  }
-  let rightSum = globalTree[u * 2 + 1].sum;
-  let rightMax = globalTree[u * 2 + 1].max;
-  let rightMin = globalTree[u * 2 + 1].min;
-  if (globalLazy[u * 2 + 1] !== 0) {
-    const rightLen = tr - (mid + 1) + 1;
-    rightSum += globalLazy[u * 2 + 1] * rightLen;
-    rightMax += globalLazy[u * 2 + 1];
-    rightMin += globalLazy[u * 2 + 1];
-  }
-  globalTree[u].sum = leftSum + rightSum;
-  globalTree[u].max = Math.max(leftMax, rightMax);
-  globalTree[u].min = Math.min(leftMin, rightMin);
-  updateNodeDisplaySafe(u, tl, tr);
 }
 
 // 查找节点区间
