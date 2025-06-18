@@ -75,19 +75,10 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     console.error("Modify tree visual element not found.");
     return;
   }
-
-  // 确保容器有有效的宽度，如果没有则使用默认值
-  let containerWidth = treeVisual.clientWidth - 50;
-  if (containerWidth <= 0) {
-    // 如果clientWidth为0，使用容器的offsetWidth或默认值
-    containerWidth = Math.max(treeVisual.offsetWidth - 50, 600);
-    console.log('📏 使用fallback宽度:', containerWidth);
-  }
-  console.log('📐 容器有效宽度:', containerWidth);
-  
-  const nodeMinWidth = 50;
-  const levelHeight = 80;
-  const padding = 25; // Internal padding within the containerWidth
+  const containerWidth = treeVisual.clientWidth - 50; // 与原始实现相同
+  const nodeMinWidth = 50; // 与原始实现相同
+  const levelHeight = 80; // 与原始实现相同
+  const padding = 25; // 与原始实现相同
   // 构建带初始值的线段树 - 维护最大值、最小值、区间和
   const tree = new Array(4 * n);
   const lazy = new Array(4 * n).fill(0);
@@ -288,18 +279,16 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
           <span class="node-lazy">lazy:${lazy}</span>
         </div>
       `;
-      
-      nodeDiv.style.position = 'absolute';
+        nodeDiv.style.position = 'absolute';
       nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
       nodeDiv.style.top = `${position.y}px`;
       nodeDiv.style.width = `${position.nodeWidth}px`;
-      nodeDiv.style.zIndex = '10';
-      nodeDiv.style.minHeight = '85px'; // 增加高度以适应3行布局
+      nodeDiv.style.zIndex = '10';      nodeDiv.style.minHeight = '70px'; // 与原始实现相似的高度
       nodeDiv.style.display = 'flex';
       nodeDiv.style.flexDirection = 'column';
       nodeDiv.style.justifyContent = 'center';
       nodeDiv.style.alignItems = 'center';
-      nodeDiv.style.fontSize = '10px'; // 稍微缩小字体以适应更多内容
+      nodeDiv.style.fontSize = '11px'; // 统一字体大小
       nodeDiv.style.lineHeight = '1.2';
       nodeDiv.style.padding = '4px';
       nodeDiv.style.boxSizing = 'border-box';
@@ -314,9 +303,9 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       // 添加内部样式
       const intervalDiv = nodeDiv.querySelector('.node-interval');
       if (intervalDiv) {
-        intervalDiv.style.fontSize = '11px';
+        intervalDiv.style.fontSize = '11px'; // 与其他行相同大小
         intervalDiv.style.fontWeight = 'bold';
-        intervalDiv.style.marginBottom = '2px';
+        intervalDiv.style.marginBottom = '1px';
       }
       
       const rowDivs = nodeDiv.querySelectorAll('.node-row');
@@ -324,7 +313,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         row.style.display = 'flex';
         row.style.justifyContent = 'space-between';
         row.style.width = '100%';
-        row.style.fontSize = '9px';
+        row.style.fontSize = '11px'; // 增大字体到与区间相同
         row.style.marginBottom = '1px';
       });
       
@@ -333,6 +322,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       spans.forEach(span => {
         span.style.flex = '1';
         span.style.textAlign = 'center';
+        span.style.fontSize = '11px'; // 确保所有文字大小一致
       });
       
       const nodeColor = window.nodeColor || '#74b9ff';
@@ -343,11 +333,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       
       nodeDiv.style.opacity = '0';
       nodeDiv.style.transform = 'translateY(-10px)';
-      
-      treeVisual.appendChild(nodeDiv);
+        treeVisual.appendChild(nodeDiv);
       modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
-        if (depth > 0) {
+      
+      if (depth > 0) {
         addModifyConnectionLine(u, nodePositions, treeVisual); // This will also store the line in modifyDomLineElements
+        console.log(`🔗 添加连线: 节点${u} -> 父节点${Math.floor(u/2)}`);
       }
       
       setTimeout(() => {
@@ -370,8 +361,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
         nodeDiv.style.top = `${position.y}px`;
         nodeDiv.style.width = `${position.nodeWidth}px`;
-      }
-    });
+      }    });
 
     modifyDomLineElements.forEach((line, childId) => {
       const parentId = Math.floor(childId / 2);
@@ -379,12 +369,13 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       const parentPos = nodePositions.get(parentId);
       if (childPos && parentPos) {
         const deltaX = childPos.x - parentPos.x;
-        const deltaY = childPos.y - parentPos.y - 35;
+        const deltaY = childPos.y - parentPos.y - 35; // 与原始实现相同的偏移
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-          line.style.width = `${length}px`;
+        
+        line.style.width = `${length}px`;
         line.style.left = `${parentPos.x}px`;
-        line.style.top = `${parentPos.y + 35}px`;
+        line.style.top = `${parentPos.y + 35}px`; // 与原始实现相同的偏移
         line.style.transform = `rotate(${angle}deg)`;
       }
     });
@@ -409,14 +400,14 @@ function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
   line.style.borderRadius = '1px';
   
   const deltaX = childPos.x - parentPos.x;
-  const deltaY = childPos.y - parentPos.y - 35; 
+  const deltaY = childPos.y - parentPos.y - 35; // 与原始实现相同的偏移
   const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
   const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
   
   line.style.width = `${length}px`;
-  line.style.height = '2px';
+  line.style.height = '2px'; // 与原始实现相同的高度
   line.style.left = `${parentPos.x}px`;
-  line.style.top = `${parentPos.y + 35}px`;
+  line.style.top = `${parentPos.y + 35}px`; // 与原始实现相同的偏移
   line.style.transformOrigin = '0 50%';
   line.style.transform = `rotate(${angle}deg)`;
   
@@ -425,7 +416,7 @@ function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
 
   setTimeout(() => {
     line.style.transition = 'opacity 0.4s ease-in-out';
-    line.style.opacity = '0.8';
+    line.style.opacity = '0.8'; // 与原始实现相同的不透明度
   }, 200);
 }
 
