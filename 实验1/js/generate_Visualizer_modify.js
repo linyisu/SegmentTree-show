@@ -315,10 +315,10 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         <div class="node-interval">[${l},${r}]</div>
         <div class="node-row">
           <span class="node-sum">sum:${sum}</span>
-          <span class="node-lazy">lazy:${lazy || 0}</span>
+          <span class="node-min">min:${min}</span>
         </div>
         <div class="node-row">
-          <span class="node-min">min:${min}</span>
+          <span class="node-lazy">lazy:${(lazy && lazy !== 0) ? lazy : '-'}</span>
           <span class="node-max">max:${max}</span>
         </div>
       `;
@@ -572,7 +572,7 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
         const lazySpan = nodeDiv.querySelector('.node-lazy');
         if (lazySpan && tree[u]) {
           const currentLazy = tree[u].lazy || 0;
-          lazySpan.textContent = `lazy:${currentLazy}`;
+          lazySpan.textContent = `lazy:${currentLazy !== 0 ? currentLazy : '-'}`;
           // 为有改动的lazy值添加高亮效果
           if (currentLazy !== 0) {
             lazySpan.style.background = '#ffeb3b'; // 黄色高亮背景
