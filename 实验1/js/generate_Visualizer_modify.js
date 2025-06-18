@@ -74,10 +74,9 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   if (!treeVisual) {
     console.error("Modify tree visual element not found.");
     return;
-  }
-  const containerWidth = treeVisual.clientWidth - 50; // 与原始实现相同
+  }  const containerWidth = treeVisual.clientWidth - 50; // 与原始实现相同
   const nodeMinWidth = 50; // 与原始实现相同
-  const levelHeight = 80; // 与原始实现相同
+  const levelHeight = 100; // 增加层级间距，从80px增加到100px
   const padding = 25; // 与原始实现相同
   // 构建带初始值的线段树 - 维护最大值、最小值、区间和
   const tree = new Array(4 * n);
@@ -283,14 +282,14 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
       nodeDiv.style.top = `${position.y}px`;
       nodeDiv.style.width = `${position.nodeWidth}px`;
-      nodeDiv.style.zIndex = '10';      nodeDiv.style.minHeight = '70px'; // 与原始实现相似的高度
+      nodeDiv.style.zIndex = '10';      nodeDiv.style.minHeight = '80px'; // 增加节点高度以容纳更大字体
       nodeDiv.style.display = 'flex';
       nodeDiv.style.flexDirection = 'column';
       nodeDiv.style.justifyContent = 'center';
       nodeDiv.style.alignItems = 'center';
-      nodeDiv.style.fontSize = '11px'; // 统一字体大小
-      nodeDiv.style.lineHeight = '1.2';
-      nodeDiv.style.padding = '4px';
+      nodeDiv.style.fontSize = '13px'; // 增大字体到与原始实现相同
+      nodeDiv.style.lineHeight = '1.3';
+      nodeDiv.style.padding = '6px';
       nodeDiv.style.boxSizing = 'border-box';
       nodeDiv.style.borderRadius = '8px';
       nodeDiv.style.border = '2px solid #74b9ff';
@@ -303,9 +302,9 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       // 添加内部样式
       const intervalDiv = nodeDiv.querySelector('.node-interval');
       if (intervalDiv) {
-        intervalDiv.style.fontSize = '11px'; // 与其他行相同大小
+        intervalDiv.style.fontSize = '13px'; // 增大区间字体
         intervalDiv.style.fontWeight = 'bold';
-        intervalDiv.style.marginBottom = '1px';
+        intervalDiv.style.marginBottom = '2px';
       }
       
       const rowDivs = nodeDiv.querySelectorAll('.node-row');
@@ -313,7 +312,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         row.style.display = 'flex';
         row.style.justifyContent = 'space-between';
         row.style.width = '100%';
-        row.style.fontSize = '11px'; // 增大字体到与区间相同
+        row.style.fontSize = '13px'; // 增大数值字体
         row.style.marginBottom = '1px';
       });
       
@@ -322,7 +321,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       spans.forEach(span => {
         span.style.flex = '1';
         span.style.textAlign = 'center';
-        span.style.fontSize = '11px'; // 确保所有文字大小一致
+        span.style.fontSize = '13px'; // 确保所有文字大小一致
       });
       
       const nodeColor = window.nodeColor || '#74b9ff';
@@ -366,16 +365,15 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     modifyDomLineElements.forEach((line, childId) => {
       const parentId = Math.floor(childId / 2);
       const childPos = nodePositions.get(childId);
-      const parentPos = nodePositions.get(parentId);
-      if (childPos && parentPos) {
+      const parentPos = nodePositions.get(parentId);      if (childPos && parentPos) {
         const deltaX = childPos.x - parentPos.x;
-        const deltaY = childPos.y - parentPos.y - 35; // 与原始实现相同的偏移
+        const deltaY = childPos.y - parentPos.y - 40; // 增加偏移量以适应更高的节点
         const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
         
         line.style.width = `${length}px`;
         line.style.left = `${parentPos.x}px`;
-        line.style.top = `${parentPos.y + 35}px`; // 与原始实现相同的偏移
+        line.style.top = `${parentPos.y + 40}px`; // 增加偏移量以适应更高的节点
         line.style.transform = `rotate(${angle}deg)`;
       }
     });
@@ -398,16 +396,15 @@ function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
   line.style.zIndex = '5';
   line.style.opacity = '0';
   line.style.borderRadius = '1px';
-  
-  const deltaX = childPos.x - parentPos.x;
-  const deltaY = childPos.y - parentPos.y - 35; // 与原始实现相同的偏移
+    const deltaX = childPos.x - parentPos.x;
+  const deltaY = childPos.y - parentPos.y - 40; // 增加偏移量以适应更高的节点
   const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
   const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
   
   line.style.width = `${length}px`;
   line.style.height = '2px'; // 与原始实现相同的高度
   line.style.left = `${parentPos.x}px`;
-  line.style.top = `${parentPos.y + 35}px`; // 与原始实现相同的偏移
+  line.style.top = `${parentPos.y + 40}px`; // 增加偏移量以适应更高的节点
   line.style.transformOrigin = '0 50%';
   line.style.transform = `rotate(${angle}deg)`;
   
