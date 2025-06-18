@@ -564,6 +564,217 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
   setTimeout(animateNextNode, 300);
 }
 
+// 区间修改操作 - 步进版本
+let stepModifyState = {
+  isActive: false,
+  affectedNodes: [],
+  currentIndex: 0,
+  modifyL: 0,
+  modifyR: 0,
+  delta: 0,
+  container: null
+};
+
+function performRangeUpdateStep(modifyL, modifyR, delta, container) {
+  console.log('👣 performRangeUpdateStep 被调用', {
+    modifyL, modifyR, delta,
+    isModifyTreeRendered,
+    lastModifyBuiltContainer: !!lastModifyBuiltContainer,
+    modifyDomNodeElements_size: modifyDomNodeElements.size
+  });
+  
+  if (!isModifyTreeRendered || !lastModifyBuiltContainer) {
+    alert('请先构建线段树！');
+    if (!isModifyTreeRendered)
+      console.warn('线段树尚未渲染，请先构建线段树');
+    if (!lastModifyBuiltContainer)
+      console.warn('线段树容器未找到，请先构建线段树');
+    return;
+  }
+
+  // 如果已经在步进模式中，重置状态
+  if (stepModifyState.isActive) {
+    resetStepModifyState();
+  }
+
+  // 清除之前的高亮
+  modifyDomNodeElements.forEach((nodeDiv) => {
+    nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+    nodeDiv.style.border = '2px solid #74b9ff';
+    nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+  });
+
+  // 初始化步进状态
+  stepModifyState.isActive = true;
+  stepModifyState.affectedNodes = [];
+  stepModifyState.currentIndex = 0;
+  stepModifyState.modifyL = modifyL;
+  stepModifyState.modifyR = modifyR;
+  stepModifyState.delta = delta;
+  stepModifyState.container = container;
+  
+  // 模拟区间修改过程，收集受影响的节点
+  function collectAffectedNodes(l, r, u, tl, tr, delta) {
+    if (modifyL > tr || modifyR < tl) {
+      return; // 完全不相交
+    }
+    
+    if (modifyL <= tl && tr <= modifyR) {
+      // 完全包含，懒标记
+      stepModifyState.affectedNodes.push({ u, type: 'lazy', tl, tr });
+      return;
+    }
+    
+    // 部分相交，需要下推
+    stepModifyState.affectedNodes.push({ u, type: 'pushdown', tl, tr });
+    const mid = Math.floor((tl + tr) / 2);
+    collectAffectedNodes(l, r, u * 2, tl, mid, delta);
+    if (mid < tr) {
+      collectAffectedNodes(l, r, u * 2 + 1, mid + 1, tr, delta);
+    }
+  }
+
+  collectAffectedNodes(modifyL, modifyR, 1, 1, lastModifyBuiltN, delta);
+
+  // 显示步进控制提示
+  showStepControls();
+  
+  console.log('👣 步进修改初始化完成，受影响节点数:', stepModifyState.affectedNodes.length);
+}
+
+function showStepControls() {
+  // 创建步进控制面板
+  let controlPanel = document.getElementById('step-control-panel');
+  if (!controlPanel) {
+    controlPanel = document.createElement('div');
+    controlPanel.id = 'step-control-panel';
+    controlPanel.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: 2px solid #74b9ff;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      text-align: center;
+      min-width: 280px;
+      max-width: 320px;
+    `;
+    document.body.appendChild(controlPanel);
+  }
+
+  updateStepControlPanel();
+}
+
+function updateStepControlPanel() {
+  const controlPanel = document.getElementById('step-control-panel');
+  if (!controlPanel) return;
+
+  const totalSteps = stepModifyState.affectedNodes.length;
+  const currentStep = stepModifyState.currentIndex + 1;
+  const isFinished = stepModifyState.currentIndex >= totalSteps;
+  controlPanel.innerHTML = `
+    <h4 style="margin: 0 0 10px 0; font-size: 16px;">👣 步进修改模式</h4>
+    <p style="margin: 5px 0; font-size: 14px;"><strong>区间:</strong> [${stepModifyState.modifyL}, ${stepModifyState.modifyR}] <strong>值:</strong> +${stepModifyState.delta}</p>
+    <p style="margin: 5px 0; font-size: 14px;"><strong>进度:</strong> ${Math.min(currentStep, totalSteps)} / ${totalSteps}</p>
+    <div style="margin: 10px 0;">
+      <button id="btn-next-step" ${isFinished ? 'disabled' : ''} 
+              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
+                     background: ${isFinished ? '#ccc' : '#74b9ff'}; color: white; cursor: ${isFinished ? 'not-allowed' : 'pointer'};">
+        ${isFinished ? '✅ 完成' : '👣 下一步'}
+      </button><br>
+      <button id="btn-finish-steps" ${isFinished ? 'disabled' : ''}
+              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
+                     background: ${isFinished ? '#ccc' : '#e74c3c'}; color: white; cursor: ${isFinished ? 'not-allowed' : 'pointer'};">
+        ⚡ 直接完成
+      </button>
+      <button id="btn-close-steps"
+              style="margin: 2px; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px;
+                     background: #95a5a6; color: white; cursor: pointer;">
+        ❌ 关闭
+      </button>
+    </div>
+  `;
+
+  // 绑定按钮事件
+  const btnNextStep = document.getElementById('btn-next-step');
+  const btnFinishSteps = document.getElementById('btn-finish-steps');
+  const btnCloseSteps = document.getElementById('btn-close-steps');
+
+  if (btnNextStep && !isFinished) {
+    btnNextStep.addEventListener('click', executeNextStep);
+  }
+
+  if (btnFinishSteps && !isFinished) {
+    btnFinishSteps.addEventListener('click', finishAllSteps);
+  }
+
+  if (btnCloseSteps) {
+    btnCloseSteps.addEventListener('click', closeStepControls);
+  }
+}
+
+function executeNextStep() {
+  if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
+    return;
+  }
+
+  const { u, type } = stepModifyState.affectedNodes[stepModifyState.currentIndex];
+  const nodeDiv = modifyDomNodeElements.get(u);
+  
+  if (nodeDiv) {
+    if (type === 'lazy') {
+      // 懒标记节点 - 红色
+      nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
+      nodeDiv.style.border = '2px solid #e74c3c';
+      nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
+      
+      // 更新节点内容显示懒标记
+      const lazySpan = nodeDiv.querySelector('.node-lazy');
+      if (lazySpan) {
+        lazySpan.textContent = `lazy:${stepModifyState.delta}`;
+        lazySpan.style.flex = '1';
+        lazySpan.style.textAlign = 'center';
+      }
+    } else if (type === 'pushdown') {
+      // 下推节点 - 橙色
+      nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+      nodeDiv.style.border = '2px solid #e67e22';
+      nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+    }
+  }
+
+  stepModifyState.currentIndex++;
+  updateStepControlPanel();
+}
+
+function finishAllSteps() {
+  // 快速执行剩余所有步骤
+  while (stepModifyState.currentIndex < stepModifyState.affectedNodes.length) {
+    executeNextStep();
+  }
+}
+
+function closeStepControls() {
+  resetStepModifyState();
+  const controlPanel = document.getElementById('step-control-panel');
+  if (controlPanel) {
+    controlPanel.remove();
+  }
+}
+
+function resetStepModifyState() {
+  stepModifyState.isActive = false;
+  stepModifyState.affectedNodes = [];
+  stepModifyState.currentIndex = 0;
+  stepModifyState.modifyL = 0;
+  stepModifyState.modifyR = 0;
+  stepModifyState.delta = 0;
+  stepModifyState.container = null;
+}
+
 // 初始化显示区间修改可视化的容器
 function initializeModifyTreeContainer(container) {
   container.innerHTML = ''; // 不显示任何标题
@@ -629,15 +840,15 @@ function parseInputData(inputString) {
 // Modified initModifyTreeVisualizer
 function initModifyTreeVisualizer() {
   console.log('🔧 初始化区间修改可视化模块...');
-  
-  const inputCustomData = document.getElementById('input-custom-data');
+    const inputCustomData = document.getElementById('input-custom-data');
   const btnRandomData = document.getElementById('btn-random-data');
   const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
   const treeContainer = document.getElementById('custom-tree-visualizer-host');
   const inputModifyLeft = document.getElementById('input-modify-left');
   const inputModifyRight = document.getElementById('input-modify-right');
   const inputModifyValue = document.getElementById('input-modify-value');
-  const btnApplyModification = document.getElementById('btn-apply-modification');
+  const btnApplyModificationDirect = document.getElementById('btn-apply-modification-direct');
+  const btnApplyModificationStep = document.getElementById('btn-apply-modification-step');
   
   console.log('🔍 查找到的HTML元素:', {
     inputCustomData: !!inputCustomData,
@@ -647,7 +858,8 @@ function initModifyTreeVisualizer() {
     inputModifyLeft: !!inputModifyLeft,
     inputModifyRight: !!inputModifyRight,
     inputModifyValue: !!inputModifyValue,
-    btnApplyModification: !!btnApplyModification
+    btnApplyModificationDirect: !!btnApplyModificationDirect,
+    btnApplyModificationStep: !!btnApplyModificationStep
   });
     // 初始化时显示区间修改可视化的盒子
   if (treeContainer) {
@@ -693,12 +905,11 @@ function initModifyTreeVisualizer() {
       treeContainer: !!treeContainer, 
       inputCustomData: !!inputCustomData 
     });
-  }
-  // 应用修改按钮
-  if (btnApplyModification && treeContainer) {
-    console.log('✅ 绑定应用修改按钮事件');
-    btnApplyModification.addEventListener('click', () => {
-      console.log('⚡ 点击应用修改按钮');
+  }  // 直接完成修改按钮
+  if (btnApplyModificationDirect && treeContainer) {
+    console.log('✅ 绑定直接完成修改按钮事件');
+    btnApplyModificationDirect.addEventListener('click', () => {
+      console.log('⚡ 点击直接完成修改按钮');
       const l = parseInt(inputModifyLeft?.value || '1');
       const r = parseInt(inputModifyRight?.value || '1');
       const delta = parseInt(inputModifyValue?.value || '1');
@@ -723,15 +934,54 @@ function initModifyTreeVisualizer() {
         return;
       }
       
-      console.log('✅ 所有检查通过，开始执行区间修改');
+      console.log('✅ 所有检查通过，开始执行直接完成修改');
       performRangeUpdate(l, r, delta, treeContainer);
     });
   } else {
-    console.log('❌ 无法绑定应用修改按钮，元素缺失:', { 
-      btnApplyModification: !!btnApplyModification, 
+    console.log('❌ 无法绑定直接完成修改按钮，元素缺失:', { 
+      btnApplyModificationDirect: !!btnApplyModificationDirect, 
       treeContainer: !!treeContainer 
     });
-  }  
+  }
+
+  // 步进修改按钮
+  if (btnApplyModificationStep && treeContainer) {
+    console.log('✅ 绑定步进修改按钮事件');
+    btnApplyModificationStep.addEventListener('click', () => {
+      console.log('👣 点击步进修改按钮');
+      const l = parseInt(inputModifyLeft?.value || '1');
+      const r = parseInt(inputModifyRight?.value || '1');
+      const delta = parseInt(inputModifyValue?.value || '1');
+      
+      console.log('📝 修改参数:', { l, r, delta });
+      console.log('🔍 状态检查:', {
+        lastModifyBuiltN,
+        isModifyTreeRendered,
+        lastModifyBuiltContainer: !!lastModifyBuiltContainer,
+        modifyDomNodeElements_size: modifyDomNodeElements.size
+      });
+      
+      if (!lastModifyBuiltN || lastModifyBuiltN === 0) {
+        console.log('❌ lastModifyBuiltN 检查失败');
+        alert('请先构建线段树！');
+        return;
+      }
+      
+      if (l < 1 || r > lastModifyBuiltN || l > r) {
+        console.log('❌ 区间范围检查失败');
+        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]`);
+        return;
+      }
+      
+      console.log('✅ 所有检查通过，开始执行步进修改');
+      performRangeUpdateStep(l, r, delta, treeContainer);
+    });
+  } else {
+    console.log('❌ 无法绑定步进修改按钮，元素缺失:', { 
+      btnApplyModificationStep: !!btnApplyModificationStep, 
+      treeContainer: !!treeContainer 
+    });
+  }
   // Optimized resize handler
   window.addEventListener('resize', debounceModify(() => {
     console.log('🚨 RESIZE事件被触发！');

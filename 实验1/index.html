@@ -200,10 +200,13 @@ void push_down(int u, int llen, int rlen)
                     <span>+</span>
                     <input type="number" id="input-modify-value" aria-label="输入要增加的值" style="width: 90px;">
                 </div>
-            </div>            <!-- 两个按钮在下方 -->
+            </div>            <!-- 按钮布局：构建树占一半，修改按钮占一半 -->
             <div class="settings-row">
                 <button id="btn-update-custom-data" class="btn" style="flex: 1;">🚀 更新可视化</button>
-                <button id="btn-apply-modification" class="btn" style="flex: 1;">⚡ 应用修改</button>
+                <div style="flex: 1; display: flex; gap: 5px;">
+                    <button id="btn-apply-modification-direct" class="btn" style="flex: 1;">⚡ 直接完成修改</button>
+                    <button id="btn-apply-modification-step" class="btn" style="flex: 1;">👣 步进修改</button>
+                </div>
             </div>
 
             <div id="custom-tree-visualizer-host" style="margin-top: 20px;"></div> <!-- Placeholder for the custom tree canvas -->
