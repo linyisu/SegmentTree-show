@@ -30,10 +30,19 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     containerExists: !!container, 
     isResizeUpdate 
   });
-  const n = dataArray.length;
+  
+  // 如果是 resize 更新且 dataArray 为 null，使用已保存的数据长度
+  let n;
+  if (isResizeUpdate && dataArray === null) {
+    n = lastModifyBuiltN;
+    console.log('🔄 Resize 更新，使用保存的数据长度:', n);
+  } else {
+    n = dataArray ? dataArray.length : 0;
+  }
   
   if (!isResizeUpdate) {
-    // This is an initial build or a full rebuild    lastModifyBuiltN = n;
+    // This is an initial build or a full rebuild
+    lastModifyBuiltN = n;
     lastModifyBuiltContainer = container;
     isModifyTreeRendered = false; // Mark as not rendered until animation completes
     modifyDomNodeElements.clear();
@@ -60,7 +69,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     treeVisual.style.width = '100%';
     treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
     treeVisual.style.background = 'var(--card-bg)';
-    treeVisual.style.borderRadius = '12px'; // 改为12px圆角
+    treeVisual.style.borderRadius = '12px';
     treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
     treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
     treeVisual.style.overflow = 'visible';
@@ -247,8 +256,13 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   let orderIndex = 0;
   
   function renderNextModifyNodeWithData() {      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
-        isModifyTreeRendered = true;
         activeModifyBuildAnimationTimeout = null;
+        
+        // 延迟设置渲染完成标志，确保所有节点动画都完成
+        setTimeout(() => {
+          isModifyTreeRendered = true;
+          console.log('🎉 线段树渲染完成，可以进行区间修改操作');
+        }, 1000); // 等待所有动画完成
         return;
       }
 
@@ -367,8 +381,19 @@ function getModifyAnimationDelay() {
 
 // 区间修改操作
 function performRangeUpdate(modifyL, modifyR, delta, container) {
+  console.log('🔧 performRangeUpdate 被调用', {
+    modifyL, modifyR, delta,
+    isModifyTreeRendered,
+    lastModifyBuiltContainer: !!lastModifyBuiltContainer,
+    modifyDomNodeElements_size: modifyDomNodeElements.size
+  });
+  
   if (!isModifyTreeRendered || !lastModifyBuiltContainer) {
     alert('请先构建线段树！');
+    if (!isModifyTreeRendered)
+      console.warn('线段树尚未渲染，请先构建线段树');
+    if (!lastModifyBuiltContainer)
+      console.warn('线段树容器未找到，请先构建线段树');
     return;
   }
 
@@ -471,7 +496,7 @@ function initializeModifyTreeContainer(container) {
 
 // 随机生成数组数据
 function generateRandomData() {
-  const length = Math.floor(Math.random() * 4) + 4; // 4-8个数字
+  const length = Math.floor(Math.random() * 4) + 5; //5-8个数字
   const data = [];
   for (let i = 0; i < length; i++) {
     data.push(Math.floor(Math.random() * 10) + 1); // 1-10之间的数字
@@ -572,31 +597,48 @@ function initModifyTreeVisualizer() {
       inputCustomData: !!inputCustomData 
     });
   }
-
   // 应用修改按钮
   if (btnApplyModification && treeContainer) {
+    console.log('✅ 绑定应用修改按钮事件');
     btnApplyModification.addEventListener('click', () => {
+      console.log('⚡ 点击应用修改按钮');
       const l = parseInt(inputModifyLeft?.value || '1');
       const r = parseInt(inputModifyRight?.value || '1');
       const delta = parseInt(inputModifyValue?.value || '1');
       
+      console.log('📝 修改参数:', { l, r, delta });
+      console.log('🔍 状态检查:', {
+        lastModifyBuiltN,
+        isModifyTreeRendered,
+        lastModifyBuiltContainer: !!lastModifyBuiltContainer,
+        modifyDomNodeElements_size: modifyDomNodeElements.size
+      });
+      
       if (!lastModifyBuiltN || lastModifyBuiltN === 0) {
+        console.log('❌ lastModifyBuiltN 检查失败');
         alert('请先构建线段树！');
         return;
       }
       
       if (l < 1 || r > lastModifyBuiltN || l > r) {
+        console.log('❌ 区间范围检查失败');
         alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]`);
         return;
       }
       
+      console.log('✅ 所有检查通过，开始执行区间修改');
       performRangeUpdate(l, r, delta, treeContainer);
     });
-  }
-  window.addEventListener('resize', debounceModify(() => {
+  } else {
+    console.log('❌ 无法绑定应用修改按钮，元素缺失:', { 
+      btnApplyModification: !!btnApplyModification, 
+      treeContainer: !!treeContainer 
+    });
+  }  window.addEventListener('resize', debounceModify(() => {
     if (isModifyTreeRendered && lastModifyBuiltContainer && lastModifyBuiltN > 0) {
-      // 直接重绘，不检查可见性
-      buildModifyTreeVisualizationWithData([], lastModifyBuiltContainer, true); // true for resize update
+      // 直接重绘，使用保存的 lastModifyBuiltN 重新生成数据或跳过数据重新设置
+      console.log('🔄 Resize 事件触发，重新布局现有节点');
+      buildModifyTreeVisualizationWithData(null, lastModifyBuiltContainer, true); // 传入 null 表示 resize 更新
     }
   }, 250));
 }
