@@ -80,10 +80,16 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   if (!treeVisual) {
     console.error("Modify tree visual element not found.");
     return;
-  }  const containerWidth = treeVisual.clientWidth - 50; // 与原始实现相同
+  }  // 🎯 保持原始节点宽度结构，只优化自适应响应
+  const containerWidth = treeVisual.clientWidth; // 实时获取容器宽度
   const nodeMinWidth = 50; // 与原始实现相同
-  const levelHeight = 100; // 增加层级间距，从80px增加到100px
+  const levelHeight = 100; // 与原始实现相同
   const padding = 25; // 与原始实现相同
+  
+  console.log('📏 容器信息 (保持原始宽度结构):', {
+    containerWidth,
+    effectiveWidth: containerWidth - (2 * padding)
+  });
   // 构建带初始值的线段树 - 维护最大值、最小值、区间和
   const tree = new Array(4 * n);
   const lazy = new Array(4 * n).fill(0);
@@ -160,8 +166,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     treeVisual.style.height = `${minHeight}px`;  }
   
   const nodePositions = new Map();
-
-  // 修改后的位置计算函数调用
+  // 🎯 保持原始位置计算函数 - 完全恢复原始节点宽度逻辑
   function calculateModifyNodePositionsWithData(l, r, u, depth = 0, parentX = null, parentW = null) {
     // Check if this node should exist based on currentModifyTreeLevelsData
     const levelNodes = currentModifyTreeLevelsData[depth];
@@ -172,18 +177,24 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     const y = depth * levelHeight + 30;
     let x, nodeWidth;
 
-    if (u === 1) { // Root node
-        nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
+    if (u === 1) { // Root node - 保持原始超长宽度
+        nodeWidth = containerWidth - (2 * padding); // 原始逻辑：根节点横跨整个容器
         nodeWidth = Math.max(nodeMinWidth, nodeWidth);
-        x = containerWidth / 2; // Centered within containerWidth
-    } else { // Child Node
+        x = containerWidth / 2; // 居中
+        
+        console.log('🌳 根节点 (原始超长宽度):', { 
+          containerWidth, 
+          nodeWidth: Math.round(nodeWidth), 
+          x: Math.round(x) 
+        });
+    } else { // Child Node - 保持原始递减宽度
         if (parentW == null || parentX == null) {
             console.error(`Parent data not passed for node ${u}`);
             nodeWidth = nodeMinWidth; // Fallback
             const tempParentPos = nodePositions.get(Math.floor(u/2)); // Attempt to get from map if available
             x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
         } else {
-            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = parentW / 2; // 原始逻辑：子节点宽度是父节点的一半
             nodeWidth = Math.max(nodeMinWidth, nodeWidth);
 
             const isLeftChild = (u % 2 === 0);
@@ -192,10 +203,17 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
             } else { // Right child
                 x = parentX + parentW / 4; // Center in parent's right half-width
             }
+            
+            console.log(`🌿 子节点 u=${u} (原始递减宽度):`, { 
+              isLeftChild, 
+              parentW: Math.round(parentW), 
+              nodeWidth: Math.round(nodeWidth), 
+              x: Math.round(x) 
+            });
         }
     }
 
-    // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
+    // 原始边界检查逻辑
     const halfW = nodeWidth / 2;
     if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
         x = padding + halfW;
