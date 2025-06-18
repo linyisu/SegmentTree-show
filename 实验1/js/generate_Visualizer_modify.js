@@ -310,18 +310,17 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       }        // 创建节点显示内容，按新的布局格式
       const nodeDiv = document.createElement('div');
       nodeDiv.className = `modify-tree-node depth-${depth}`;
-      nodeDiv.setAttribute('data-node-id', u);
-      
-      // 创建节点内容的HTML结构
+      nodeDiv.setAttribute('data-node-id', u);      // 创建节点内容的HTML结构
+      const lazyDisplay = lazy === 0 ? '-' : lazy;
       nodeDiv.innerHTML = `
         <div class="node-interval">[${l},${r}]</div>
         <div class="node-row">
           <span class="node-sum">sum:${sum}</span>
-          <span class="node-max">max:${max}</span>
+          <span class="node-min">min:${min}</span>
         </div>
         <div class="node-row">
-          <span class="node-min">min:${min}</span>
-          <span class="node-lazy">lazy:${lazy}</span>
+          <span class="node-lazy">lazy:${lazyDisplay}</span>
+          <span class="node-max">max:${max}</span>
         </div>
       `;
         nodeDiv.style.position = 'absolute';
