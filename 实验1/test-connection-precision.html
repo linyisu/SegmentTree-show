@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连线精度测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/tree.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .debug-info {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-container {
+            border: 2px solid #007bff;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        /* 突出显示连线端点 */
+        .modify-tree-connection-line {
+            box-shadow: 0 0 3px rgba(255, 0, 0, 0.5) !important;
+        }
+        /* 突出显示节点边界 */
+        .modify-tree-node {
+            border: 3px solid #ff6b6b !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>线段树区间修改 - 连线精度测试</h1>
+    
+    <div class="debug-info">
+        <strong>测试目标：</strong>验证连线端点是否精确连接父节点底边中点和子节点顶边中点
+        <br><strong>方法：</strong>使用 getBoundingClientRect() 获取实际 DOM 盒子边界
+    </div>
+
+    <div class="test-container">
+        <h3>测试 1: 小数组 [1,2,3]</h3>
+        <input type="text" id="arrayInput1" value="1,2,3" placeholder="输入数组，用逗号分隔">
+        <button onclick="buildTest1()">构建测试1</button>
+        <button onclick="performRangeUpdateTest1()">区间修改 [1,2] +5</button>
+        <div id="treeVisualization1" class="tree-visual"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>测试 2: 较大数组 [1,2,3,4,5,6]</h3>
+        <input type="text" id="arrayInput2" value="1,2,3,4,5,6" placeholder="输入数组，用逗号分隔">
+        <button onclick="buildTest2()">构建测试2</button>
+        <button onclick="performRangeUpdateTest2()">区间修改 [2,4] +3</button>
+        <div id="treeVisualization2" class="tree-visual"></div>
+    </div>
+
+    <div class="debug-info" id="debugOutput">
+        调试信息将在这里显示...
+    </div>
+
+    <script src="js/generate_Visualizer_modify.js"></script>
+    <script>
+        let visualizer1, visualizer2;
+
+        function buildTest1() {
+            const input = document.getElementById('arrayInput1').value;
+            const container = document.getElementById('treeVisualization1');
+            const debugOutput = document.getElementById('debugOutput');
+            
+            debugOutput.innerHTML = '<strong>测试1 构建开始...</strong><br>';
+            
+            if (visualizer1) {
+                visualizer1.clearTree();
+            }
+            
+            visualizer1 = new ModifyTreeVisualizer(container);
+            visualizer1.buildTreeFromInput(input);
+            
+            setTimeout(() => {
+                debugOutput.innerHTML += '<strong>测试1 构建完成，分析连线精度...</strong><br>';
+                analyzeConnections(container, '测试1');
+            }, 2000);
+        }
+
+        function buildTest2() {
+            const input = document.getElementById('arrayInput2').value;
+            const container = document.getElementById('treeVisualization2');
+            const debugOutput = document.getElementById('debugOutput');
+            
+            debugOutput.innerHTML += '<strong>测试2 构建开始...</strong><br>';
+            
+            if (visualizer2) {
+                visualizer2.clearTree();
+            }
+            
+            visualizer2 = new ModifyTreeVisualizer(container);
+            visualizer2.buildTreeFromInput(input);
+            
+            setTimeout(() => {
+                debugOutput.innerHTML += '<strong>测试2 构建完成，分析连线精度...</strong><br>';
+                analyzeConnections(container, '测试2');
+            }, 2000);
+        }
+
+        function performRangeUpdateTest1() {
+            if (visualizer1) {
+                visualizer1.performRangeUpdate(1, 2, 5);
+                setTimeout(() => {
+                    analyzeConnections(document.getElementById('treeVisualization1'), '测试1-修改后');
+                }, 1000);
+            }
+        }
+
+        function performRangeUpdateTest2() {
+            if (visualizer2) {
+                visualizer2.performRangeUpdate(2, 4, 3);
+                setTimeout(() => {
+                    analyzeConnections(document.getElementById('treeVisualization2'), '测试2-修改后');
+                }, 1000);
+            }
+        }
+
+        function analyzeConnections(container, testName) {
+            const debugOutput = document.getElementById('debugOutput');
+            const nodes = container.querySelectorAll('.modify-tree-node');
+            const lines = container.querySelectorAll('.modify-tree-connection-line');
+            
+            debugOutput.innerHTML += `<br><strong>${testName} 连线分析：</strong><br>`;
+            debugOutput.innerHTML += `节点数量: ${nodes.length}, 连线数量: ${lines.length}<br>`;
+            
+            lines.forEach((line, index) => {
+                const lineRect = line.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                // 计算连线的起点和终点（相对于容器）
+                const lineLeft = lineRect.left - containerRect.left;
+                const lineTop = lineRect.top - containerRect.top;
+                const lineWidth = parseFloat(line.style.width);
+                const transform = line.style.transform;
+                const rotateMatch = transform.match(/rotate\(([^)]+)deg\)/);
+                const angle = rotateMatch ? parseFloat(rotateMatch[1]) : 0;
+                
+                // 计算连线终点
+                const endX = lineLeft + lineWidth * Math.cos(angle * Math.PI / 180);
+                const endY = lineTop + lineWidth * Math.sin(angle * Math.PI / 180);
+                
+                debugOutput.innerHTML += `连线${index + 1}: 起点(${lineLeft.toFixed(1)}, ${lineTop.toFixed(1)}) -> 终点(${endX.toFixed(1)}, ${endY.toFixed(1)}) 角度${angle.toFixed(1)}°<br>`;
+            });
+            
+            // 分析节点位置
+            nodes.forEach((node, index) => {
+                const nodeRect = node.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const nodeId = node.getAttribute('data-node-id');
+                
+                const relativeLeft = nodeRect.left - containerRect.left;
+                const relativeTop = nodeRect.top - containerRect.top;
+                const centerX = relativeLeft + nodeRect.width / 2;
+                const bottomY = relativeTop + nodeRect.height;
+                const topY = relativeTop;
+                
+                debugOutput.innerHTML += `节点${nodeId}: 中心X=${centerX.toFixed(1)}, 顶部Y=${topY.toFixed(1)}, 底部Y=${bottomY.toFixed(1)}<br>`;
+            });
+        }
+
+        // 页面加载后自动运行第一个测试
+        window.addEventListener('load', () => {
+            setTimeout(buildTest1, 500);
+        });
+    </script>
+</body>
+</html>

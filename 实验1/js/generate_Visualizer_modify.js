@@ -248,10 +248,17 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     }
     generateModifyBuildOrderWithData(1, n, 1);
 
-    let orderIndex = 0;
-    function renderNextModifyNodeWithData() {      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
+  let orderIndex = 0;
+  let allNodesToCreateLines = []; // 收集需要创建连线的节点
+  
+  function renderNextModifyNodeWithData() {      if (orderIndex >= currentModifyTreeBuildOrderData.length) {
         isModifyTreeRendered = true;
         activeModifyBuildAnimationTimeout = null;
+        
+        // 所有节点创建完成后，统一创建连线
+        setTimeout(() => {
+          createAllConnectionLines();
+        }, 200);
         return;
       }
 
@@ -331,19 +338,17 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       }
       
       nodeDiv.style.opacity = '0';
-      nodeDiv.style.transform = 'translateY(-10px)';
-        treeVisual.appendChild(nodeDiv);
+      nodeDiv.style.transform = 'translateY(-10px)';      treeVisual.appendChild(nodeDiv);
       modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
-      
-      if (depth > 0) {
-        addModifyConnectionLine(u, nodePositions, treeVisual); // This will also store the line in modifyDomLineElements
-        console.log(`🔗 添加连线: 节点${u} -> 父节点${Math.floor(u/2)}`);
-      }
-      
-      setTimeout(() => {
+        setTimeout(() => {
         nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
         nodeDiv.style.opacity = '1';
         nodeDiv.style.transform = 'translateY(0)';
+        
+        // 收集需要创建连线的节点信息
+        if (depth > 0) {
+          allNodesToCreateLines.push(u);
+        }
       }, 50);
 
       orderIndex++;
@@ -360,21 +365,42 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
         nodeDiv.style.top = `${position.y}px`;
         nodeDiv.style.width = `${position.nodeWidth}px`;
-      }    });
-
-    modifyDomLineElements.forEach((line, childId) => {
+      }    });    modifyDomLineElements.forEach((line, childId) => {
       const parentId = Math.floor(childId / 2);
-      const childPos = nodePositions.get(childId);
-      const parentPos = nodePositions.get(parentId);      if (childPos && parentPos) {
-        const deltaX = childPos.x - parentPos.x;
-        const deltaY = childPos.y - parentPos.y - 35; // 使用原始的35px偏移
-        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-        
-        line.style.width = `${length}px`;
-        line.style.left = `${parentPos.x}px`;
-        line.style.top = `${parentPos.y + 35}px`; // 使用原始的35px偏移
-        line.style.transform = `rotate(${angle}deg)`;
+      const parentElement = modifyDomNodeElements.get(parentId);
+      const childElement = modifyDomNodeElements.get(childId);
+      
+      if (parentElement && childElement) {
+        // 延迟一下确保DOM已经更新
+        setTimeout(() => {
+          // 获取实际的DOM元素边界
+          const parentRect = parentElement.getBoundingClientRect();
+          const childRect = childElement.getBoundingClientRect();
+          const containerRect = treeVisual.getBoundingClientRect();
+          
+          // 检查边界框是否有效
+          if (parentRect.width === 0 || parentRect.height === 0 || 
+              childRect.width === 0 || childRect.height === 0) {
+            console.warn(`resize时节点尺寸无效: parent=${parentRect.width}x${parentRect.height}, child=${childRect.width}x${childRect.height}`);
+            return;
+          }
+          
+          // 计算相对于容器的坐标
+          const parentBottomCenterX = parentRect.left + parentRect.width / 2 - containerRect.left;
+          const parentBottomY = parentRect.bottom - containerRect.top;
+          const childTopCenterX = childRect.left + childRect.width / 2 - containerRect.left;
+          const childTopY = childRect.top - containerRect.top;
+          
+          const deltaX = childTopCenterX - parentBottomCenterX;
+          const deltaY = childTopY - parentBottomY;
+          const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+          const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+          
+          line.style.width = `${length}px`;
+          line.style.left = `${parentBottomCenterX}px`;
+          line.style.top = `${parentBottomY}px`;
+          line.style.transform = `rotate(${angle}deg)`;
+        }, 50);
       }
     });
     isModifyTreeRendered = true; // Ensure flag is set after resize update
@@ -388,38 +414,112 @@ function addModifyConnectionLine(nodeId, nodePositions, treeVisual) {
   const parentPos = nodePositions.get(parentId);
   
   if (!childPos || !parentPos) return;
+    // 获取实际的DOM元素来计算精确的边界点
+  const parentElement = modifyDomNodeElements.get(parentId);
+  const childElement = modifyDomNodeElements.get(nodeId);
+    if (!parentElement || !childElement) {
+    console.warn(`无法找到DOM元素: parent=${parentId}, child=${nodeId}`);
+    return;
+  }
+  
   const line = document.createElement('div');
   line.className = 'modify-tree-connection-line';
-  line.style.position = 'absolute';  line.style.background = '#74b9ff'; // 使用固定颜色确保可见
+  line.style.position = 'absolute';
+  line.style.background = '#74b9ff';
   line.style.zIndex = '5';
-  line.style.opacity = '0.8'; // 立即设置为可见
+  line.style.opacity = '0';
   line.style.borderRadius = '1px';
-  // 采用与原始实现完全相同的计算方式
-  const deltaX = childPos.x - parentPos.x;
-  const deltaY = childPos.y - parentPos.y - 35; // 使用原始的35px偏移
-  const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-  const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-  
-  console.log(`🔗 连线计算: 父节点${Math.floor(nodeId/2)} -> 子节点${nodeId}`, {
-    parentPos: parentPos,
-    childPos: childPos,
-    deltaX, deltaY, length, angle
-  });
-  
-  line.style.width = `${length}px`;
   line.style.height = '2px';
-  line.style.left = `${parentPos.x}px`;
-  line.style.top = `${parentPos.y + 35}px`; // 使用原始的35px偏移
-  line.style.transformOrigin = '0 50%';
-  line.style.transform = `rotate(${angle}deg)`;
   
+  // 获取父节点和子节点的实际边界框
+  const parentRect = parentElement.getBoundingClientRect();
+  const childRect = childElement.getBoundingClientRect();
+  const containerRect = treeVisual.getBoundingClientRect();
+    
+    // 检查边界框是否有效
+    if (parentRect.width === 0 || parentRect.height === 0 || 
+        childRect.width === 0 || childRect.height === 0) {
+      console.warn(`节点尺寸无效: parent=${parentRect.width}x${parentRect.height}, child=${childRect.width}x${childRect.height}`);
+      return;
+    }
+    
+    // 计算相对于容器的坐标
+    // 父节点底边中点
+    const parentBottomCenterX = parentRect.left + parentRect.width / 2 - containerRect.left;
+    const parentBottomY = parentRect.bottom - containerRect.top;
+    
+    // 子节点顶边中点
+    const childTopCenterX = childRect.left + childRect.width / 2 - containerRect.left;
+    const childTopY = childRect.top - containerRect.top;
+    
+    // 计算连线向量
+    const deltaX = childTopCenterX - parentBottomCenterX;
+    const deltaY = childTopY - parentBottomY;
+    const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+      console.log(`🔗 精确连线计算: 父节点${parentId} -> 子节点${nodeId}`, {
+      parentRect: { 
+        width: parentRect.width, 
+        height: parentRect.height, 
+        left: parentRect.left, 
+        top: parentRect.top,
+        bottom: parentRect.bottom,
+        centerX: parentRect.left + parentRect.width / 2
+      },
+      childRect: { 
+        width: childRect.width, 
+        height: childRect.height, 
+        left: childRect.left, 
+        top: childRect.top,
+        centerX: childRect.left + childRect.width / 2
+      },
+      containerRect: {
+        left: containerRect.left,
+        top: containerRect.top
+      },
+      计算结果: {
+        startPoint: { x: parentBottomCenterX.toFixed(1), y: parentBottomY.toFixed(1) },
+        endPoint: { x: childTopCenterX.toFixed(1), y: childTopY.toFixed(1) },
+        deltaX: deltaX.toFixed(1), 
+        deltaY: deltaY.toFixed(1), 
+        length: length.toFixed(1), 
+        angle: angle.toFixed(1)
+      }
+    });
+    
+    line.style.width = `${length}px`;
+    line.style.left = `${parentBottomCenterX}px`;
+    line.style.top = `${parentBottomY}px`;
+    line.style.transformOrigin = '0 50%';
+    line.style.transform = `rotate(${angle}deg)`;
+    
   treeVisual.appendChild(line);
   modifyDomLineElements.set(nodeId, line);
 
   setTimeout(() => {
     line.style.transition = 'opacity 0.4s ease-in-out';
-    line.style.opacity = '0.8'; // 与原始实现相同的不透明度
-  }, 200);
+    line.style.opacity = '0.8';
+  }, 50);
+}
+
+// 统一创建所有连线
+function createAllConnectionLines() {
+  console.log(`🔗 开始统一创建 ${allNodesToCreateLines.length} 条连线`);
+  
+  // 使用 requestAnimationFrame 确保DOM完全渲染
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      allNodesToCreateLines.forEach((nodeId, index) => {
+        setTimeout(() => {
+          addModifyConnectionLine(nodeId, nodePositions, treeVisual);
+          console.log(`🔗 创建连线 ${index + 1}/${allNodesToCreateLines.length}: 节点${nodeId} -> 父节点${Math.floor(nodeId/2)}`);
+        }, index * 50); // 减少延迟，因为DOM已经稳定
+      });
+    });
+  });
+  
+  // 清空待创建列表
+  allNodesToCreateLines = [];
 }
 
 // 获取区间修改动画延迟
