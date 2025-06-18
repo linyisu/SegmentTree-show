@@ -8,6 +8,10 @@ let modifyDomNodeElements = new Map(); // Stores DOM node elements, keyed by 'u'
 let currentModifyTreeLevelsData = [];
 let currentModifyTreeBuildOrderData = [];
 let activeModifyBuildAnimationTimeout = null; // To cancel ongoing build animation
+
+// 全局线段树数据
+let globalTree = [];
+let globalLazy = [];
 // --- End of Adaptive Functionality State ---
 
 // Debounce function
@@ -104,14 +108,13 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
     isResize: isResizeUpdate,
     clientWidth: treeVisualElement.clientWidth,
     containerWidth,
-    effectiveWidth: containerWidth - (2 * padding)
-  });// 构建带初始值的线段树 - 维护最大值、最小值、区间和
-  const tree = new Array(4 * n);
-  const lazy = new Array(4 * n).fill(0);
+    effectiveWidth: containerWidth - (2 * padding)  });// 构建带初始值的线段树 - 维护最大值、最小值、区间和
+  globalTree = new Array(4 * n);
+  globalLazy = new Array(4 * n).fill(0);
   
   // 初始化树节点
   for (let i = 0; i < 4 * n; i++) {
-    tree[i] = { sum: 0, max: -Infinity, min: Infinity };
+    globalTree[i] = { sum: 0, max: -Infinity, min: Infinity };
   }
   
   // 🔧 修复：只在非resize更新时构建树数据
@@ -135,29 +138,26 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         };
       }
     }
-    buildTree(dataArray, tree, 1, 1, n);
-    
+    buildTree(dataArray, globalTree, 1, 1, n);    
     console.log('🌳 线段树构建完成:', {
       n,
-      treeSize: tree.length,
-      rootNode: tree[1],
-      sampleNodes: [tree[2], tree[3]]
+      treeSize: globalTree.length,
+      rootNode: globalTree[1],
+      sampleNodes: [globalTree[2], globalTree[3]]
     });
   } else if (isResizeUpdate) {
     console.log('🔄 Resize更新：跳过树数据重建，仅更新布局');
   }
   
-  if (!isResizeUpdate) {
-    // This is an initial build: collect tree levels data with actual values
+  if (!isResizeUpdate) {    // This is an initial build: collect tree levels data with actual values
     currentModifyTreeLevelsData = []; // Clear for new build
-
+    
     function collectModifyLevelsWithData(l, r, u, depth = 0) {
       if (l > r) return; // Base case: invalid range, do not process
       if (!currentModifyTreeLevelsData[depth]) currentModifyTreeLevelsData[depth] = [];
-      const treeNode = tree[u] || { sum: 0, max: 0, min: 0 };
-      const lazyValue = lazy[u] || 0;
-      currentModifyTreeLevelsData[depth].push({ 
-        l, r, u, depth, 
+      const treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+      const lazyValue = globalLazy[u] || 0;
+      currentModifyTreeLevelsData[depth].push({        l, r, u, depth, 
         lazy: lazyValue, 
         sum: treeNode.sum,
         max: treeNode.max,
@@ -267,10 +267,8 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       const levelNodes = currentModifyTreeLevelsData[depth];
       if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
           return; 
-      }
-
-      const treeNode = tree[u] || { sum: 0, max: 0, min: 0 };
-      const lazyValue = lazy[u] || 0;
+      }      const treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+      const lazyValue = globalLazy[u] || 0;
       currentModifyTreeBuildOrderData.push({ 
         l, r, u, depth, 
         lazy: lazyValue, 
@@ -278,7 +276,6 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         max: treeNode.max,
         min: treeNode.min
       }); 
-      
       if (l < r) {
         const mid = Math.floor((l + r) / 2);
         generateModifyBuildOrderWithData(l, mid, u * 2, depth + 1);
@@ -469,6 +466,75 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
   }
 }
 
+// ========== 线段树区间修改核心函数 ==========
+
+// 下推懒标记
+function pushDown(u, tl, tr) {
+  if (globalLazy[u] !== 0) {
+    const delta = globalLazy[u];
+    const len = tr - tl + 1;
+    
+    // 更新当前节点的值
+    globalTree[u].sum += delta * len;
+    globalTree[u].max += delta;
+    globalTree[u].min += delta;
+    
+    // 如果不是叶子节点，下推到子节点
+    if (tl !== tr) {
+      globalLazy[u * 2] += delta;
+      globalLazy[u * 2 + 1] += delta;
+    }
+    
+    globalLazy[u] = 0;
+  }
+}
+
+// 向上更新节点信息
+function pushUp(u) {
+  const left = globalTree[u * 2];
+  const right = globalTree[u * 2 + 1];
+  
+  globalTree[u].sum = left.sum + right.sum;
+  globalTree[u].max = Math.max(left.max, right.max);
+  globalTree[u].min = Math.min(left.min, right.min);
+}
+
+// 区间修改函数
+function updateRange(l, r, tl, tr, u, delta) {
+  console.log(`🔧 updateRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}] 增加 ${delta}`);
+  
+  // 下推懒标记
+  pushDown(u, tl, tr);
+  
+  // 如果当前区间完全包含在修改区间内
+  if (l <= tl && tr <= r) {
+    globalLazy[u] += delta;
+    pushDown(u, tl, tr);
+    console.log(`✅ 节点 u=${u} [${tl},${tr}] 完全包含，添加懒标记 ${delta}`);
+    return;
+  }
+  
+  // 如果没有交集
+  if (r < tl || l > tr) {
+    console.log(`❌ 节点 u=${u} [${tl},${tr}] 与修改区间无交集`);
+    return;
+  }
+  
+  // 递归修改子节点
+  const mid = Math.floor((tl + tr) / 2);
+  updateRange(l, r, tl, mid, u * 2, delta);
+  updateRange(l, r, mid + 1, tr, u * 2 + 1, delta);
+  
+  // 下推子节点的懒标记，然后向上更新
+  pushDown(u * 2, tl, mid);
+  pushDown(u * 2 + 1, mid + 1, tr);
+  pushUp(u);
+  
+  console.log(`🔄 节点 u=${u} [${tl},${tr}] 更新完成，新值:`, globalTree[u]);
+}
+
+// ========== 线段树区间修改核心函数结束 ==========
+
 // 获取区间修改动画延迟
 function getModifyAnimationDelay() {
   const animationSpeed = window.animationSpeed || 'fast'; // Assuming animationSpeed might be set globally
@@ -476,7 +542,7 @@ function getModifyAnimationDelay() {
   return speeds[animationSpeed] || 1000;
 }
 
-// 区间修改操作
+// 区间修改操作 - 直接完成版本
 function performRangeUpdate(modifyL, modifyR, delta, container) {
   console.log('🔧 performRangeUpdate 被调用', {
     modifyL, modifyR, delta,
@@ -487,81 +553,131 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
   
   if (!isModifyTreeRendered || !lastModifyBuiltContainer) {
     alert('请先构建线段树！');
-    if (!isModifyTreeRendered)
-      console.warn('线段树尚未渲染，请先构建线段树');
-    if (!lastModifyBuiltContainer)
-      console.warn('线段树容器未找到，请先构建线段树');
+    console.warn('线段树状态检查失败');
     return;
   }
 
-  // 清除之前的高亮
+  console.log(`⚡ 开始直接完成修改: 区间[${modifyL}, ${modifyR}] 增加 ${delta}`);
+
+  // 1. 执行实际的区间更新
+  updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+  console.log('✅ 区间更新完成');
+
+  // 2. 重置所有节点样式
   modifyDomNodeElements.forEach((nodeDiv) => {
     nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
     nodeDiv.style.border = '2px solid #74b9ff';
     nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
   });
 
+  // 3. 收集并高亮受影响的节点
   const affectedNodes = [];
   
-  // 模拟区间修改过程
-  function updateRange(l, r, u, tl, tr, delta) {
+  function collectAffectedNodes(u, tl, tr) {
+    // 检查当前节点是否与修改区间有交集
     if (modifyL > tr || modifyR < tl) {
       return; // 完全不相交
     }
     
     if (modifyL <= tl && tr <= modifyR) {
-      // 完全包含，懒标记
+      // 完全包含，这是懒标记节点
       affectedNodes.push({ u, type: 'lazy', tl, tr });
-      return;
+      return; // 不需要继续向下
     }
     
-    // 部分相交，需要下推
+    // 部分相交，这是下推节点
     affectedNodes.push({ u, type: 'pushdown', tl, tr });
-    const mid = Math.floor((tl + tr) / 2);
-    updateRange(l, r, u * 2, tl, mid, delta);
-    if (mid < tr) {
-      updateRange(l, r, u * 2 + 1, mid + 1, tr, delta);
+    
+    // 继续检查子节点
+    if (tl < tr) {
+      const mid = Math.floor((tl + tr) / 2);
+      collectAffectedNodes(u * 2, tl, mid);
+      collectAffectedNodes(u * 2 + 1, mid + 1, tr);
     }
   }
+  
+  collectAffectedNodes(1, 1, lastModifyBuiltN);
+  console.log(`📊 收集到 ${affectedNodes.length} 个受影响的节点:`, affectedNodes);
 
-  updateRange(modifyL, modifyR, 1, 1, lastModifyBuiltN, delta);
-
-  // 动画显示受影响的节点
-  let animationIndex = 0;
-  function animateNextNode() {
-    if (animationIndex >= affectedNodes.length) {
-      return;
-    }
-
-    const { u, type } = affectedNodes[animationIndex];
+  // 4. 立即高亮所有受影响的节点并更新显示
+  affectedNodes.forEach(({ u, type, tl, tr }, index) => {
     const nodeDiv = modifyDomNodeElements.get(u);
     
     if (nodeDiv) {
-      if (type === 'lazy') {
-        // 懒标记节点 - 红色
-        nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
-        nodeDiv.style.border = '2px solid #e74c3c';
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 根据新的HTML结构
-        const lazySpan = nodeDiv.querySelector('.node-lazy');
-        if (lazySpan) {
-          lazySpan.textContent = `lazy:${delta}`;
-          // 重新应用样式确保格式正确
-          lazySpan.style.flex = '1';
-          lazySpan.style.textAlign = 'center';
+      setTimeout(() => {
+        if (type === 'lazy') {
+          // 懒标记节点 - 红色
+          nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
+          nodeDiv.style.border = '2px solid #e74c3c';
+          nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
+          console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}]`);
+        } else {
+          // 下推节点 - 橙色
+          nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+          nodeDiv.style.border = '2px solid #e67e22';
+          nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+          console.log(`🟠 高亮下推节点 u=${u} [${tl},${tr}]`);
         }
-      } else if (type === 'pushdown') {
-        // 下推节点 - 橙色
-        nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
-        nodeDiv.style.border = '2px solid #e67e22';
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+          // 立即更新节点显示的数值
+        updateNodeDisplayWithLazyPush(u, tl, tr);
+      }, index * 200); // 错开动画时间
+    }
+  });
+
+  // 5. 立即更新所有相关节点显示（确保数据同步）
+  console.log('🔄 立即更新所有相关节点显示');
+  setTimeout(() => {
+    // 遍历整个树，更新所有可能受影响的节点
+    function updateAllRelatedNodes(u, tl, tr) {
+      // 如果这个节点存在于DOM中，就更新它
+      if (modifyDomNodeElements.has(u)) {
+        updateNodeDisplayWithLazyPush(u, tl, tr);
+      }
+      
+      // 如果当前节点区间与修改区间有交集，递归更新子节点
+      if (tl < tr && (modifyL <= tr && modifyR >= tl)) {
+        const mid = Math.floor((tl + tr) / 2);
+        updateAllRelatedNodes(u * 2, tl, mid);
+        updateAllRelatedNodes(u * 2 + 1, mid + 1, tr);
       }
     }
+    
+    updateAllRelatedNodes(1, 1, lastModifyBuiltN);
+    console.log('✅ 所有相关节点显示更新完成');
+  }, 100); // 很快执行，确保数据同步
 
-    animationIndex++;
-    setTimeout(animateNextNode, 600);
+  // 6. 最终确保所有节点都是最新状态
+  setTimeout(() => {
+    console.log('🎯 直接完成修改 - 最终确保所有节点状态正确');
+    modifyDomNodeElements.forEach((nodeDiv, u) => {
+      const nodeInfo = findNodeRange(u, 1, 1, lastModifyBuiltN);
+      if (nodeInfo) {
+        updateNodeDisplayWithLazyPush(u, nodeInfo.tl, nodeInfo.tr);
+      }
+    });}, affectedNodes.length * 200 + 500);
+}
+
+// 辅助函数：根据节点编号找到对应的区间范围
+function findNodeRange(targetU, u, tl, tr) {
+  if (u === targetU) {
+    return { tl, tr };
   }
-
-  setTimeout(animateNextNode, 300);
+  
+  if (tl === tr) {
+    return null; // 叶子节点，没找到
+  }
+  
+  const mid = Math.floor((tl + tr) / 2);
+  
+  // 在左子树中查找
+  const leftResult = findNodeRange(targetU, u * 2, tl, mid);
+  if (leftResult) return leftResult;
+  
+  // 在右子树中查找
+  const rightResult = findNodeRange(targetU, u * 2 + 1, mid + 1, tr);
+  if (rightResult) return rightResult;
+  
+  return null;
 }
 
 // 区间修改操作 - 步进版本
@@ -608,13 +724,14 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
   stepModifyState.isActive = true;
   stepModifyState.affectedNodes = [];
   stepModifyState.currentIndex = 0;
-  stepModifyState.modifyL = modifyL;
-  stepModifyState.modifyR = modifyR;
+  stepModifyState.modifyL = modifyL;  stepModifyState.modifyR = modifyR;
   stepModifyState.delta = delta;
   stepModifyState.container = container;
   
-  // 模拟区间修改过程，收集受影响的节点
-  function collectAffectedNodes(l, r, u, tl, tr, delta) {
+  // 🔧 不要立即执行修改，而是在步进过程中逐步执行
+  // updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+    // 模拟收集受影响的节点用于步进显示
+  function collectAffectedNodes(modifyL, modifyR, u, tl, tr) {
     if (modifyL > tr || modifyR < tl) {
       return; // 完全不相交
     }
@@ -628,13 +745,13 @@ function performRangeUpdateStep(modifyL, modifyR, delta, container) {
     // 部分相交，需要下推
     stepModifyState.affectedNodes.push({ u, type: 'pushdown', tl, tr });
     const mid = Math.floor((tl + tr) / 2);
-    collectAffectedNodes(l, r, u * 2, tl, mid, delta);
+    collectAffectedNodes(modifyL, modifyR, u * 2, tl, mid);
     if (mid < tr) {
-      collectAffectedNodes(l, r, u * 2 + 1, mid + 1, tr, delta);
+      collectAffectedNodes(modifyL, modifyR, u * 2 + 1, mid + 1, tr);
     }
   }
 
-  collectAffectedNodes(modifyL, modifyR, 1, 1, lastModifyBuiltN, delta);
+  collectAffectedNodes(modifyL, modifyR, 1, 1, lastModifyBuiltN);
 
   // 显示步进控制提示
   showStepControls();
@@ -675,6 +792,9 @@ function updateStepControlPanel() {
   const totalSteps = stepModifyState.affectedNodes.length;
   const currentStep = stepModifyState.currentIndex + 1;
   const isFinished = stepModifyState.currentIndex >= totalSteps;
+  
+  console.log(`🎮 updateStepControlPanel: currentIndex=${stepModifyState.currentIndex}, totalSteps=${totalSteps}, currentStep=${currentStep}, isFinished=${isFinished}`);
+  
   controlPanel.innerHTML = `
     <h4 style="margin: 0 0 10px 0; font-size: 16px;">👣 步进修改模式</h4>
     <p style="margin: 5px 0; font-size: 14px;"><strong>区间:</strong> [${stepModifyState.modifyL}, ${stepModifyState.modifyR}] <strong>值:</strong> +${stepModifyState.delta}</p>
@@ -695,59 +815,84 @@ function updateStepControlPanel() {
                      background: #95a5a6; color: white; cursor: pointer;">
         ❌ 关闭
       </button>
-    </div>
-  `;
-
-  // 绑定按钮事件
+    </div>  `;
+  
+  // 绑定按钮事件（使用onclick属性直接绑定）
   const btnNextStep = document.getElementById('btn-next-step');
   const btnFinishSteps = document.getElementById('btn-finish-steps');
   const btnCloseSteps = document.getElementById('btn-close-steps');
 
   if (btnNextStep && !isFinished) {
-    btnNextStep.addEventListener('click', executeNextStep);
+    btnNextStep.onclick = function() {
+      console.log('🖱️ "下一步" 按钮被点击');
+      executeNextStep();
+    };
   }
 
   if (btnFinishSteps && !isFinished) {
-    btnFinishSteps.addEventListener('click', finishAllSteps);
+    btnFinishSteps.onclick = function() {
+      console.log('🖱️ "直接完成" 按钮被点击');
+      finishAllSteps();
+    };
   }
 
   if (btnCloseSteps) {
-    btnCloseSteps.addEventListener('click', closeStepControls);
+    btnCloseSteps.onclick = function() {
+      console.log('🖱️ "关闭" 按钮被点击');
+      closeStepControls();
+    };
   }
 }
 
 function executeNextStep() {
+  console.log(`👣 executeNextStep: currentIndex=${stepModifyState.currentIndex}, totalNodes=${stepModifyState.affectedNodes.length}`);
+  
   if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
+    console.log('👣 所有步骤已完成');
     return;
   }
 
-  const { u, type } = stepModifyState.affectedNodes[stepModifyState.currentIndex];
+  const { u, type, tl, tr } = stepModifyState.affectedNodes[stepModifyState.currentIndex];
   const nodeDiv = modifyDomNodeElements.get(u);
+  
+  console.log(`👣 执行步骤 ${stepModifyState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}] 类型=${type}`);
   
   if (nodeDiv) {
     if (type === 'lazy') {
-      // 懒标记节点 - 红色
+      // 懒标记节点 - 红色，这种节点完全包含在修改区间内
       nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
       nodeDiv.style.border = '2px solid #e74c3c';
       nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
       
-      // 更新节点内容显示懒标记
-      const lazySpan = nodeDiv.querySelector('.node-lazy');
-      if (lazySpan) {
-        lazySpan.textContent = `lazy:${stepModifyState.delta}`;
-        lazySpan.style.flex = '1';
-        lazySpan.style.textAlign = 'center';
-      }
+      // 添加懒标记并下推
+      globalLazy[u] += stepModifyState.delta;
+      pushDown(u, tl, tr);
+      
+      console.log(`👣🔴 步进：懒标记节点 u=${u} [${tl},${tr}] 添加懒标记 ${stepModifyState.delta}`);
+      updateNodeDisplayWithLazyPush(u, tl, tr);
     } else if (type === 'pushdown') {
-      // 下推节点 - 橙色
+      // 下推节点 - 橙色，这种节点部分相交，需要下推到子节点
       nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
       nodeDiv.style.border = '2px solid #e67e22';
       nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+      
+      // 下推懒标记到子节点
+      pushDown(u, tl, tr);
+      
+      console.log(`👣🟠 步进：下推节点 u=${u} [${tl},${tr}] 执行下推操作`);
+      updateNodeDisplayWithLazyPush(u, tl, tr);
     }
+  } else {
+    console.log(`❌ 节点 u=${u} 的DOM元素未找到`);
   }
-
+  
   stepModifyState.currentIndex++;
-  updateStepControlPanel();
+  console.log(`👣 步骤完成，currentIndex 更新为: ${stepModifyState.currentIndex}`);
+  
+  // 立即更新面板
+  setTimeout(() => {
+    updateStepControlPanel();
+  }, 100);
 }
 
 function finishAllSteps() {
@@ -771,291 +916,188 @@ function resetStepModifyState() {
   stepModifyState.currentIndex = 0;
   stepModifyState.modifyL = 0;
   stepModifyState.modifyR = 0;
-  stepModifyState.delta = 0;
-  stepModifyState.container = null;
+  stepModifyState.delta = 0;  stepModifyState.container = null;
 }
 
-// 初始化显示区间修改可视化的容器
-function initializeModifyTreeContainer(container) {
-  container.innerHTML = ''; // 不显示任何标题
-  
-  const treeVisual = document.createElement('div');
-  treeVisual.className = 'modify-tree-visual';
-  treeVisual.style.position = 'relative';
-  treeVisual.style.width = '100%';
-  treeVisual.style.padding = '25px';
-  treeVisual.style.background = 'var(--card-bg)';
-  treeVisual.style.borderRadius = '12px';
-  treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
-  treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-  treeVisual.style.overflow = 'visible';
-  treeVisual.style.minHeight = '200px';
-  treeVisual.style.display = 'flex';
-  treeVisual.style.alignItems = 'center';
-  treeVisual.style.justifyContent = 'center';
-  treeVisual.style.color = 'var(--text-color)';
-  treeVisual.style.fontSize = '16px';
-  treeVisual.style.opacity = '0.7';
-  
-  treeVisual.innerHTML = '<div style="text-align: center;">🔧 请输入数组数据并点击"更新可视化"按钮查看线段树区间修改动画</div>';
-  
-  container.appendChild(treeVisual);
-}
-
-// 随机生成数组数据
-function generateRandomData() {
-  const length = Math.floor(Math.random() * 4) + 5; //5-8个数字
-  const data = [];
-  for (let i = 0; i < length; i++) {
-    data.push(Math.floor(Math.random() * 10) + 1); // 1-10之间的数字
-  }
-  return data.join(' ');
-}
-
-// 解析输入的数组数据
-function parseInputData(inputString) {
-  if (!inputString.trim()) {
-    return null;
-  }
-  
-  const numbers = inputString.trim().split(/\s+/).map(num => parseInt(num)).filter(num => !isNaN(num));
-  
-  if (numbers.length === 0) {
-    return null;
-  }
-  
-  if (numbers.length > 8) {
-    alert('数组长度不能超过8个数字');
-    return null;
-  }
-  
-  if (numbers.some(num => num < 1 || num > 100)) {
-    alert('数字应该在1-100范围内');
-    return null;
-  }
-  
-  return numbers;
-}
-
-// Modified initModifyTreeVisualizer
+// 初始化区间修改可视化模块
 function initModifyTreeVisualizer() {
   console.log('🔧 初始化区间修改可视化模块...');
-    const inputCustomData = document.getElementById('input-custom-data');
+  
+  // 获取所有需要的DOM元素
+  const inputCustomData = document.getElementById('input-custom-data');
   const btnRandomData = document.getElementById('btn-random-data');
   const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
-  const treeContainer = document.getElementById('custom-tree-visualizer-host');
-  const inputModifyLeft = document.getElementById('input-modify-left');
-  const inputModifyRight = document.getElementById('input-modify-right');
-  const inputModifyValue = document.getElementById('input-modify-value');
   const btnApplyModificationDirect = document.getElementById('btn-apply-modification-direct');
   const btnApplyModificationStep = document.getElementById('btn-apply-modification-step');
+  const customTreeVisualizerHost = document.getElementById('custom-tree-visualizer-host');
   
-  console.log('🔍 查找到的HTML元素:', {
-    inputCustomData: !!inputCustomData,
-    btnRandomData: !!btnRandomData,
-    btnUpdateCustomData: !!btnUpdateCustomData,
-    treeContainer: !!treeContainer,
-    inputModifyLeft: !!inputModifyLeft,
-    inputModifyRight: !!inputModifyRight,
-    inputModifyValue: !!inputModifyValue,
-    btnApplyModificationDirect: !!btnApplyModificationDirect,
-    btnApplyModificationStep: !!btnApplyModificationStep
-  });
-    // 初始化时显示区间修改可视化的盒子
-  if (treeContainer) {
-    initializeModifyTreeContainer(treeContainer);
+  // 初始化默认数据
+  if (inputCustomData) {
+    inputCustomData.value = "1 1 4 5 1 4";
   }
   
-  // 随机生成数据按钮
-  if (btnRandomData && inputCustomData) {
-    console.log('✅ 绑定随机生成按钮事件');
+  // 绑定随机生成按钮事件
+  if (btnRandomData) {
     btnRandomData.addEventListener('click', () => {
-      console.log('🎲 点击随机生成按钮');
-      const randomData = generateRandomData();
-      console.log('📊 生成的随机数据:', randomData);
-      inputCustomData.value = randomData;
-      console.log('✅ 数据已填入输入框');
-    });  } else {
-    console.log('❌ 无法绑定随机生成按钮，元素缺失:', { btnRandomData: !!btnRandomData, inputCustomData: !!inputCustomData });
+      console.log('🎲 随机生成数据按钮被点击');
+      const randomArray = [];
+      const length = Math.floor(Math.random() * 6) + 3; // 3-8个数字
+      for (let i = 0; i < length; i++) {
+        randomArray.push(Math.floor(Math.random() * 10) + 1); // 1-10的随机数
+      }
+      const randomDataString = randomArray.join(' ');
+      if (inputCustomData) {
+        inputCustomData.value = randomDataString;
+      }
+      console.log('🎲 生成的随机数据:', randomDataString);
+    });
+  } else {
+    console.log('❌ 随机生成按钮未找到');
   }
   
-  // 更新可视化按钮
-  if (btnUpdateCustomData && treeContainer && inputCustomData) {
-    console.log('✅ 绑定更新可视化按钮事件');
+  // 绑定更新可视化按钮事件
+  if (btnUpdateCustomData && customTreeVisualizerHost) {
     btnUpdateCustomData.addEventListener('click', () => {
-      console.log('🚀 点击更新可视化按钮');
-      console.log('📝 输入框内容:', `"${inputCustomData.value}"`);
-      const inputData = parseInputData(inputCustomData.value);
-      console.log('🔍 解析结果:', inputData);
+      console.log('🚀 更新可视化按钮被点击');
+      const inputData = inputCustomData?.value?.trim() || '';
       if (!inputData) {
-        if (!inputCustomData.value.trim()) {
-          alert('请输入数组数据或点击随机生成');
+        alert('请输入数据或点击随机生成按钮！');
+        return;
+      }
+      
+      try {
+        const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
+        if (dataArray.length === 0 || dataArray.length > 8) {
+          alert('请输入1到8个有效数字！');
+          return;
         }
-        return;
+        
+        console.log('📊 构建线段树，数据:', dataArray);
+        buildModifyTreeVisualizationWithData(dataArray, customTreeVisualizerHost, false);
+      } catch (error) {
+        console.error('❌ 解析数据时出错:', error);
+        alert('数据格式不正确，请输入用空格分隔的数字！');
       }
-      
-      const n = inputData.length;
-      console.log('📏 数组长度:', n);
-      console.log('🎨 开始构建树可视化...');
-      buildModifyTreeVisualizationWithData(inputData, treeContainer, false);
     });
   } else {
-    console.log('❌ 无法绑定更新可视化按钮，元素缺失:', { 
-      btnUpdateCustomData: !!btnUpdateCustomData, 
-      treeContainer: !!treeContainer, 
-      inputCustomData: !!inputCustomData 
-    });
-  }  // 直接完成修改按钮
-  if (btnApplyModificationDirect && treeContainer) {
-    console.log('✅ 绑定直接完成修改按钮事件');
+    console.log('❌ 更新可视化按钮或容器未找到');
+  }
+    // 绑定直接完成修改按钮事件
+  if (btnApplyModificationDirect) {
     btnApplyModificationDirect.addEventListener('click', () => {
-      console.log('⚡ 点击直接完成修改按钮');
-      const l = parseInt(inputModifyLeft?.value || '1');
-      const r = parseInt(inputModifyRight?.value || '1');
-      const delta = parseInt(inputModifyValue?.value || '1');
-      
-      console.log('📝 修改参数:', { l, r, delta });
-      console.log('🔍 状态检查:', {
-        lastModifyBuiltN,
-        isModifyTreeRendered,
-        lastModifyBuiltContainer: !!lastModifyBuiltContainer,
-        modifyDomNodeElements_size: modifyDomNodeElements.size
-      });
-      
-      if (!lastModifyBuiltN || lastModifyBuiltN === 0) {
-        console.log('❌ lastModifyBuiltN 检查失败');
+      console.log('⚡ 直接完成修改按钮被点击');
+      if (!isModifyTreeRendered) {
         alert('请先构建线段树！');
         return;
       }
       
-      if (l < 1 || r > lastModifyBuiltN || l > r) {
-        console.log('❌ 区间范围检查失败');
-        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]`);
+      // 获取修改参数
+      const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
+      const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
+      const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
+      
+      if (isNaN(modifyL) || isNaN(modifyR) || isNaN(modifyValue)) {
+        alert('请输入有效的修改参数！');
         return;
       }
       
-      console.log('✅ 所有检查通过，开始执行直接完成修改');
-      performRangeUpdate(l, r, delta, treeContainer);
+      if (modifyL < 1 || modifyR > lastModifyBuiltN || modifyL > modifyR) {
+        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]！`);
+        return;
+      }
+      
+      performRangeUpdate(modifyL, modifyR, modifyValue, lastModifyBuiltContainer);
     });
   } else {
-    console.log('❌ 无法绑定直接完成修改按钮，元素缺失:', { 
-      btnApplyModificationDirect: !!btnApplyModificationDirect, 
-      treeContainer: !!treeContainer 
-    });
+    console.log('❌ 直接完成修改按钮未找到');
   }
-
-  // 步进修改按钮
-  if (btnApplyModificationStep && treeContainer) {
-    console.log('✅ 绑定步进修改按钮事件');
+  
+  // 绑定步进修改按钮事件
+  if (btnApplyModificationStep) {
     btnApplyModificationStep.addEventListener('click', () => {
-      console.log('👣 点击步进修改按钮');
-      const l = parseInt(inputModifyLeft?.value || '1');
-      const r = parseInt(inputModifyRight?.value || '1');
-      const delta = parseInt(inputModifyValue?.value || '1');
-      
-      console.log('📝 修改参数:', { l, r, delta });
-      console.log('🔍 状态检查:', {
-        lastModifyBuiltN,
-        isModifyTreeRendered,
-        lastModifyBuiltContainer: !!lastModifyBuiltContainer,
-        modifyDomNodeElements_size: modifyDomNodeElements.size
-      });
-      
-      if (!lastModifyBuiltN || lastModifyBuiltN === 0) {
-        console.log('❌ lastModifyBuiltN 检查失败');
+      console.log('👣 步进修改按钮被点击');
+      if (!isModifyTreeRendered) {
         alert('请先构建线段树！');
         return;
       }
       
-      if (l < 1 || r > lastModifyBuiltN || l > r) {
-        console.log('❌ 区间范围检查失败');
-        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]`);
+      // 获取修改参数
+      const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
+      const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
+      const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
+      
+      if (isNaN(modifyL) || isNaN(modifyR) || isNaN(modifyValue)) {
+        alert('请输入有效的修改参数！');
         return;
       }
       
-      console.log('✅ 所有检查通过，开始执行步进修改');
-      performRangeUpdateStep(l, r, delta, treeContainer);
+      if (modifyL < 1 || modifyR > lastModifyBuiltN || modifyL > modifyR) {
+        alert(`请输入有效的区间范围 [1, ${lastModifyBuiltN}]！`);
+        return;
+      }
+      
+      performRangeUpdateStep(modifyL, modifyR, modifyValue, lastModifyBuiltContainer);
     });
   } else {
-    console.log('❌ 无法绑定步进修改按钮，元素缺失:', { 
-      btnApplyModificationStep: !!btnApplyModificationStep, 
-      treeContainer: !!treeContainer 
-    });
+    console.log('❌ 步进修改按钮未找到');
   }
-  // Optimized resize handler
+  
+  // 绑定窗口resize事件
   window.addEventListener('resize', debounceModify(() => {
-    console.log('🚨 RESIZE事件被触发！');
-    console.log('📊 当前状态:', {
-      isModifyTreeRendered,
-      hasContainer: !!lastModifyBuiltContainer,
-      lastModifyBuiltN,
-      containerExists: !!document.querySelector('.modify-tree-visual')
-    });
-    
     if (isModifyTreeRendered && lastModifyBuiltContainer && lastModifyBuiltN > 0) {
-      console.log('✅ 条件满足，开始重新布局');
-      // 获取外部容器的宽度
-      const outerContainer = lastModifyBuiltContainer.parentElement || lastModifyBuiltContainer;
-      const outerWidth = outerContainer.getBoundingClientRect().width;
-      console.log('📏 外部容器宽度:', outerWidth);
-      
-      // 设置 tree-visual 宽度为外部容器的宽度
-      const treeVisual = lastModifyBuiltContainer.querySelector('.modify-tree-visual');
-      if (treeVisual) {
-        treeVisual.style.width = `${outerWidth}px`;
-        treeVisual.style.boxSizing = 'border-box'; // 确保宽度包含 padding 和 border
-        treeVisual.style.padding = '25px'; // 确保 padding 不影响宽度
-        console.log('✅ 设置 tree-visual 宽度:', outerWidth, '实际 clientWidth:', treeVisual.clientWidth);
-        
-        // 强制重绘
-        treeVisual.style.display = 'none';
-        treeVisual.offsetHeight; // 强制重排
-        treeVisual.style.display = '';
-        
-        // 调用可视化更新函数，传入 null 表示 resize 更新
+      // 检查容器是否可见
+      const containerStyle = window.getComputedStyle(lastModifyBuiltContainer);
+      if (containerStyle.display !== 'none' && lastModifyBuiltContainer.offsetParent !== null) {
+        console.log('🔄 窗口resize，重新渲染线段树');
         buildModifyTreeVisualizationWithData(null, lastModifyBuiltContainer, true);
-      } else {
-        console.error('❌ 未找到 tree-visual 元素，无法更新宽度');
       }
-    } else {
-      console.log('❌ 条件不满足，跳过resize更新');
     }
-  }, 100)); // 防抖时间 100ms
+  }, 250));
+  
+  console.log('✅ 区间修改可视化模块初始化完成');
 }
 
-// Export functions
-window.ModifyTreeVisualizer = class {
-  constructor(container) {
-    this.container = container;
-  }
-  
-  buildTreeFromInput(input) {
-    const dataArray = parseInputData(input);
-    buildModifyTreeVisualizationWithData(dataArray, this.container);
-  }
-  
-  performRangeUpdate(l, r, delta) {
-    performRangeUpdate(l, r, delta, this.container);
-  }
-  
-  clearTree() {
-    if (this.container) {
-      this.container.innerHTML = '';
-      modifyDomNodeElements.clear();
-      isModifyTreeRendered = false;
-      if (activeModifyBuildAnimationTimeout) {
-        clearTimeout(activeModifyBuildAnimationTimeout);
-        activeModifyBuildAnimationTimeout = null;
-      }
-    }
-  }
+// 导出模块
+window.ModifyTreeVisualizer = {
+  buildModifyTreeVisualizationWithData,
+  initModifyTreeVisualizer
 };
 
-// 也保留原有的导出方式以兼容
-window.ModifyTreeVisualizer.buildModifyTreeVisualizationWithData = buildModifyTreeVisualizationWithData;
-window.ModifyTreeVisualizer.initModifyTreeVisualizer = initModifyTreeVisualizer;
-window.ModifyTreeVisualizer.performRangeUpdate = performRangeUpdate;
-window.ModifyTreeVisualizer.generateRandomData = generateRandomData;
-window.ModifyTreeVisualizer.parseInputData = parseInputData;
-
-console.log('🌟 ModifyTreeVisualizer 模块已加载', window.ModifyTreeVisualizer);
+// 更新节点显示信息（包括懒标记和树节点值）
+function updateNodeDisplayWithLazyPush(u, tl, tr) {
+  console.log(`🔄 updateNodeDisplayWithLazyPush: 更新节点 u=${u} [${tl},${tr}]`);
+  
+  const nodeDiv = modifyDomNodeElements.get(u);
+  if (!nodeDiv) {
+    console.log(`❌ 节点 u=${u} 的DOM元素未找到`);
+    return;
+  }
+  
+  // 确保懒标记已经下推到当前节点
+  pushDown(u, tl, tr);
+  
+  const treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
+  const lazyValue = globalLazy[u] || 0;
+  const lazyDisplay = lazyValue === 0 ? '-' : lazyValue;
+  
+  // 更新节点的HTML内容
+  nodeDiv.innerHTML = `
+    <div class="node-interval">[${tl},${tr}]</div>
+    <div class="node-row">
+      <span class="node-sum">sum:${treeNode.sum}</span>
+      <span class="node-min">min:${treeNode.min}</span>
+    </div>
+    <div class="node-row">
+      <span class="node-lazy">lazy:${lazyDisplay}</span>
+      <span class="node-max">max:${treeNode.max}</span>
+    </div>
+  `;
+  
+  console.log(`✅ 节点 u=${u} 显示已更新:`, {
+    sum: treeNode.sum,
+    min: treeNode.min,
+    max: treeNode.max,
+    lazy: lazyDisplay,
+    原始lazy: lazyValue
+  });
+}
