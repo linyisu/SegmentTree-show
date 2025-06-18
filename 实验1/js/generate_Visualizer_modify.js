@@ -335,15 +335,23 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
       nodeDiv.style.alignItems = 'center';
       nodeDiv.style.fontSize = '13px'; // 增大字体到与原始实现相同
       nodeDiv.style.lineHeight = '1.3';
-      nodeDiv.style.padding = '6px';
-      nodeDiv.style.boxSizing = 'border-box';
+      nodeDiv.style.padding = '6px';      nodeDiv.style.boxSizing = 'border-box';
+        // 🎨 按层级分配颜色
+      const layerColors = [
+        '#6c5ce7', // 第0层 - 紫色
+        '#fd79a8', // 第1层 - 粉色  
+        '#00b894', // 第2层 - 绿色
+        '#e17055'  // 第3层 - 橙红色（替代原来的黄色 #fdcb6e）
+      ];
+        const layerColor = layerColors[depth] || '#74b9ff'; // 超过4层使用默认蓝色
+      
       nodeDiv.style.borderRadius = '8px';
-      nodeDiv.style.border = '2px solid #74b9ff';
-      nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+      nodeDiv.style.border = `1px solid ${layerColor}`;
+      nodeDiv.style.background = layerColor;
       nodeDiv.style.color = 'white';
       nodeDiv.style.fontWeight = 'bold';
       nodeDiv.style.textAlign = 'center';
-      nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+      nodeDiv.style.boxShadow = `0 2px 8px ${layerColor}40`; // 使用对应颜色的半透明阴影
       
       // 添加内部样式
       const intervalDiv = nodeDiv.querySelector('.node-interval');
@@ -361,8 +369,7 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         row.style.fontSize = '13px'; // 增大数值字体
         row.style.marginBottom = '1px';
       });
-      
-      // 为数值添加样式
+        // 为数值添加样式
       const spans = nodeDiv.querySelectorAll('span');
       spans.forEach(span => {
         span.style.flex = '1';
@@ -370,15 +377,16 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         span.style.fontSize = '13px'; // 确保所有文字大小一致
       });
       
-      const nodeColor = window.nodeColor || '#74b9ff';
-      if (nodeColor !== '#74b9ff') {
-        nodeDiv.style.background = nodeColor;
-        nodeDiv.style.border = `2px solid ${nodeColor}`;
-      }
-        nodeDiv.style.opacity = '0';
-      nodeDiv.style.transform = 'translateY(-10px)';
+      // 注释掉全局nodeColor设置，因为现在使用层级颜色
+      // const nodeColor = window.nodeColor || '#74b9ff';
+      // if (nodeColor !== '#74b9ff') {
+      //   nodeDiv.style.background = nodeColor;
+      //   nodeDiv.style.border = `2px solid ${nodeColor}`;
+      // }
       
-      treeVisual.appendChild(nodeDiv);
+      nodeDiv.style.opacity = '0';
+      nodeDiv.style.transform = 'translateY(-10px)';
+        treeVisual.appendChild(nodeDiv);
       modifyDomNodeElements.set(u, nodeDiv); // Store DOM element
       
       setTimeout(() => {
@@ -386,11 +394,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         nodeDiv.style.opacity = '1';
         nodeDiv.style.transform = 'translateY(0)';
       }, 50);
-
+      
       orderIndex++;
       const animationDelay = getModifyAnimationDelay();
       activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, animationDelay / 6);
-    }    
+    }
+    
     activeModifyBuildAnimationTimeout = setTimeout(renderNextModifyNodeWithData, 500); // Initial call for animation
   } else {
     // This is a resize update: update existing DOM elements with smooth animation
@@ -493,13 +502,22 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     if (!lastModifyBuiltContainer)
       console.warn('线段树容器未找到，请先构建线段树');
     return;
-  }
-
-  // 清除之前的高亮
-  modifyDomNodeElements.forEach((nodeDiv) => {
-    nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
-    nodeDiv.style.border = '2px solid #74b9ff';
-    nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+  }  // 清除之前的高亮 - 恢复层级颜色
+  const layerColors = [
+    '#6c5ce7', // 第0层 - 紫色
+    '#fd79a8', // 第1层 - 粉色  
+    '#00b894', // 第2层 - 绿色
+    '#e17055'  // 第3层 - 橙红色
+  ];
+  
+  modifyDomNodeElements.forEach((nodeDiv, u) => {
+    // 根据节点类获取其深度    const depthClass = nodeDiv.className.match(/depth-(\d+)/);
+    const depth = depthClass ? parseInt(depthClass[1]) : 0;
+    const originalColor = layerColors[depth] || '#74b9ff';
+    
+    nodeDiv.style.background = originalColor;
+    nodeDiv.style.border = `1px solid ${originalColor}`;
+    nodeDiv.style.boxShadow = `0 2px 8px ${originalColor}40`;
   });
 
   const affectedNodes = [];
@@ -537,23 +555,20 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     const { u, type } = affectedNodes[animationIndex];
     const nodeDiv = modifyDomNodeElements.get(u);
     
-    if (nodeDiv) {
-      if (type === 'lazy') {
-        // 懒标记节点 - 红色
-        nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
-        nodeDiv.style.border = '2px solid #e74c3c';
-        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';        // 更新节点内容显示懒标记 - 根据新的HTML结构
+    if (nodeDiv) {      if (type === 'lazy') {        // 懒标记节点 - 纯红色
+        nodeDiv.style.background = '#e74c3c';
+        nodeDiv.style.border = '1px solid #e74c3c';
+        nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';// 更新节点内容显示懒标记 - 根据新的HTML结构
         const lazySpan = nodeDiv.querySelector('.node-lazy');
         if (lazySpan) {
           lazySpan.textContent = `lazy:${delta}`;
           // 重新应用样式确保格式正确
           lazySpan.style.flex = '1';
           lazySpan.style.textAlign = 'center';
-        }
-      } else if (type === 'pushdown') {
-        // 下推节点 - 橙色
-        nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
-        nodeDiv.style.border = '2px solid #e67e22';
+        }      } else if (type === 'pushdown') {
+        // 下推节点 - 纯橙色
+        nodeDiv.style.background = '#e67e22';
+        nodeDiv.style.border = '1px solid #e67e22';
         nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
       }
     }
@@ -808,5 +823,26 @@ window.ModifyTreeVisualizer.initModifyTreeVisualizer = initModifyTreeVisualizer;
 window.ModifyTreeVisualizer.performRangeUpdate = performRangeUpdate;
 window.ModifyTreeVisualizer.generateRandomData = generateRandomData;
 window.ModifyTreeVisualizer.parseInputData = parseInputData;
+
+// 添加resize事件监听器实现自适应
+const debouncedModifyResize = debounceModify(() => {
+  console.log('🔄 窗口resize触发，检查是否需要更新modify树...');
+  
+  if (isModifyTreeRendered && lastModifyBuiltContainer && lastModifyBuiltN > 0) {
+    console.log('🔄 开始执行modify树自适应更新...', {
+      container: !!lastModifyBuiltContainer,
+      n: lastModifyBuiltN,
+      isRendered: isModifyTreeRendered
+    });
+    
+    // 使用resize模式重新构建，传入null作为dataArray表示这是resize更新
+    buildModifyTreeVisualizationWithData(null, lastModifyBuiltContainer, true);
+  } else {
+    console.log('⏭️ 跳过modify树更新：无已渲染的树');
+  }
+}, 300);
+
+// 监听窗口resize事件
+window.addEventListener('resize', debouncedModifyResize);
 
 console.log('🌟 ModifyTreeVisualizer 模块已加载', window.ModifyTreeVisualizer);
