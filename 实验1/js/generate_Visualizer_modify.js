@@ -217,12 +217,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         nodeWidth = containerWidth - (2 * padding); // 原始逻辑：根节点横跨整个容器
         nodeWidth = Math.max(nodeMinWidth, nodeWidth);        x = (containerWidth + 50) / 2; // 修复居中：基于实际treeVisual宽度居中
         
-        console.log('🌳 根节点 (强制更新尺寸):', { 
-          treeVisualWidth: treeVisualElement.clientWidth,
-          containerWidth, 
-          nodeWidth: Math.round(nodeWidth), 
-          x: Math.round(x) 
-        });
+        // console.log('🌳 根节点 (强制更新尺寸):', { 
+        //   treeVisualWidth: treeVisualElement.clientWidth,
+        //   containerWidth, 
+        //   nodeWidth: Math.round(nodeWidth), 
+        //   x: Math.round(x) 
+        // });
     } else { // Child Node - 保持原始递减宽度
         if (parentW == null || parentX == null) {
             console.error(`Parent data not passed for node ${u}`);
@@ -240,12 +240,12 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
                 x = parentX + parentW / 4; // Center in parent's right half-width
             }
             
-            console.log(`🌿 子节点 u=${u} (原始递减宽度):`, { 
-              isLeftChild, 
-              parentW: Math.round(parentW), 
-              nodeWidth: Math.round(nodeWidth), 
-              x: Math.round(x) 
-            });
+            // console.log(`🌿 子节点 u=${u} (原始递减宽度):`, { 
+            //   isLeftChild, 
+            //   parentW: Math.round(parentW), 
+            //   nodeWidth: Math.round(nodeWidth), 
+            //   x: Math.round(x) 
+            // });
         }
     }    // 修复边界检查逻辑 - 使用实际容器边界
     const actualContainerWidth = containerWidth + 50; // 实际treeVisual宽度
@@ -422,15 +422,15 @@ function buildModifyTreeVisualizationWithData(dataArray, container, isResizeUpda
         const newTop = `${position.y}px`;
         const newWidth = `${position.nodeWidth}px`;
         
-        console.log(`🔍 节点 u=${u} 详细对比:`, {
-          positionData: position,
-          calculated: {
-            left: position.x - position.nodeWidth / 2,
-            width: position.nodeWidth
-          },
-          old: { left: oldLeft, width: oldWidth },
-          new: { left: newLeft, width: newWidth }
-        });
+        // console.log(`🔍 节点 u=${u} 详细对比:`, {
+        //   positionData: position,
+        //   calculated: {
+        //     left: position.x - position.nodeWidth / 2,
+        //     width: position.nodeWidth
+        //   },
+        //   old: { left: oldLeft, width: oldWidth },
+        //   new: { left: newLeft, width: newWidth }
+        // });
         
         // 强制清除现有样式并重新设置
         nodeDiv.style.transition = '';
@@ -607,18 +607,26 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
     alert('请先构建线段树！');
     console.warn('线段树状态检查失败');
     return;
-  }
-  console.log(`⚡ 开始直接完成修改: 区间[${modifyL}, ${modifyR}] 增加 ${delta}`);
+  }  console.log(`⚡ 开始直接完成修改: 区间[${modifyL}, ${modifyR}] 增加 ${delta}`);
 
-  // 1. 执行实际的区间更新
+  // 1. 记录修改前哪些节点已经有懒标记
+  console.log('🔧 记录修改前的懒标记状态:');
+  const originalLazyNodes = new Set();
+  for (let i = 1; i <= 20; i++) {
+    if (globalLazy[i] !== 0) {
+      originalLazyNodes.add(i);
+      console.log(`  - 原有懒标记: globalLazy[${i}] = ${globalLazy[i]}`);
+    }
+  }
+
+  // 2. 执行实际的区间更新
   console.log('🔧 执行区间更新前，检查懒标记状态:');
   for (let i = 1; i <= 20; i++) {
     if (globalLazy[i] !== 0) {
       console.log(`  - globalLazy[${i}] = ${globalLazy[i]}`);
     }
   }
-  
-  updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+    updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
   
   console.log('🔧 执行区间更新后，检查懒标记状态:');
   for (let i = 1; i <= 20; i++) {
@@ -626,62 +634,79 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
       console.log(`  - globalLazy[${i}] = ${globalLazy[i]}`);
     }
   }
-  
   console.log('✅ 区间更新完成');
+
+  // � 修复：直接完成修改时不应该下推懒标记
+  // 懒标记应该保留在适当的层级，这正是懒标记的核心思想
+  console.log('✅ 懒标记正确设置完成，保持在适当层级');
 
   // 2. 重置所有节点样式
   modifyDomNodeElements.forEach((nodeDiv) => {
     nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
     nodeDiv.style.border = '2px solid #74b9ff';
     nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-  });
-
-  // 3. 收集并高亮受影响的节点
+  });  // 3. 完成下推和回溯后，按照DFS遍历顺序收集所有受影响的节点用于高亮显示
   const affectedNodes = [];
-  
-  function collectAffectedNodes(u, tl, tr) {
+    // 按照DFS顺序收集节点（模拟真实的线段树遍历过程）
+  function collectNodesInDFSOrder(u, tl, tr) {
     // 检查当前节点是否与修改区间有交集
     if (modifyL > tr || modifyR < tl) {
-      return; // 完全不相交
+      return; // 完全不相交，不访问
     }
     
-    if (modifyL <= tl && tr <= modifyR) {
-      // 完全包含，这是懒标记节点
+    // 🔧 修复：先检查当前节点是否有懒标记（包括下推后新产生的懒标记）
+    if (globalLazy[u] !== 0) {
       affectedNodes.push({ u, type: 'lazy', tl, tr });
-      return; // 不需要继续向下
+      console.log(`🔍 DFS收集: 懒标记节点 u=${u} [${tl},${tr}] lazy=${globalLazy[u]}`);
+      return; // 有懒标记的节点下面不需要再检查
     }
     
-    // 部分相交，这是下推节点
-    affectedNodes.push({ u, type: 'pushdown', tl, tr });
+    // 完全包含的情况
+    if (modifyL <= tl && tr <= modifyR) {
+      affectedNodes.push({ u, type: 'processed', tl, tr });
+      console.log(`🔍 DFS收集: 已处理节点 u=${u} [${tl},${tr}]`);
+      return;
+    }
     
-    // 继续检查子节点
+    // 部分相交，这是下推路径节点
+    affectedNodes.push({ u, type: 'pushdown', tl, tr });
+    console.log(`🔍 DFS收集: 下推路径节点 u=${u} [${tl},${tr}]`);
+    
+    // 继续DFS遍历子节点
     if (tl < tr) {
       const mid = Math.floor((tl + tr) / 2);
-      collectAffectedNodes(u * 2, tl, mid);
-      collectAffectedNodes(u * 2 + 1, mid + 1, tr);
+      collectNodesInDFSOrder(u * 2, tl, mid);
+      collectNodesInDFSOrder(u * 2 + 1, mid + 1, tr);
     }
   }
   
-  collectAffectedNodes(1, 1, lastModifyBuiltN);
-  console.log(`📊 收集到 ${affectedNodes.length} 个受影响的节点:`, affectedNodes);
-
-  // 4. 立即高亮所有受影响的节点并更新显示
+  // 执行DFS收集
+  collectNodesInDFSOrder(1, 1, lastModifyBuiltN);
+  
+  console.log(`📊 按DFS顺序收集到 ${affectedNodes.length} 个节点:`, affectedNodes);// 4. 立即高亮所有受影响的节点并更新显示
   affectedNodes.forEach(({ u, type, tl, tr }, index) => {
     const nodeDiv = modifyDomNodeElements.get(u);
     
     if (nodeDiv) {
       setTimeout(() => {
         if (type === 'lazy') {
-          // 懒标记节点 - 红色
+          // 懒标记节点 - 红色高亮
           nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
           nodeDiv.style.border = '2px solid #e74c3c';
           nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
-          console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}]`);
-        } else {
-          // 下推节点 - 橙色
+          console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}] lazy=${globalLazy[u]}`);
+        } else if (type === 'pushdown') {
+          // 下推路径节点 - 橙色高亮
           nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
           nodeDiv.style.border = '2px solid #e67e22';
-          nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';          console.log(`🟠 高亮下推节点 u=${u} [${tl},${tr}]`);
+          nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+          console.log(`🟠 高亮下推路径节点 u=${u} [${tl},${tr}]`);
+        } else if (type === 'processed') {
+          // 已处理节点 - 绿色高亮
+          nodeDiv.style.background = 'linear-gradient(135deg, #00b894, #00a085)';
+          nodeDiv.style.border = '2px solid #00a085';
+          nodeDiv.style.boxShadow = '0 2px 12px rgba(0, 168, 133, 0.3)';
+          console.log(`🟢 高亮已处理节点 u=${u} [${tl},${tr}]`);
         }
         
         // 立即更新节点显示的数值（使用安全更新）
@@ -689,10 +714,12 @@ function performRangeUpdate(modifyL, modifyR, delta, container) {
       }, index * 200); // 错开动画时间
     }
   });
-  
-  // 5. 仅更新高亮节点的显示，不要触发全树更新
+    // 5. 仅更新高亮节点的显示，不要触发全树更新
   console.log('🔄 仅更新受影响节点的显示');
-  // 不要调用全树更新，避免意外下推懒标记
+    // 🔧 修复：使用安全的显示更新，确保节点显示的数值包含懒标记的影响
+  updateAffectedNodesDisplay(modifyL, modifyR, originalLazyNodes);
+  
+  console.log('✅ 直接完成修改操作完毕');
 }
 
 // 辅助函数：根据节点编号找到对应的区间范围
@@ -779,10 +806,13 @@ function initializeStepModify(modifyL, modifyR, delta, container) {
   stepModifyState.currentIndex = 0;
   stepModifyState.modifyL = modifyL;
   stepModifyState.modifyR = modifyR;
-  stepModifyState.delta = delta;
-  stepModifyState.container = container;
+  stepModifyState.delta = delta;  stepModifyState.container = container;
   
-  // 模拟收集受影响的节点用于步进显示
+  // 🔧 重要：先执行真正的区间更新，确保数据结构正确
+  console.log('🔧 步进修改：先执行真实的区间更新操作');
+  updateRange(modifyL, modifyR, 1, lastModifyBuiltN, 1, delta);
+  
+  // 然后收集受影响的节点用于步进显示（仅用于高亮显示）
   function collectAffectedNodes(modifyL, modifyR, u, tl, tr) {
     if (modifyL > tr || modifyR < tl) {
       return; // 完全不相交
@@ -870,16 +900,137 @@ function executeNextStep() {
   }
 }
 
-// 移除所有弹窗相关函数，因为改为直接点击方式
-// finishAllSteps, closeStepControls 等函数已不需要
+// 递归回溯更新：从指定节点开始，向上更新所有祖先节点
+function updateAncestors(u) {
+  console.log(`⬆️ updateAncestors: 开始从节点 u=${u} 向上更新`);
+  
+  // 从当前节点开始，向上更新到根节点
+  let currentU = u;
+  while (currentU > 1) {
+    // 先更新当前节点（如果它有子节点）
+    updateSingleNode(currentU);
+    
+    // 移动到父节点
+    currentU = Math.floor(currentU / 2);
+    console.log(`⬆️ 向上移动到父节点 u=${currentU}`);
+  }
+  
+  // 最后更新根节点
+  if (currentU === 1) {
+    updateSingleNode(1);
+    console.log(`⬆️ 根节点更新完成`);
+  }
+}
 
-function resetStepModifyState() {
-  stepModifyState.isActive = false;
-  stepModifyState.affectedNodes = [];
-  stepModifyState.currentIndex = 0;
-  stepModifyState.modifyL = 0;
-  stepModifyState.modifyR = 0;
-  stepModifyState.delta = 0;  stepModifyState.container = null;
+// 更新单个节点的值（基于其子节点）
+function updateSingleNode(u) {
+  // 找到这个节点的区间范围
+  const range = findNodeRange(u, 1, 1, lastModifyBuiltN);
+  if (!range) {
+    console.log(`❌ 无法找到节点 u=${u} 的区间范围`);
+    return;
+  }
+  
+  const { tl, tr } = range;
+  
+  // 如果是叶子节点，不需要更新
+  if (tl === tr) {
+    console.log(`🍃 节点 u=${u} [${tl},${tr}] 是叶子节点，跳过更新`);
+    return;
+  }
+  
+  const mid = Math.floor((tl + tr) / 2);
+  const leftChild = globalTree[u * 2];
+  const rightChild = globalTree[u * 2 + 1];
+  
+  console.log(`🔄 更新节点 u=${u} [${tl},${tr}]，基于子节点 ${u * 2} 和 ${u * 2 + 1}`);
+  
+  // 计算左子节点的有效值（包括懒标记）
+  let leftSum = leftChild.sum;
+  let leftMax = leftChild.max;
+  let leftMin = leftChild.min;
+  if (globalLazy[u * 2] !== 0) {
+    const leftLen = mid - tl + 1;
+    leftSum += globalLazy[u * 2] * leftLen;
+    leftMax += globalLazy[u * 2];
+    leftMin += globalLazy[u * 2];
+    console.log(`📊 左子节点 u=${u * 2} 有懒标记 ${globalLazy[u * 2]}，计算有效值`);
+  }
+  
+  // 计算右子节点的有效值（包括懒标记）
+  let rightSum = rightChild.sum;
+  let rightMax = rightChild.max;
+  let rightMin = rightChild.min;
+  if (globalLazy[u * 2 + 1] !== 0) {
+    const rightLen = tr - (mid + 1) + 1;
+    rightSum += globalLazy[u * 2 + 1] * rightLen;
+    rightMax += globalLazy[u * 2 + 1];
+    rightMin += globalLazy[u * 2 + 1];
+    console.log(`📊 右子节点 u=${u * 2 + 1} 有懒标记 ${globalLazy[u * 2 + 1]}，计算有效值`);
+  }
+  
+  // 更新当前节点的值
+  const oldValue = { ...globalTree[u] };
+  globalTree[u].sum = leftSum + rightSum;
+  globalTree[u].max = Math.max(leftMax, rightMax);
+  globalTree[u].min = Math.min(leftMin, rightMin);
+  
+  console.log(`✅ 节点 u=${u} [${tl},${tr}] 更新完成:`);
+  console.log(`   原值: sum=${oldValue.sum}, min=${oldValue.min}, max=${oldValue.max}`);
+  console.log(`   新值: sum=${globalTree[u].sum}, min=${globalTree[u].min}, max=${globalTree[u].max}`);
+  
+  // 同时更新该节点的显示
+  updateNodeDisplaySafe(u, tl, tr);
+}
+
+// 完整的下推和回溯过程（用于直接完成修改）
+function performCompletePushDownAndPushUp(u, tl, tr, modifyL, modifyR) {
+  console.log(`🔄 访问节点 u=${u} [${tl},${tr}]，修改区间 [${modifyL},${modifyR}]`);
+  
+  // 如果当前区间与修改区间完全无交集，直接返回
+  if (modifyR < tl || modifyL > tr) {
+    console.log(`❌ 节点 u=${u} [${tl},${tr}] 与修改区间无交集，跳过`);
+    return;
+  }
+  
+  // 🔧 修复关键问题：如果当前区间完全包含在修改区间内，不应该下推懒标记
+  if (modifyL <= tl && tr <= modifyR) {
+    console.log(`🎯 节点 u=${u} [${tl},${tr}] 完全包含在修改区间内，懒标记应该保留在此层，不下推`);
+    // 完全包含的节点应该有懒标记，且懒标记应该保持在这一层
+    if (globalLazy[u] !== 0) {
+      console.log(`✅ 节点 u=${u} [${tl},${tr}] 懒标记 ${globalLazy[u]} 正确保留在当前层`);
+    }
+    return;
+  }
+  
+  // 只有部分相交的节点才需要下推懒标记
+  if (globalLazy[u] !== 0) {
+    console.log(`🔽 节点 u=${u} [${tl},${tr}] 部分相交且有懒标记 ${globalLazy[u]}，开始下推`);
+    pushDown(u, tl, tr);
+    console.log(`✅ 节点 u=${u} [${tl},${tr}] 懒标记下推完成`);
+  }
+  
+  // 如果是叶子节点，直接返回
+  if (tl === tr) {
+    console.log(`� 节点 u=${u} [${tl},${tr}] 是叶子节点，无需继续处理`);
+    return;
+  }
+  
+  // 递归处理子节点
+  const mid = Math.floor((tl + tr) / 2);
+  
+  console.log(`🔄 开始递归处理子节点: 左子树 u=${u * 2} [${tl},${mid}]，右子树 u=${u * 2 + 1} [${mid + 1},${tr}]`);
+  
+  // 递归处理左子树
+  performCompletePushDownAndPushUp(u * 2, tl, mid, modifyL, modifyR);
+  
+  // 递归处理右子树
+  performCompletePushDownAndPushUp(u * 2 + 1, mid + 1, tr, modifyL, modifyR);
+  
+  // 回溯：向上更新当前节点
+  console.log(`🔼 回溯：开始向上更新节点 u=${u} [${tl},${tr}]`);
+  pushUp(u);
+  console.log(`✅ 回溯：节点 u=${u} [${tl},${tr}] 向上更新完成，新值:`, globalTree[u]);
 }
 
 // 初始化区间修改可视化模块
@@ -1055,7 +1206,7 @@ function updateNodeDisplayWithLazyPush(u, tl, tr) {
   let treeNode = globalTree[u] || { sum: 0, max: 0, min: 0 };
   console.log(`🌳 节点 u=${u} 的树节点值:`, treeNode);
   
-  // 如果有懒标记，需要计算应用懒标记后的显示值（但不修改原数据）
+  // 如果有懊标记，需要计算应用懒标记后的显示值（但不修改原数据）
   let displaySum = treeNode.sum;
   let displayMax = treeNode.max;
   let displayMin = treeNode.min;
@@ -1115,12 +1266,13 @@ function updateNodeDisplaySafe(u, tl, tr) {
   let displayMax = treeNode.max;
   let displayMin = treeNode.min;
   
-  if (lazyValue !== 0) {
-    const len = tr - tl + 1;
+  if (lazyValue !== 0) {    const len = tr - tl + 1;
     displaySum += lazyValue * len;
     displayMax += lazyValue;
     displayMin += lazyValue;
-    console.log(`📊 节点 u=${u} 应用懒标记 ${lazyValue} 到显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);  } else {    console.log(`📊 节点 u=${u} 无懒标记，显示原始值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+    console.log(`📊 节点 u=${u} 应用懒标记 ${lazyValue} 到显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
+  } else {
+    console.log(`📊 节点 u=${u} 无懒标记，显示原始值: sum=${displaySum}, min=${displayMin}, max=${displayMax}`);
   }
   
   // 更新节点的HTML内容
@@ -1156,7 +1308,7 @@ function testLazyMarkingSetting(modifyL, modifyR, delta) {
     }
   }
   
-  // 立即更新所有节点的显示，看看懒标记是否正确显示
+  // 立即更新所有节点的显示，看看懊标记是否正确显示
   console.log('📊 更新所有节点显示:');
   modifyDomNodeElements.forEach((nodeDiv, u) => {
     // 找到对应的区间
@@ -1165,4 +1317,78 @@ function testLazyMarkingSetting(modifyL, modifyR, delta) {
       updateNodeDisplaySafe(u, range.tl, range.tr);
     }
   });
+}
+
+// 更新所有受影响节点的显示（只在真正需要访问子节点时才下推懒标记）
+function updateAffectedNodesDisplay(modifyL, modifyR, originalLazyNodes = new Set()) {
+  console.log(`🔄 更新受影响节点显示: 修改区间 [${modifyL}, ${modifyR}]`);
+  console.log(`🔍 原本有懒标记的节点:`, Array.from(originalLazyNodes));
+  
+  // 模拟线段树的访问路径，只在真正需要访问子节点时才下推
+  function simulateTreeTraversal(u, tl, tr) {
+    console.log(`🚶 访问节点 u=${u} [${tl},${tr}]`);
+    
+    // 如果当前区间与修改区间完全无交集，不访问
+    if (modifyR < tl || modifyL > tr) {
+      console.log(`❌ 节点 u=${u} [${tl},${tr}] 与修改区间无交集，不访问`);
+      return;
+    }
+    
+    // 如果当前区间完全包含在修改区间内，在这里停止，不需要访问子节点
+    if (modifyL <= tl && tr <= modifyR) {
+      console.log(`🎯 节点 u=${u} [${tl},${tr}] 完全包含在修改区间内，在此停止，不访问子节点`);
+      // 更新当前节点显示即可
+      if (modifyDomNodeElements.has(u)) {
+        updateNodeDisplaySafe(u, tl, tr);
+      }
+      return;
+    }
+    
+    // 部分相交的情况：需要访问子节点，因此需要下推懒标记
+    console.log(`🔄 节点 u=${u} [${tl},${tr}] 部分相交，需要访问子节点`);
+      // 如果当前节点有懒标记，必须先下推才能访问子节点
+    if (globalLazy[u] !== 0) {
+      console.log(`🔽 节点 u=${u} [${tl},${tr}] 有懒标记 ${globalLazy[u]}，因为需要访问子节点，所以下推到两个子节点`);
+      
+      const mid = Math.floor((tl + tr) / 2);
+      const leftChild = u * 2;
+      const rightChild = u * 2 + 1;
+      
+      // 先记录下推前的状态
+      console.log(`📋 下推前状态: globalLazy[${leftChild}]=${globalLazy[leftChild]}, globalLazy[${rightChild}]=${globalLazy[rightChild]}`);
+      
+      // 执行下推操作（会将懒标记传播到两个子节点）
+      pushDown(u, tl, tr);
+      
+      console.log(`📋 下推后状态: globalLazy[${leftChild}]=${globalLazy[leftChild]}, globalLazy[${rightChild}]=${globalLazy[rightChild]}`);
+      
+      // 更新两个子节点的显示（确保懒标记的传播被可视化）
+      if (modifyDomNodeElements.has(leftChild)) {
+        updateNodeDisplaySafe(leftChild, tl, mid);
+        console.log(`🔄 更新左子节点 u=${leftChild} [${tl},${mid}] 显示（接收到懒标记 ${globalLazy[leftChild]}）`);
+      }
+      
+      if (modifyDomNodeElements.has(rightChild)) {
+        updateNodeDisplaySafe(rightChild, mid + 1, tr);
+        console.log(`🔄 更新右子节点 u=${rightChild} [${mid + 1},${tr}] 显示（接收到懒标记 ${globalLazy[rightChild]}）`);
+      }
+    }
+    
+    // 更新当前节点显示
+    if (modifyDomNodeElements.has(u)) {
+      updateNodeDisplaySafe(u, tl, tr);
+    }
+    
+    // 如果不是叶子节点，继续访问子节点
+    if (tl < tr) {
+      const mid = Math.floor((tl + tr) / 2);
+      simulateTreeTraversal(u * 2, tl, mid);           // 访问左子节点
+      simulateTreeTraversal(u * 2 + 1, mid + 1, tr);  // 访问右子节点
+    }
+  }
+  
+  // 从根节点开始模拟访问
+  simulateTreeTraversal(1, 1, lastModifyBuiltN);
+  
+  console.log('✅ 模拟线段树访问完成');
 }
