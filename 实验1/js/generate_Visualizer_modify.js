@@ -236,7 +236,7 @@
         nodeDiv.style.boxSizing = 'border-box';
         nodeDiv.style.borderRadius = '8px';
         nodeDiv.style.border = '2px solid #74b9ff';
-        nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+        nodeDiv.style.background = ' #0984e3';
         nodeDiv.style.color = 'white';
         nodeDiv.style.textAlign = 'center';
         nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -363,7 +363,7 @@
     updateRange(modifyL, modifyR, 1, ModifyVisualizerState.lastBuiltN, 1, delta);
 
     ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
-      nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+      nodeDiv.style.background = ' #0984e3';
       nodeDiv.style.border = '2px solid #74b9ff';
       nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
     });
@@ -389,13 +389,13 @@
       if (nodeDiv) {
         setTimeout(() => {
           if (type === 'lazy') {
-            nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
+            nodeDiv.style.background = ' #ff6b6b';
             nodeDiv.style.border = '2px solid #e74c3c';
             nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
             console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}] lazy=${ModifyVisualizerState.globalLazy[u]}`);
             updateNodeDisplaySafe(u, tl, tr);
           } else {
-            nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+            nodeDiv.style.background = ' #f39c12';
             nodeDiv.style.border = '2px solid #e67e22';
             nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
             console.log(`🟠 高亮过程节点 u=${u} [${tl},${tr}]`);
@@ -412,7 +412,7 @@
                 pushUp(currentU, parentTl, parentTr);
                 const parentDiv = ModifyVisualizerState.domNodeElements.get(currentU);
                 if (parentDiv) {
-                  parentDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+                  parentDiv.style.background = ' #f39c12';
                   parentDiv.style.border = '2px solid #e67e22';
                   parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
                 }
@@ -435,7 +435,7 @@
     if (!stepModifyState.isActive || stepModifyState.modifyL !== modifyL || stepModifyState.modifyR !== modifyR || stepModifyState.delta !== delta) {
       console.log('👣 初始化步进修改');
       ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
-        nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+        nodeDiv.style.background = ' #0984e3';
         nodeDiv.style.border = '2px solid #74b9ff';
         nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
       });
@@ -480,13 +480,13 @@
 
     if (nodeDiv) {
       if (type === 'lazy') {
-        nodeDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #e74c3c)';
+        nodeDiv.style.background = ' #ff6b6b';
         nodeDiv.style.border = '2px solid #e74c3c';
         nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
         console.log(`🔴 步进：懒标记节点 u=${u} [${tl},${tr}] lazy=${ModifyVisualizerState.globalLazy[u]}`);
         updateNodeDisplaySafe(u, tl, tr);
       } else {
-        nodeDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+        nodeDiv.style.background = ' #f39c12';
         nodeDiv.style.border = '2px solid #e67e22';
         nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
         console.log(`🟠 步进：过程节点 u=${u} [${tl},${tr}]`);
@@ -503,7 +503,7 @@
             pushUp(currentU, parentTl, parentTr);
             const parentDiv = ModifyVisualizerState.domNodeElements.get(currentU);
             if (parentDiv) {
-              parentDiv.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+              parentDiv.style.background = ' #f39c12';
               parentDiv.style.border = '2px solid #e67e22';
               parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
             }

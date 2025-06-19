@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTreeLevelsData: [],
         currentTreeBuildOrderData: [],
         activeBuildAnimationTimeout: null
-    };    // 步进查询状态
+    };
+    // 步进查询状态
     let stepQueryState = {
         isActive: false,
         affectedNodes: [],
@@ -215,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.innerHTML = `
                     <div class="node-interval">[${l},${r}]</div>
                     <div class="node-info">sum:${sum} min:${min}</div>
-                    <div class="node-info">lazy:<span class="lazy-tag">${lazyDisplay}</span> max:${max}</div>
+                    <div class="node-info">lazy:${lazyDisplay} max:${max}</div> <!-- 移除 <span class="lazy-tag"> 防止高亮 -->
                 `;
                 nodeDiv.style.position = 'absolute';
                 nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
@@ -232,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.boxSizing = 'border-box';
                 nodeDiv.style.borderRadius = '8px';
                 nodeDiv.style.border = '2px solid #74b9ff';
-                nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+                nodeDiv.style.background = ' #0984e3';
                 nodeDiv.style.color = 'white';
                 nodeDiv.style.textAlign = 'center';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -292,7 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateNodeDisplaySafe(u * 2 + 1, mid + 1, tr);
             }
         }
-    }    // 区间查询
+    }
+    // 区间查询
     function queryRange(l, r, tl, tr, u) {
         console.log(`🔍 queryRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}]`);
         if (l > tr || r < tl) {
@@ -340,13 +342,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 重置所有节点样式并清除完全包含标志
         QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
-            nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+            nodeDiv.style.background = ' #0984e3';
             nodeDiv.style.border = '2px solid #74b9ff';
             nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
             nodeDiv.dataset.fullyContained = 'false';
         });
 
-        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);        const affectedNodes = [];
+        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
+        const affectedNodes = [];
         function collectNodes(u, tl, tr) {
             if (queryL > tr || queryR < tl) return;
             affectedNodes.push({ u, tl, tr });
@@ -360,14 +363,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 collectNodes(u * 2 + 1, mid + 1, tr);
             }
         }
-        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);        affectedNodes.forEach(({ u, tl, tr }, index) => {
+        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);
+
+        affectedNodes.forEach(({ u, tl, tr }, index) => {
             const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
             if (nodeDiv) {
                 setTimeout(() => {
                     const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
                     nodeDiv.style.background = isFullyContained
-                        ? 'linear-gradient(135deg, #ff6b6b, #e74c3c)'
-                        : 'linear-gradient(135deg, #f39c12, #e67e22)';
+                        ? ' #ff6b6b'
+                        : ' #f39c12';
                     nodeDiv.style.border = isFullyContained
                         ? '2px solid #e74c3c'
                         : '2px solid #e67e22';
@@ -378,31 +383,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateNodeDisplaySafe(u, tl, tr);
                 }, index * 200);
             }
-        });        setTimeout(() => {
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'query-result';
-            resultDiv.style.margin = '10px';
-            resultDiv.style.padding = '15px';
-            resultDiv.style.background = '#e8f4f8';
-            resultDiv.style.borderRadius = '8px';
-            resultDiv.style.border = '1px solid #bee5eb';
-            resultDiv.style.position = 'relative';
-            resultDiv.innerHTML = `
-                <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
-                <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
-                总和: ${result.sum}<br>
-                最大值: ${result.max}<br>
-                最小值: ${result.min}
-            `;
-            
-            // 添加关闭按钮事件
-            const closeBtn = resultDiv.querySelector('.close-btn');
-            closeBtn.addEventListener('click', () => {
-                resultDiv.remove();
-            });
-            
-            container.appendChild(resultDiv);
-        }, affectedNodes.length * 200 + 500);
+        });
+
+        // 只显示一个结果，使用 resultDisplayed 标志
+        if (!stepQueryState.resultDisplayed) {
+            setTimeout(() => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'query-result';
+                resultDiv.style.margin = '10px';
+                resultDiv.style.padding = '15px';
+                resultDiv.style.background = '#e8f4f8';
+                resultDiv.style.borderRadius = '8px';
+                resultDiv.style.border = '1px solid #bee5eb';
+                resultDiv.style.position = 'relative';
+                resultDiv.innerHTML = `
+                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">×</button>
+                    <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
+                    总和: ${result.sum}<br>
+                    最大值: ${result.max}<br>
+                    最小值: ${result.min}
+                `;
+                
+                const closeBtn = resultDiv.querySelector('.close-btn');
+                closeBtn.addEventListener('click', () => {
+                    resultDiv.remove();
+                });
+                
+                container.appendChild(resultDiv);
+                stepQueryState.resultDisplayed = true; // 标记结果已显示
+            }, affectedNodes.length * 200 + 500);
+        }
     }
 
     // 步进查询
@@ -410,7 +420,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!QueryVisualizerState.isTreeRendered || !QueryVisualizerState.lastBuiltContainer) {
             showError('请先构建线段树！');
             return;
-        }        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
+        }
+        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
             console.log('👣 初始化步进查询');
             
             // 清除之前的查询结果
@@ -418,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
             oldResults.forEach(result => result.remove());
             
             QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
-                nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
+                nodeDiv.style.background = ' #0984e3';
                 nodeDiv.style.border = '2px solid #74b9ff';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                 nodeDiv.dataset.fullyContained = 'false';
@@ -448,7 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
             stepQueryState.queryL = queryL;
             stepQueryState.queryR = queryR;
             stepQueryState.container = container;
-            stepQueryState.result = { sum: 0, max: -Infinity, min: Infinity };            function collectAffectedNodes(u, tl, tr) {
+            stepQueryState.result = { sum: 0, max: -Infinity, min: Infinity };
+            stepQueryState.resultDisplayed = false; // 重置结果显示标志
+
+            function collectAffectedNodes(u, tl, tr) {
                 if (queryL > tr || queryR < tl) return;
                 stepQueryState.affectedNodes.push({ u, tl, tr });
                 // 如果当前节点被完全包含，就不继续向下递归
@@ -467,7 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const stepTotal = container.querySelector('#step-total');
             if (stepTotal) stepTotal.textContent = stepQueryState.affectedNodes.length;
-        }        if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
+        }
+        if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
             // 确保至少进行了一步，避免在初始化时立即显示结果
             if (stepQueryState.currentIndex === 0 && stepQueryState.affectedNodes.length === 0) {
                 console.log('⚠️ 没有受影响的节点，直接显示结果');
@@ -477,29 +492,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             console.log('✅ 所有步进步骤完成');
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'query-result';
-            resultDiv.style.margin = '10px';
-            resultDiv.style.padding = '15px';
-            resultDiv.style.background = '#e8f4f8';
-            resultDiv.style.borderRadius = '8px';
-            resultDiv.style.border = '1px solid #bee5eb';
-            resultDiv.style.position = 'relative';
-            resultDiv.innerHTML = `
-                <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
-                <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
-                总和: ${stepQueryState.result.sum}<br>
-                最大值: ${stepQueryState.result.max}<br>
-                最小值: ${stepQueryState.result.min}
-            `;
-            
-            // 添加关闭按钮事件
-            const closeBtn = resultDiv.querySelector('.close-btn');
-            closeBtn.addEventListener('click', () => {
-                resultDiv.remove();
-            });
-            
-            container.appendChild(resultDiv);
+            if (!stepQueryState.resultDisplayed) {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'query-result';
+                resultDiv.style.margin = '10px';
+                resultDiv.style.padding = '15px';
+                resultDiv.style.background = '#e8f4f8';
+                resultDiv.style.borderRadius = '8px';
+                resultDiv.style.border = '1px solid #bee5eb';
+                resultDiv.style.position = 'relative';
+                resultDiv.innerHTML = `
+                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">×</button>
+                    <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
+                    总和: ${stepQueryState.result.sum}<br>
+                    最大值: ${stepQueryState.result.max}<br>
+                    最小值: ${stepQueryState.result.min}
+                `;
+                
+                const closeBtn = resultDiv.querySelector('.close-btn');
+                closeBtn.addEventListener('click', () => {
+                    resultDiv.remove();
+                });
+                
+                container.appendChild(resultDiv);
+                stepQueryState.resultDisplayed = true; // 标记结果已显示
+            }
             const progressContainer = container.querySelector('#step-progress-container');
             if (progressContainer) progressContainer.remove();
             stepQueryState.isActive = false;
@@ -509,11 +526,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
         const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
 
-        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);        if (nodeDiv) {
+        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
+        if (nodeDiv) {
             const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
             nodeDiv.style.background = isFullyContained
-                ? 'linear-gradient(135deg, #ff6b6b, #e74c3c)'
-                : 'linear-gradient(135deg, #f39c12, #e67e22)';
+                ? ' #ff6b6b'
+                : ' #f39c12';
             nodeDiv.style.border = isFullyContained
                 ? '2px solid #e74c3c'
                 : '2px solid #e67e22';
@@ -558,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nodeDiv.innerHTML = `
             <div class="node-interval">[${tl},${tr}]</div>
             <div class="node-info">sum:${displaySum} min:${displayMin}</div>
-            <div class="node-info">lazy:<span class="lazy-tag">${lazyDisplay}</span> max:${displayMax}</div>
+            <div class="node-info">lazy:${lazyDisplay} max:${displayMax}</div> <!-- 移除 <span class="lazy-tag"> 防止高亮 -->
         `;
         console.log(`🔄 更新节点 u=${u} [${tl},${tr}] 显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}, lazy=${lazyDisplay}`);
     }
@@ -598,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 初始化默认值
-        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 3";
+        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
 
         // 随机数据按钮
         if (btnRandomData) {
