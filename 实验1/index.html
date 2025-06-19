@@ -1,18 +1,2629 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>线段树全方位介绍</title>
-  
-  <!-- CSS 文件链接 -->  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/components.css">
-  <link rel="stylesheet" href="styles/tree.css">
-  <link rel="stylesheet" href="styles/quiz.css">
-  <link rel="stylesheet" href="styles/settings.css">
-  <link rel="stylesheet" href="styles/Visualizer_modify.css">
-  <link rel="stylesheet" href="styles/Visualizer_query.css">
+  <style>
+    /* 响应式基础设置 */
+    * {
+      box-sizing: border-box;
+    }
+
+    /* 确保容器不会超出屏幕 */
+    body,
+    html {
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    main {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 响应式媒体查询 */
+    @media screen and (max-width: 480px) {
+      :root {
+        --font-size-base: 14px;
+        --border-radius: 12px;
+      }
+
+      body {
+        font-size: 14px;
+      }
+
+      header {
+        padding: 10px;
+        font-size: 18px;
+      }
+
+      nav {
+        padding: 8px;
+        gap: 5px;
+      }
+
+      .nav-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+
+      main {
+        padding: 10px;
+      }
+
+      .card {
+        padding: 15px;
+        margin: 10px 0;
+      }
+
+      h2,
+      h3 {
+        font-size: 1.2em;
+      }
+
+      .settings-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      input,
+      button,
+      select {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      :root {
+        --font-size-base: 14px;
+      }
+
+      header {
+        padding: 12px;
+        font-size: 20px;
+      }
+
+      nav {
+        padding: 10px;
+      }
+
+      .nav-btn {
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+
+      main {
+        padding: 15px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+
+    /* 主要CSS文件 - 包含CSS变量和全局样式 */
+    :root {
+      --primary-color: #6c5ce7;
+      --secondary-color: #a29bfe;
+      --accent-color: #fd79a8;
+      --success-bg: #00b894;
+      /* Was linear-gradient(135deg, #00b894, #00cec9) */
+      --warning-bg: #fdcb6e;
+      /* Was linear-gradient(135deg, #fdcb6e, #e17055) */
+      --error-bg: #fd79a8;
+      /* Was linear-gradient(135deg, #fd79a8, #e84393) */
+      --header-bg: #2d3436;
+      /* Was linear-gradient(135deg, #2d3436, #636e72) */
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      --text-primary: #2d3436;
+      /* Default for light theme */
+      --text-secondary: #636e72;
+      /* Default for light theme */
+      --border-radius: 20px;
+      --font-size-base: 15px;
+      --line-height-base: 1.6;
+      --input-bg: white;
+      /* Default input background for light theme */
+      --eye-care-text-primary: #3a3a3a;
+      /* Specific for eye-care, as it\'s on a light bg */
+      --eye-care-text-secondary: #5c5c5c;
+      /* Specific for eye-care */
+      --primary-color-rgb: 108, 92, 231;
+      /* Default for light theme */
+      --animation-duration: 0.5s;
+      /* Default animation duration */
+      --transition-speed: 0.3s;
+      /* Default transition speed */
+    }
+
+    /* ... existing body, header, nav, main, footer, scrollbar, focus styles ... */
+    /* These styles are generally theme-agnostic or use variables defined above/below */
+
+    body {
+      margin: 0;
+      font-family: \'Inter\', \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      /* Default background, will be overridden by themes */
+      background: #667eea;
+      /* Was linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) */
+      min-width: 800px;
+      position: relative;
+      color: var(--text-primary);
+      /* Set default body text color */
+    }
+
+    body::before {
+      content: \'\';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      /* Removed radial gradients */
+      background: transparent;
+      z-index: -1;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: var(--header-bg);
+      color: white;
+      /* Header text is usually light on dark backgrounds */
+      padding: 20px;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      letter-spacing: 1px;
+      background-attachment: fixed;
+    }
+
+    header::after {
+      content: \'\';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 3px;
+      background: var(--primary-color);
+      /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color)) */
+      border-radius: 2px;
+    }
+
+    nav {
+      margin-top: 85px;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      flex-shrink: 0;
+      background: var(--card-bg);
+      /* Uses themed card background */
+      backdrop-filter: blur(20px);
+      padding: 25px;
+      box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+      overflow-y: auto;
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+      box-sizing: border-box;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      /* This border might need theme adjustments */
+    }
+
+    main {
+      flex-grow: 1;
+      margin-top: 85px;
+      padding: 30px;
+      overflow-y: auto;
+      /* Default background, will be overridden by themes if needed */
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    main::before {
+      content: \'\';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* Removed radial gradients */
+      background: transparent;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    main>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      display: none;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    footer {
+      margin-top: 50px;
+      font-size: 15px;
+      color: var(--text-secondary);
+      /* Changed from rgba(255, 255, 255, 0.9) to use a theme variable suitable for light backgrounds */
+      text-align: center;
+      padding: 25px;
+      background: rgba(255, 255, 255, 0.1);
+      /* Was linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) */
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary-color);
+      /* Was linear-gradient(135deg, var(--secondary-color), var(--primary-color)) */
+    }
+
+    /* 焦点样式 */
+    .btn:focus,
+    nav button:focus,
+    input:focus,
+    select:focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    /* 通用输入框样式 */
+    input,
+    select,
+    textarea {
+      background: var(--input-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--text-secondary);
+      border-radius: 6px;
+      padding: 8px 12px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+      outline: none;
+    }
+
+    /* 主题切换器样式 */
+    .theme-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      background-color: var(--card-bg);
+      /* Themed */
+      border-radius: var(--border-radius);
+      padding: 5px;
+      box-shadow: var(--card-shadow);
+      /* Themed */
+      z-index: 1001;
+      overflow: hidden;
+    }
+
+    .theme-option {
+      background: none;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: var(--text-secondary);
+      /* Themed */
+      transition: color 0.3s ease, transform 0.2s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .theme-option.active {
+      color: var(--primary-color);
+      /* Themed */
+    }
+
+    .theme-option:hover {
+      color: var(--primary-color);
+      /* Themed */
+      transform: translateY(-2px);
+    }
+
+    .theme-slider {
+      position: absolute;
+      top: 5px;
+      bottom: 5px;
+      width: calc((100% - 10px) / 3);
+      background-color: var(--primary-color);
+      /* Themed */
+      border-radius: calc(var(--border-radius) - 5px);
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), background-color 0.3s ease;
+      z-index: 0;
+    }
+
+    /* --- Theme Definitions --- */
+
+    /* Light Theme (relies on :root defaults mostly) */
+    html[data-theme="light"] body {
+      background: #e9eafc;
+      /* Was linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) - simplified to a light variant */
+      /* Other light-theme specific body styles if any */
+    }
+
+    /* Dark Theme */
+    html[data-theme="dark"] {
+      --primary-color: #81ecec;
+      --secondary-color: #74b9ff;
+      --accent-color: #fab1a0;
+      --header-bg: #1e272e;
+      /* Was linear-gradient(135deg, #1e272e, #34495e) */
+      --card-bg: rgba(45, 52, 54, 0.85);
+      /* Dark card background */
+      --text-primary: #dfe6e9;
+      /* Light text for dark theme */
+      --text-secondary: #b2bec3;
+      /* Lighter grey text for dark theme */
+      --input-bg: #4a5568;
+      /* Lighter dark input background for better visibility */
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --primary-color-rgb: 129, 236, 236;
+      /* Corresponds to #81ecec */
+    }
+
+    html[data-theme="dark"] body {
+      background: #2c3e50;
+      /* Was linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #1abc9c 100%) - simplified */
+      color: var(--text-primary);
+      /* Ensure body text color is updated */
+    }
+
+    html[data-theme="dark"] nav,
+    html[data-theme="dark"] main {
+      background: rgba(30, 39, 46, 0.7);
+      /* Darker background for nav/main */
+    }
+
+    /* html[data-theme="dark"] .card is already covered by --card-bg var */
+    html[data-theme="dark"] .nav-btn {
+      /* Assuming .nav-btn exists */
+      color: var(--text-primary);
+    }
+
+    html[data-theme="dark"] .nav-btn.active {
+      background: var(--primary-color);
+      color: #1e272e;
+      /* Dark text on light primary */
+    }
+
+    html[data-theme="dark"] footer {
+      color: rgba(223, 230, 233, 0.9);
+      background: rgba(45, 52, 54, 0.2);
+      /* Was linear-gradient(135deg, rgba(45, 52, 54, 0.2), rgba(45, 52, 54, 0.1)) */
+      border: 1px solid rgba(223, 230, 233, 0.2);
+    }
+
+    /* Eye-Care Theme */
+    html[data-theme="eye-care"] {
+      --primary-color: #86d9b3;
+      --secondary-color: #4db6ac;
+      --accent-color: #fff9e0;
+      --header-bg: var(--secondary-color);
+      /* Was linear-gradient(135deg, var(--secondary-color), #80cbc4) */
+      --card-bg: rgba(240, 255, 240, 0.95);
+      /* Pale green card */
+      --text-primary: var(--eye-care-text-primary);
+      /* Defined in :root */
+      --text-secondary: var(--eye-care-text-secondary);
+      /* Defined in :root */
+      --input-bg: #f0f0e0;
+      /* Light beige input background for eye-care */
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      --primary-color-rgb: 134, 217, 179;
+      /* Corresponds to #86d9b3 */
+    }
+
+    html[data-theme="eye-care"] body {
+      background: #e0f2f1;
+      /* Was linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 50%, #80cbc4 100%) - simplified */
+      color: var(--text-primary);
+      /* Ensure body text color is updated */
+    }
+
+    html[data-theme="eye-care"] nav,
+    html[data-theme="eye-care"] main {
+      background: rgba(224, 242, 241, 0.7);
+    }
+
+    /* html[data-theme="eye-care"] .card is already covered by --card-bg var */
+    html[data-theme="eye-care"] .nav-btn {
+      /* Assuming .nav-btn exists */
+      color: var(--text-primary);
+    }
+
+    html[data-theme="eye-care"] .nav-btn.active {
+      background: var(--primary-color);
+      color: #2d3436;
+      /* Dark text on light primary */
+    }
+
+    html[data-theme="eye-care"] footer {
+      color: var(--text-primary);
+      background: rgba(224, 242, 241, 0.2);
+      /* Was linear-gradient(135deg, rgba(224, 242, 241, 0.2), rgba(224, 242, 241, 0.1)) */
+      border: 1px solid rgba(45, 52, 54, 0.2);
+    }
+  </style>
+  <style>
+    /* 组件样式 - 按钮、卡片、代码块等 */
+
+    .btn {
+      padding: 12px 24px;
+      background: #6c5ce7;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      text-transform: none;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background: #5f4fcf;
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+
+    nav button {
+      display: block;
+      width: 100%;
+      min-width: 220px;
+      margin: 15px 0;
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-radius: 15px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(108, 92, 231, 0.1);
+      /* Was linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1)) */
+      border: 2px solid transparent;
+    }
+
+    nav button::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: var(--primary-color);
+      /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color)) */
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+      border-radius: 0 2px 2px 0;
+    }
+
+    nav button:hover {
+      background: rgba(108, 92, 231, 0.15);
+      /* Was linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(162, 155, 254, 0.15)) */
+      transform: translateX(5px);
+      border-color: rgba(108, 92, 231, 0.3);
+    }
+
+    nav button:hover::before {
+      transform: scaleY(1);
+    }
+
+    nav button.active {
+      background: #6c5ce7;
+      color: white;
+      box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    nav button.active::before {
+      background: rgba(255, 255, 255, 0.8);
+      transform: scaleY(1);
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      padding: 35px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-color);
+      /* Was linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color)) */
+    }
+
+    .card h2 {
+      color: var(--text-primary);
+      margin-bottom: 25px;
+      font-size: 28px;
+      font-weight: 700;
+      /* background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); */
+      /* Removed gradient */
+      /* -webkit-background-clip: text; */
+      /* -webkit-text-fill-color: transparent; */
+      /* background-clip: text; */
+      color: var(--primary-color);
+      /* Use primary color directly */
+      position: relative;
+    }
+
+    .card h3 {
+      color: var(--text-secondary);
+      margin: 25px 0 18px 0;
+      font-size: 20px;
+      font-weight: 600;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .card h3::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 20px;
+      background: var(--primary-color);
+      /* Was linear-gradient(135deg, var(--primary-color), var(--accent-color)) */
+      border-radius: 2px;
+    }
+
+    .card p {
+      line-height: 1.9;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    /* Code Block Styles from Attachment */
+    .code-block {
+      background: #1a1a2e;
+      /* Was linear-gradient(135deg, #1a1a2e, #16213e) */
+      color: #e2e8f0;
+      padding: 25px;
+      padding-top: 45px;
+      /* Ensure space for the button */
+      border-radius: 16px;
+      margin: 25px 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-base);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      position: relative;
+      /* This is crucial for absolute positioning of children */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Remove any ::after pseudo-element styling previously intended for a copy button */
+    /* pre#build-code.code-block::after, .code-block::after { content: none; } */
+
+    .code-block code {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0);
+      /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
+      transition: left 0.5s;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
+      border: none;
+      padding: 0;
+      margin: 0;
+      white-space: inherit;
+      word-wrap: inherit;
+    }
+
+    .code-block .copy-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      /* Changed from left to right */
+      background: transparent;
+      /* Make background transparent by default */
+      color: #a0aec0;
+      /* Subtler color for default state, adjust as needed */
+      border: none;
+      /* Remove border by default */
+      border-radius: 6px;
+      padding: 6px 8px;
+      /* Adjust padding for a tighter look */
+      cursor: pointer;
+      font-size: 14px;
+      /* Slightly larger for better visibility of {} */
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      z-index: 10;
+      line-height: 1;
+      /* Ensure text is vertically centered if padding is tricky */
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      min-height: 28px;
+      transition: background 0.2s ease;
+    }
+
+    .code-block .copy-button .brackets,
+    .code-block .copy-button .message {
+      display: inline-block;
+      transition: opacity 0.3s ease-in-out, max-width 0.4s ease-in-out;
+      white-space: nowrap;
+      will-change: opacity, max-width;
+    }
+
+    /* Initial state: Show brackets, HIDE message */
+    .code-block .copy-button .brackets {
+      opacity: 1;
+      max-width: 30px;
+      /* Adjust if "{}" is wider */
+      color: #a0aec0;
+      transition-delay: 0.1s, 0s;
+      /* Delay showing brackets slightly when reverting */
+    }
+
+    .code-block .copy-button .message {
+      opacity: 0;
+      max-width: 0;
+      color: #38a169;
+      /* Default copied color, will be overridden by themes */
+      /* Ensure message is hidden initially and animates out quickly */
+      transition-delay: 0s, 0s;
+    }
+
+    /* "Copied" state: Hide brackets, show message */
+    .code-block .copy-button.copied .brackets {
+      opacity: 0;
+      max-width: 0;
+      transition-delay: 0s, 0s;
+      /* Hide brackets immediately */
+    }
+
+    .code-block .copy-button.copied .message {
+      opacity: 1;
+      max-width: 100px;
+      /* Adjust for "Copied!" text width */
+      /* Delay showing message slightly to allow brackets to disappear */
+      transition-delay: 0s, 0.1s;
+      /* Opacity, max-width */
+    }
+
+    /* "Error" state: Hide brackets, show error message */
+    .code-block .copy-button.error .brackets {
+      opacity: 0;
+      max-width: 0;
+      transition-delay: 0s, 0s;
+    }
+
+    .code-block .copy-button.error .message {
+      opacity: 1;
+      max-width: 100px;
+      /* Adjust for "Error!" text width */
+      color: #e53e3e;
+      /* Default error color */
+      transition-delay: 0s, 0.1s;
+    }
+
+
+    /* Hover styles for the button */
+    .code-block .copy-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .code-block .copy-button:not(.copied):not(.error):hover .brackets {
+      color: #e2e8f0;
+    }
+
+    /* --- Light Theme Adjustments --- */
+    html[data-theme="light"] .code-block .copy-button .brackets {
+      color: #718096;
+    }
+
+    html[data-theme="light"] .code-block .copy-button:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    html[data-theme="light"] .code-block .copy-button:not(.copied):not(.error):hover .brackets {
+      color: #2d3748;
+    }
+
+    html[data-theme="light"] .code-block .copy-button.copied .message {
+      color: #2f855a;
+    }
+
+    html[data-theme="light"] .code-block .copy-button.error .message {
+      color: #c53030;
+    }
+
+    /* --- Eye-Care Theme Adjustments --- */
+    html[data-theme="eye-care"] .code-block .copy-button .brackets {
+      color: var(--eye-care-text-secondary);
+    }
+
+    html[data-theme="eye-care"] .code-block .copy-button:hover {
+      background: rgba(80, 80, 30, 0.15);
+    }
+
+    html[data-theme="eye-care"] .code-block .copy-button:not(.copied):not(.error):hover .brackets {
+      color: var(--eye-care-text-primary);
+    }
+
+    html[data-theme="eye-care"] .code-block .copy-button.copied .message {
+      color: #5cb85c;
+    }
+
+    html[data-theme="eye-care"] .code-block .copy-button.error .message {
+      color: #d9534f;
+    }
+
+
+    /* Default (Dark Theme) Syntax Highlighting Styles */
+    .code-block .keyword,
+    .code-block code .keyword {
+      color: #63b3ed;
+      font-weight: bold;
+    }
+
+    .code-block .type,
+    .code-block code .type {
+      color: #68d391;
+      font-weight: bold;
+    }
+
+    .code-block .function,
+    .code-block code .function {
+      color: #fbb6ce;
+    }
+
+    .code-block .number,
+    .code-block code .number {
+      color: #f6ad55;
+    }
+
+    .code-block .comment,
+    .code-block code .comment {
+      color: #a0aec0;
+      /* font-style: italic; */
+    }
+
+    .code-block .string,
+    .code-block code .string {
+      color: #9ae6b4;
+    }
+
+    .code-block .operator,
+    .code-block code .operator {
+      color: #fbb6ce;
+      font-weight: bold;
+    }
+
+    .code-block .variable,
+    .code-block code .variable {
+      color: #e9c46a;
+      font-weight: 500;
+    }
+
+    .code-block .bracket,
+    .code-block code .bracket {
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+
+    .code-block .symbol,
+    .code-block code .symbol {
+      color: #4ecdc4;
+      font-weight: 500;
+    }
+
+    .code-block .pointer,
+    .code-block code .pointer {
+      color: #ff8a65;
+      font-weight: bold;
+    }
+
+    .code-block .preprocessor,
+    .code-block code .preprocessor {
+      color: #ba68c8;
+      font-weight: bold;
+    }
+
+    .code-block .constant,
+    .code-block code .constant {
+      color: #ffd93d;
+      font-weight: bold;
+    }
+
+    .code-block .namespace,
+    .code-block code .namespace {
+      color: #a78bfa;
+      font-weight: 600;
+    }
+
+    /* Light Theme Code Block Styles */
+    [data-theme="light"] .code-block {
+      background: #f8f9fa;
+      color: #212529;
+      border: 1px solid #dee2e6;
+      /* Adjusted border for light theme */
+      box-shadow:
+        inset 0 1px 0 rgba(0, 0, 0, 0.05),
+        0 10px 30px rgba(0, 0, 0, 0.1);
+      /* Adjusted shadow for light theme */
+    }
+
+    [data-theme="light"] .code-block::after {
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="light"] .code-block .keyword,
+    [data-theme="light"] .code-block code .keyword {
+      color: #d73a49;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .type,
+    [data-theme="light"] .code-block code .type {
+      color: #005cc5;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .function,
+    [data-theme="light"] .code-block code .function {
+      color: #6f42c1;
+    }
+
+    [data-theme="light"] .code-block .number,
+    [data-theme="light"] .code-block code .number {
+      color: #D95F02;
+      /* Changed from blue to dark orange */
+    }
+
+    [data-theme="light"] .code-block .comment,
+    [data-theme="light"] .code-block code .comment {
+      color: #6a737d;
+      /* font-style: italic; */
+    }
+
+    [data-theme="light"] .code-block .string,
+    [data-theme="light"] .code-block code .string {
+      color: #28a745;
+    }
+
+    [data-theme="light"] .code-block .operator,
+    [data-theme="light"] .code-block code .operator {
+      color: #d73a49;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .variable,
+    [data-theme="light"] .code-block code .variable {
+      color: #e36209;
+      font-weight: 500;
+    }
+
+    [data-theme="light"] .code-block .bracket,
+    [data-theme="light"] .code-block code .bracket {
+      color: #d73a49;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .symbol,
+    [data-theme="light"] .code-block code .symbol {
+      color: #0366d6;
+      font-weight: 500;
+    }
+
+    [data-theme="light"] .code-block .pointer,
+    [data-theme="light"] .code-block code .pointer {
+      color: #e36209;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .preprocessor,
+    [data-theme="light"] .code-block code .preprocessor {
+      color: #6f42c1;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .constant,
+    [data-theme="light"] .code-block code .constant {
+      color: #005cc5;
+      font-weight: bold;
+    }
+
+    [data-theme="light"] .code-block .namespace,
+    [data-theme="light"] .code-block code .namespace {
+      color: #6f42c1;
+      font-weight: 600;
+    }
+
+    /* Dark Theme Code Block Styles (explicit for clarity) */
+    [data-theme="dark"] .code-block {
+      background: rgb(255 255, 255, 0%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="dark"] .code-block::after {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Dark theme token colors use the default .code-block .token styles defined above */
+
+    /* Eye-Care Theme Code Block Styles */
+    [data-theme="eye-care"] .code-block {
+      background: #f0f9ff;
+      /* Was linear-gradient(135deg, #f0f9ff, #e0f2fe) */
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      /* Adjusted border for eye-care */
+      box-shadow:
+        inset 0 1px 0 rgba(0, 0, 0, 0.03),
+        0 10px 30px rgba(0, 0, 0, 0.08);
+      /* Adjusted shadow for eye-care */
+    }
+
+    [data-theme="eye-care"] .code-block::after {
+      color: rgba(15, 23, 42, 0.3);
+    }
+
+    [data-theme="eye-care"] .code-block .keyword,
+    [data-theme="eye-care"] .code-block code .keyword {
+      color: #059669;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .type,
+    [data-theme="eye-care"] .code-block code .type {
+      color: #0891b2;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .function,
+    [data-theme="eye-care"] .code-block code .function {
+      color: #7c3aed;
+    }
+
+    [data-theme="eye-care"] .code-block .number,
+    [data-theme="eye-care"] .code-block code .number {
+      color: #dc2626;
+    }
+
+    [data-theme="eye-care"] .code-block .comment,
+    [data-theme="eye-care"] .code-block code .comment {
+      color: #6b7280;
+      /* font-style: italic; */
+    }
+
+    [data-theme="eye-care"] .code-block .string,
+    [data-theme="eye-care"] .code-block code .string {
+      color: #059669;
+    }
+
+    [data-theme="eye-care"] .code-block .operator,
+    [data-theme="eye-care"] .code-block code .operator {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .variable,
+    [data-theme="eye-care"] .code-block code .variable {
+      color: #d97706;
+      font-weight: 500;
+    }
+
+    [data-theme="eye-care"] .code-block .bracket,
+    [data-theme="eye-care"] .code-block code .bracket {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .symbol,
+    [data-theme="eye-care"] .code-block code .symbol {
+      color: #0891b2;
+      font-weight: 500;
+    }
+
+    [data-theme="eye-care"] .code-block .pointer,
+    [data-theme="eye-care"] .code-block code .pointer {
+      color: #d97706;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .preprocessor,
+    [data-theme="eye-care"] .code-block code .preprocessor {
+      color: #7c3aed;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .constant,
+    [data-theme="eye-care"] .code-block code .constant {
+      color: #0891b2;
+      font-weight: bold;
+    }
+
+    [data-theme="eye-care"] .code-block .namespace,
+    [data-theme="eye-care"] .code-block code .namespace {
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    .settings-panel {
+      background: var(--panel-bg);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-panel h2 {
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .settings-panel label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .settings-panel input,
+    .settings-panel select,
+    .settings-panel textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--border-radius);
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 400;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+
+    .settings-panel input:focus,
+    .settings-panel select:focus,
+    .settings-panel textarea:focus {
+      border-color: var(--primary-color);
+      outline: none;
+    }
+
+    .settings-panel button {
+      padding: 12px 24px;
+      background: var(--primary-color);
+      /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      text-transform: none;
+      letter-spacing: 0.5px;
+    }
+
+    .settings-panel button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) */
+      transition: left 0.5s;
+    }
+
+    .settings-panel button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+    }
+
+    .settings-panel button:hover::before {
+      left: 100%;
+    }
+
+    .settings-panel button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+  </style>
+  <style>
+    /* 线段树可视化样式 */
+
+    css 层叠样式表 #tree-container {
+      margin-top: 30px;
+      padding: 25px 25px 10px 25px;
+      /* Modified from padding: 25px; */
+      background: transparent;
+      border-radius: 18px;
+      border-left: 5px solid var(--primary-color);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: visible;
+      /* Changed from hidden to visible to ensure content isn't clipped if it overflows temporarily */
+      min-height: 400px;
+      /* 增加最小高度以确保有足够空间显示线段树 */
+    }
+
+    #tree-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: rgba(108, 92, 231, 0.1);
+      /* Was radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, transparent 70%) */
+      border-radius: 50%;
+    }
+
+    #tree-container h4 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    #tree-container p {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 10px;
+      background: rgba(108, 92, 231, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .tree-visual {
+      width: 100%;
+      overflow: visible;
+      padding: 30px 25px 20px 25px;
+      position: relative;
+      box-sizing: border-box;
+      min-height: 300px;
+      background: transparent;
+    }
+
+    .tree-level {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      /* Modified from margin: 18px 0; */
+      position: relative;
+      width: 100%;
+      padding: 0;
+      min-height: 40px;
+      /* Modified from min-height: 50px; */
+    }
+
+    .tree-level-0,
+    .tree-level-1,
+    .tree-level-2,
+    .tree-level-3 {
+      margin: 18px 0;
+      display: flex;
+      width: 100%;
+    }
+
+    .tree-node {
+      background: var(--primary-color);
+      /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      /* 从 8px 减少到 4px */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 35px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      /* 将动画时间从 0.3s 调整为 0.15s */
+      position: absolute;
+      overflow: hidden;
+      /* border: 1px solid rgba(255, 255, 255, 0.3); */
+      /* 移除白色描边 */
+      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.3;
+      z-index: 2;
+      backdrop-filter: blur(3px);
+      white-space: pre-line;
+      box-sizing: border-box;
+      border-radius: 5px;
+      /* 添加圆角 */
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .tree-node.depth-0 {
+      background: #6c5ce7;
+      /* Was linear-gradient(135deg, #6c5ce7, #a29bfe) */
+      height: 40px;
+      font-weight: 640;
+      box-shadow: 0 6px 16px rgba(108, 92, 231, 0.4);
+    }
+
+    .tree-node.depth-1 {
+      background: #fd79a8;
+      /* Was linear-gradient(135deg, #fd79a8, #e84393) */
+      height: 35px;
+      font-weight: 640;
+      box-shadow: 0 5px 14px rgba(253, 121, 168, 0.3);
+    }
+
+    .tree-node.depth-2 {
+      background: #00b894;
+      /* Was linear-gradient(135deg, #00b894, #00cec9) */
+      height: 35px;
+      font-weight: 640;
+      box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+    }
+
+    .tree-node.depth-3 {
+      background: #fdcb6e;
+      /* Was linear-gradient(135deg, #fdcb6e, #e17055) */
+      height: 35px;
+      font-weight: 640;
+      box-shadow: 0 3px 10px rgba(253, 203, 110, 0.3);
+    }
+
+    /* 连接线样式 */
+    .tree-connection {
+      position: absolute;
+      background: var(--primary-color);
+      /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
+      z-index: 1;
+    }
+
+    .tree-connection.vertical {
+      width: 2px;
+      top: -25px;
+      height: 25px;
+    }
+
+    .tree-connection.horizontal {
+      height: 2px;
+      top: -25px;
+    }
+
+    .tree-connection-line {
+      opacity: 0;
+      animation: fadeInLine 0.5s ease-in-out 0.3s forwards;
+    }
+
+    @keyframes fadeInLine {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .tree-node::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      /* Was linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) */
+      transition: left 0.6s ease;
+    }
+
+    .tree-node:hover::before {
+      left: 100%;
+    }
+
+    .tree-node:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    /* 响应式优化 */
+    @media (max-width: 1200px) {
+      .tree-visual {
+        width: 100%;
+        overflow: hidden;
+        padding: 30px 25px;
+        position: relative;
+        box-sizing: border-box;
+        min-height: 200px;
+      }
+    }
+
+    /* 主题特定的tree-container背景 */
+    html[data-theme="light"] #tree-container {
+      background: rgba(108, 92, 231, 0.05);
+    }
+
+    html[data-theme="dark"] #tree-container {
+      background: rgba(129, 236, 236, 0.08);
+    }
+
+    html[data-theme="eye-care"] #tree-container {
+      background: rgba(46, 204, 113, 0.06);
+    }
+  </style>
+  <style>
+    /* 测验组件样式 */
+
+    .quiz-question {
+      margin: 25px 0;
+      padding: 25px;
+      background: var(--card-bg);
+      /* Use themed card background */
+      border-radius: var(--border-radius);
+      border-left: 5px solid var(--primary-color);
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+      color: var(--text-primary);
+      /* Ensure question text is themed */
+    }
+
+    .quiz-question p {
+      margin-bottom: 15px;
+      /* Space between question and options */
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      /* Space between options */
+    }
+
+    .quiz-options .quiz-option-item {
+      display: flex;
+      /* Use flex for alignment */
+      align-items: center;
+      margin: 0;
+      /* Remove default margin */
+      cursor: pointer;
+      padding: 12px 18px;
+      border-radius: 12px;
+      /* Slightly larger radius */
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 2px solid transparent;
+      background-color: var(--input-bg);
+      /* Use themed input background */
+      color: var(--text-secondary);
+      /* Use themed secondary text color */
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .quiz-options .quiz-option-item:hover {
+      border-color: var(--primary-color);
+      background-color: color-mix(in srgb, var(--input-bg) 90%, var(--primary-color) 10%);
+      /* Slight primary color mix on hover */
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 5px 15px rgba(var(--primary-color-rgb, 108, 92, 231), 0.2);
+    }
+
+    /* Style for the actual radio button (hidden, but its state is used) */
+    .quiz-options input[type="radio"] {
+      display: none;
+      /* Hide the default radio button */
+    }
+
+    /* Custom radio button appearance */
+    .quiz-options .quiz-option-item label::before {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-secondary);
+      background-color: var(--input-bg);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      /* Prevent shrinking */
+      margin-right: 10px;
+      /* Space between custom radio and text */
+    }
+
+    /* Custom radio button when selected */
+    .quiz-options input[type="radio"]:checked+label::before {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--input-bg) inset, 0 0 0 2px var(--primary-color) inset;
+      /* Simulates inner dot */
+    }
+
+    .quiz-options .quiz-option-item input[type="radio"]:checked+label {
+      color: var(--text-primary);
+    }
+
+    /* Corrected: Style for the parent item when its radio button is selected */
+    .quiz-options .quiz-option-item:has(input[type="radio"]:checked) {
+      color: var(--text-primary);
+      border-color: var(--primary-color);
+      background-color: color-mix(in srgb, var(--input-bg) 80%, var(--primary-color) 20%);
+      box-shadow: 0 5px 15px rgba(var(--primary-color-rgb, 108, 92, 231), 0.3);
+    }
+
+
+    /* Focus style for accessibility */
+    .quiz-options input[type="radio"]:focus+label {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    /* Ensure the label itself doesn't have conflicting background/border */
+    .quiz-options .quiz-option-item label {
+      padding: 0;
+      border: none;
+      background-color: transparent;
+      box-shadow: none;
+      display: contents;
+      /* Make label behave more like a simple text container */
+    }
+
+    .quiz-options .quiz-option-item label:hover {
+      background-color: transparent;
+      /* Prevent hover on label from overriding parent item's hover */
+      border-color: transparent;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .quiz-result {
+      margin-top: 25px;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      display: none;
+      box-shadow: var(--card-shadow);
+      border: 1px solid transparent;
+      /* Remove default border or theme it */
+      color: var(--text-primary);
+    }
+
+    .quiz-result.correct {
+      background: var(--success-bg);
+      color: white;
+    }
+
+    .quiz-result.incorrect {
+      background: var(--error-bg);
+      color: white;
+    }
+
+    /* Ensure primary-color-rgb is defined for box-shadow transparency */
+    :root {
+      --primary-color-rgb: 108, 92, 231;
+      /* Default for light theme */
+    }
+
+    html[data-theme="dark"] {
+      --primary-color-rgb: 129, 236, 236;
+      /* Corresponds to #81ecec */
+    }
+
+    html[data-theme="eye-care"] {
+      --primary-color-rgb: 134, 217, 179;
+      /* Corresponds to #86d9b3 */
+    }
+  </style>
+  <style>
+    /* 设置面板样式 */
+
+    .settings-panel {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 18px;
+      margin-bottom: 25px;
+      border: 2px solid rgba(108, 92, 231, 0.2);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .settings-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      margin: 18px 0;
+      gap: 15px;
+      /* Reduced default gap slightly */
+    }
+
+    .settings-row label {
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 120px;
+      /* Reduced min-width for labels */
+      font-size: 15px;
+      flex-shrink: 0;
+      /* Prevent labels from shrinking too much */
+    }
+
+    .settings-row input[type="range"] {
+      flex-grow: 1;
+      max-width: 200px;
+      /* Limit slider width */
+      margin-right: 10px;
+      /* Add some space before the value display */
+    }
+
+    .settings-row select {
+      max-width: 200px;
+      /* Limit select box width */
+      flex-grow: 1;
+    }
+
+    .settings-row input,
+    .settings-row select {
+      padding: 10px 14px;
+      /* Slightly reduced padding */
+      border: 2px solid rgba(108, 92, 231, 0.2);
+      border-radius: 10px;
+      /* Slightly reduced border-radius */
+      background: var(--input-bg, white);
+      /* Use variable for background */
+      color: var(--text-primary);
+      /* Ensure text color is inherited or set */
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    /* Styles for the slider value display */
+    .settings-row .slider-value {
+      min-width: 30px;
+      /* Ensure space for the value */
+      text-align: right;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* Specific row for checkbox to have less gap or different alignment if needed */
+    .settings-row.checkbox-row {
+      gap: 10px;
+      /* Smaller gap for checkbox row */
+    }
+
+    .settings-row.checkbox-row label {
+      min-width: auto;
+      /* Allow label to be shorter */
+      margin-right: 5px;
+    }
+
+    .settings-row input[type="checkbox"] {
+      width: auto;
+      /* Override default input width for checkbox */
+      margin-right: auto;
+      /* Push following elements to the right if any, or just take its space */
+    }
+  </style>
+  <style>
+    /* 严格限制线段树容器边界 */
+    #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      /* 强制隐藏超出部分 */
+      box-sizing: border-box !important;
+      position: relative !important;
+    }
+
+    #custom-tree-visualizer-host>div {
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 确保树节点不会超出父容器 */
+    .tree-node {
+      max-width: calc(100% - 10px) !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 响应式设计 - 自适应不同屏幕尺寸 */
+    @media screen and (max-width: 320px) {
+      .data-input-container {
+        padding: 5px !important;
+        margin: 5px 0 !important;
+      }
+
+      .settings-row {
+        flex-direction: column !important;
+        gap: 5px !important;
+      }
+
+      .settings-row>* {
+        width: 100% !important;
+        margin: 2px 0 !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 14px !important;
+        padding: 8px !important;
+      }
+
+      .btn {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .data-input-container {
+        padding: 8px !important;
+        margin: 8px 0 !important;
+      }
+
+      .settings-row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+
+      .settings-row>div {
+        flex: 1 1 100% !important;
+        min-width: auto !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 14px !important;
+        padding: 10px !important;
+        min-width: 60px !important;
+      }
+
+      .btn {
+        font-size: 13px !important;
+        padding: 10px 15px !important;
+      }
+
+      label {
+        font-size: 14px !important;
+        white-space: nowrap !important;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .data-input-container {
+        padding: 10px !important;
+      }
+
+      .settings-row {
+        gap: 10px !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 15px !important;
+        padding: 12px !important;
+      }
+
+      .btn {
+        font-size: 14px !important;
+        padding: 12px 18px !important;
+      }
+    }
+
+    /* 确保树容器始终自适应 */
+    #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 树节点响应式文字大小 */
+    @media screen and (max-width: 480px) {
+      .tree-node {
+        font-size: 8px !important;
+        line-height: 1.1 !important;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .tree-node {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+      }
+    }
+
+    /* 线段树可视化样式 */
+    .tree-node {
+      transition: all 0.3s ease;
+    }
+
+    .tree-node:hover {
+      /* 移除transform效果，只保留阴影变化 */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .tree-node.active {
+      /* 移除transform效果，只保留其他视觉效果 */
+      box-shadow: 0 0 20px rgba(255, 235, 59, 0.8) !important;
+      border-color: #ffeb3b !important;
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.15);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    /* 懒标记特殊样式 */
+    .tree-node .lazy-tag {
+      background: rgba(255, 235, 59, 0.2);
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin-top: 2px;
+    }
+
+    /* 不同主题下的懒标记颜色 */
+    .dark .tree-node .lazy-tag {
+      color: #ffeb3b;
+      background: rgba(255, 235, 59, 0.15);
+    }
+
+    .eye-care .tree-node .lazy-tag {
+      color: #ffc107;
+      background: rgba(255, 193, 7, 0.15);
+    }
+
+    /* 确保每层容器和主容器严格控制边界 */
+    #tree-container {
+      max-width: 100vw !important;
+      overflow-x: auto;
+      overflow-y: visible;
+      scroll-behavior: smooth;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+    }
+
+    #tree-container>div {
+      position: relative;
+      min-height: 140px;
+      margin-bottom: 10px;
+      overflow: visible;
+    }
+
+    /* 自适应滚动条样式 */
+    #tree-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #tree-container::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    #tree-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    #tree-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 480px) {
+      .tree-node {
+        font-size: 9px !important;
+        min-width: 70px !important;
+        min-height: 80px !important;
+        padding: 5px !important;
+      }
+
+      #tree-container {
+        padding: 5px !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tree-node {
+        font-size: 10px !important;
+        min-width: 85px !important;
+        min-height: 90px !important;
+        padding: 8px !important;
+      }
+
+      #tree-container {
+        padding: 10px !important;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .tree-node {
+        font-size: 14px !important;
+      }
+    }
+
+    /* 严格控制基本操作页面中的数据输入容器 */
+    #basic .data-input-container.card {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 15px !important;
+    }
+
+    #basic .data-input-container.card #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+      margin: 20px 0 10px 0 !important;
+      padding: 0 !important;
+    }
+
+    /* 响应式设计：在页面缩放时确保容器适应 */
+    @media screen and (min-width: 1px) {
+      #basic .data-input-container.card {
+        margin: 10px auto !important;
+        padding: 10px !important;
+      }
+
+      #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 20px) !important;
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+      }
+    }
+
+    /* 小屏幕特殊处理 */
+    @media screen and (max-width: 768px) {
+      #basic .data-input-container.card {
+        padding: 8px !important;
+        margin: 5px auto !important;
+      }
+
+      #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 16px) !important;
+        margin-left: 8px !important;
+        margin-right: 8px !important;
+      }
+    }
+
+    /* 步进进度条动画和样式 */
+    #step-progress-container {
+      backdrop-filter: blur(10px);
+      background: rgba(248, 249, 250, 0.95) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(222, 226, 230, 0.8);
+      animation: slideInFromTop 0.4s ease-out !important;
+    }
+
+    @keyframes slideInFromTop {
+      0% {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    #step-progress-bar {
+      background: linear-gradient(90deg, #28a745, #20c997, #17a2b8) !important;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4) !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #step-progress-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      animation: progressShine 2s infinite;
+    }
+
+    #step-progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      animation: progressShine 2s infinite ease-in-out;
+    }
+
+    @keyframes progressShine {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(400%);
+      }
+    }
+
+    #btn-next-step {
+      background: linear-gradient(135deg, #007bff, #0056b3) !important;
+      transition: all 0.3s ease !important;
+      transform: scale(1);
+    }
+
+    #btn-next-step:hover {
+      background: linear-gradient(135deg, #0056b3, #004085) !important;
+      transform: scale(1.05) !important;
+      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4) !important;
+    }
+
+    #btn-next-step:active {
+      transform: scale(0.98) !important;
+    }
+
+    #btn-step-complete {
+      background: linear-gradient(135deg, #28a745, #20c997) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    #btn-step-complete:hover {
+      background: linear-gradient(135deg, #20c997, #17a2b8) !important;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4) !important;
+    }
+
+    /* 步进进度信息动画 */
+    #step-progress-info {
+      transition: all 0.3s ease;
+    }
+
+    #step-current,
+    #step-total,
+    #step-percentage {
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    #step-percentage {
+      color: #007bff !important;
+      font-weight: bold !important;
+      font-size: 13px !important;
+    }
+
+    /* 修改步进进度条样式 */
+    #modify-step-progress-container {
+      backdrop-filter: blur(10px);
+      background: rgba(248, 249, 250, 0.95) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    #modify-step-percentage {
+      color: #e67e22 !important;
+      font-weight: bold !important;
+      font-size: 13px !important;
+    }
+
+    /* 修改步进进度信息动画 */
+    #modify-step-progress-info {
+      transition: all 0.3s ease;
+    }
+
+    #modify-step-current,
+    #modify-step-total,
+    #modify-step-percentage {
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    /* 修改结果样式 */
+    .modify-result {
+      margin: 10px !important;
+      padding: 10px !important;
+      background: #fff3cd !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      animation: slideInFromTop 0.4s ease-out !important;
+    }
+
+    /* 滑入动画 */
+    @keyframes slideInFromTop {
+      0% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 输入框样式 - 确保使用主题变量 */
+    input[type="number"],
+    input[type="text"],
+    input[type="range"],
+    select,
+    textarea {
+      background: var(--input-bg) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--text-secondary) !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+    }
+
+    /* 输入框焦点状态 */
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
+      outline: none !important;
+    }
+  </style>
+  <style>
+    /* 严格限制线段树容器边界 */
+    #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+    }
+
+    #custom-tree-visualizer-host>div {
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 确保树节点不会超出父容器 */
+    .tree-node {
+      max-width: calc(100% - 10px) !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 响应式设计 - 自适应不同屏幕尺寸 */
+    @media screen and (max-width: 320px) {
+      .data-input-container {
+        padding: 5px !important;
+        margin: 5px 0 !important;
+      }
+
+      .settings-row {
+        flex-direction: column !important;
+        gap: 5px !important;
+      }
+
+      .settings-row>* {
+        width: 100% !important;
+        margin: 2px 0 !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 14px !important;
+        padding: 8px !important;
+      }
+
+      .btn {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .data-input-container {
+        padding: 8px !important;
+        margin: 8px 0 !important;
+      }
+
+      .settings-row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+      }
+
+      .settings-row>div {
+        flex: 1 1 100% !important;
+        min-width: auto !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 14px !important;
+        padding: 10px !important;
+        min-width: 60px !important;
+      }
+
+      .btn {
+        font-size: 13px !important;
+        padding: 10px 15px !important;
+      }
+
+      label {
+        font-size: 14px !important;
+        white-space: nowrap !important;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .data-input-container {
+        padding: 10px !important;
+      }
+
+      .settings-row {
+        gap: 10px !important;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        font-size: 15px !important;
+        padding: 12px !important;
+      }
+
+      .btn {
+        font-size: 14px !important;
+        padding: 12px 18px !important;
+      }
+    }
+
+    /* 确保树容器始终自适应 */
+    #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 树节点响应式文字大小 */
+    @media screen and (max-width: 480px) {
+      .tree-node {
+        font-size: 8px !important;
+        line-height: 1.1 !important;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .tree-node {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+      }
+    }
+
+    /* 线段树可视化样式 */
+    .tree-node {
+      transition: all 0.3s ease;
+    }
+
+    .tree-node:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .tree-node.active {
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.8) !important;
+      border-color: #27ae60 !important;
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.15);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    /* 懒标记特殊样式 */
+    .tree-node .lazy-tag {
+      background: rgba(46, 204, 113, 0.2);
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin-top: 2px;
+    }
+
+    /* 不同主题下的懒标记颜色 */
+    .dark .tree-node .lazy-tag {
+      color: #27ae60;
+      background: rgba(46, 204, 113, 0.15);
+    }
+
+    .eye-care .tree-node .lazy-tag {
+      color: #2ecc71;
+      background: rgba(46, 204, 113, 0.15);
+    }
+
+    /* 确保每层容器和主容器严格控制边界 */
+    #tree-container {
+      max-width: 100vw !important;
+      overflow-x: auto;
+      overflow-y: visible;
+      scroll-behavior: smooth;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+    }
+
+    #tree-container>div {
+      position: relative;
+      min-height: 140px;
+      margin-bottom: 10px;
+      overflow: visible;
+    }
+
+    /* 自适应滚动条样式 */
+    #tree-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #tree-container::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    #tree-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    #tree-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 480px) {
+      .tree-node {
+        font-size: 9px !important;
+        min-width: 70px !important;
+        min-height: 80px !important;
+        padding: 5px !important;
+      }
+
+      #tree-container {
+        padding: 5px !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tree-node {
+        font-size: 10px !important;
+        min-width: 85px !important;
+        min-height: 90px !important;
+        padding: 8px !important;
+      }
+
+      #tree-container {
+        padding: 10px !important;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .tree-node {
+        font-size: 14px !important;
+      }
+    }
+
+    /* 严格控制基本操作页面中的数据输入容器 */
+    #basic .data-input-container.card {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 15px !important;
+    }
+
+    #basic .data-input-container.card #custom-tree-visualizer-host {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+      margin: 20px 0 10px 0 !important;
+      padding: 0 !important;
+    }
+
+    /* 响应式设计：在页面缩放时确保容器适应 */
+    @media screen and (min-width: 1px) {
+      #basic .data-input-container.card {
+        margin: 10px auto !important;
+        padding: 10px !important;
+      }
+
+      #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 20px) !important;
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+      }
+    }
+
+    /* 小屏幕特殊处理 */
+    @media screen and (max-width: 768px) {
+      #basic .data-input-container.card {
+        padding: 8px !important;
+        margin: 5px auto !important;
+      }
+
+      #basic .data-input-container.card #custom-tree-visualizer-host {
+        max-width: calc(100% - 16px) !important;
+        margin-left: 8px !important;
+        margin-right: 8px !important;
+      }
+    }
+
+    /* 查询结果容器样式 */
+    .query-result {
+      margin: 10px !important;
+      padding: 10px !important;
+      background: #fff3cd !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      animation: slideInFromTop 0.4s ease-out !important;
+      border: 1px solid #ffeaa7 !important;
+    }
+
+    /* 步进进度条动画和样式 */
+    #step-progress-container {
+      backdrop-filter: blur(10px);
+      background: rgba(248, 249, 250, 0.95) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(222, 226, 230, 0.8);
+      animation: slideInFromTop 0.4s ease-out !important;
+    }
+
+    @keyframes slideInFromTop {
+      0% {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    #step-progress-bar {
+      background: linear-gradient(90deg, #2ecc71, #27ae60, #17a2b8) !important;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      box-shadow: 0 2px 8px rgba(46, 204, 113, 0.4) !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #step-progress-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      animation: progressShine 2s infinite;
+    }
+
+    #step-progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      animation: progressShine 2s infinite ease-in-out;
+    }
+
+    @keyframes progressShine {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(400%);
+      }
+    }
+
+    #btn-next-step {
+      background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+      transition: all 0.3s ease !important;
+      transform: scale(1);
+    }
+
+    #btn-next-step:hover {
+      background: linear-gradient(135deg, #27ae60, #219653) !important;
+      transform: scale(1.05) !important;
+      box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4) !important;
+    }
+
+    #btn-next-step:active {
+      transform: scale(0.98) !important;
+    }
+
+    #btn-step-complete {
+      background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    #btn-step-complete:hover {
+      background: linear-gradient(135deg, #27ae60, #17a2b8) !important;
+      box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4) !important;
+    }
+
+    /* 步进进度信息动画 */
+    #step-progress-info {
+      transition: all 0.3s ease;
+    }
+
+    #step-current,
+    #step-total,
+    #step-percentage {
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    #step-percentage {
+      color: #2ecc71 !important;
+      font-weight: bold !important;
+      font-size: 13px !important;
+    }
+
+    /* 错误提示样式 */
+    .error-message {
+      color: red !important;
+      margin: 10px !important;
+      font-size: 14px !important;
+    }
+
+    /* 输入框样式 - 确保使用主题变量 */
+    input[type="number"],
+    input[type="text"],
+    input[type="range"],
+    select,
+    textarea {
+      background: var(--input-bg) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--text-secondary) !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+    }
+
+    /* 输入框焦点状态 */
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2) !important;
+      outline: none !important;
+    }
+  </style>
 </head>
+
 <body>
   <!-- 三级主题开关 -->
   <div class="theme-switcher">
@@ -68,9 +2679,11 @@
 
         <h3>📦 信息与更新结构</h3>
         <ul>
-          <li><strong>Info 结构体</strong>：每个节点维护区间的信息，比如区间和、最大值、最小值等；支持合并（<strong> operator+ </strong>）和更新（<strong> apply </strong>）。</li>
+          <li><strong>Info 结构体</strong>：每个节点维护区间的信息，比如区间和、最大值、最小值等；支持合并（<strong> operator+ </strong>）和更新（<strong> apply
+            </strong>）。</li>
           <li><strong>Laz 结构体</strong>：用于记录对某一段区间的修改请求。它可作用于 <strong> Info </strong>的懒更新。</li>
-        </ul>        <pre class="code-block"><code>struct Laz 
+        </ul>
+        <pre class="code-block"><code>struct Laz 
 {
     int add = 0;
     void apply(const Laz &tag) 
@@ -107,7 +2720,7 @@ struct Info
 };</code></pre>
 
         <h3>🧱 构建线段树</h3>
-         <p>线段树的构建通常采用递归的方式，设当前节点为 <strong> u </strong>，若其管辖区间的长度已为 <strong> 1 </strong>，则可根据所需初始化该节点。
+        <p>线段树的构建通常采用递归的方式，设当前节点为 <strong> u </strong>，若其管辖区间的长度已为 <strong> 1 </strong>，则可根据所需初始化该节点。
           否则将该区间对半划分为两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong> push_up </strong>）。</p>
         <pre class="code-block"><code>void build(int l, int r, int u)
 {
@@ -127,20 +2740,23 @@ struct Info
 }</code></pre>
 
         <h3>🎯 构建过程可视化</h3>
-          <div class="settings-row">
-            <label>数组长度 n:</label>
-            <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
-            <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
-          </div>          <div id="tree-container">
-            <!-- 构建过程可视化容器将通过 JavaScript 初始化 -->
-          </div>
+        <div class="settings-row">
+          <label>数组长度 n:</label>
+          <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+          <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+        </div>
+        <div id="tree-container">
+          <!-- 构建过程可视化容器将通过 JavaScript 初始化 -->
+        </div>
 
 
         <h3>⚙️ 信息维护：push_up 与 push_down</h3>
-        <ul> 
+        <ul>
           <li><strong> push_up </strong>：用于更新当前节点的信息。它的作用是将左右子节点的信息通过区间合并（<strong> operator+ </strong>）向上传递，
-            更新当前节点的统计数据（如区间和、最小值、最大值等）。这个过程确保了每次修改或查询操作后，整棵线段树的状态始终是最新的。</li> 
-          <li><strong> push_down </strong>：用于懒标记（<strong> lazy tag </strong>）的传递。当一个节点上存在尚未向下传播的更新信息时，调用此函数会将该节点的懒标记应用到它的左右子节点，使得这些子节点的数据能够正确反映出应有的更新效果。随后，将当前节点的懒标记清空，避免重复更新。懒标记能减少重复更新操作，提高效率。</li>
+            更新当前节点的统计数据（如区间和、最小值、最大值等）。这个过程确保了每次修改或查询操作后，整棵线段树的状态始终是最新的。</li>
+          <li><strong> push_down </strong>：用于懒标记（<strong> lazy tag
+            </strong>）的传递。当一个节点上存在尚未向下传播的更新信息时，调用此函数会将该节点的懒标记应用到它的左右子节点，使得这些子节点的数据能够正确反映出应有的更新效果。随后，将当前节点的懒标记清空，避免重复更新。懒标记能减少重复更新操作，提高效率。
+          </li>
         </ul>
         <pre class="code-block"><code>void apply(int u, Laz tag, int len) 
 {
@@ -187,28 +2803,36 @@ void push_down(int u, int llen, int rlen)
 }</code></pre>
 
         <h3>🔧 可视化修改与数据维护</h3>
-        <p>在此处输入新的数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>        <div class="data-input-container card">            <h4>线段树可视化操作:</h4>            <!-- 输入控件在上方，左右各占一半并分别居中 -->
-            <div class="settings-row" style="display: flex;">
-                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                    <label>输入数据:</label>
-                    <input type="text" id="input-custom-data-modify" value="" aria-label="输入自定义数组数据" placeholder="例如: 1 2 3 4 (最多8个数字)">
-                    <button id="btn-random-data-modify" class="btn" style="min-width: 100px;">🎲 随机生成</button>
-                </div>                  <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;" class="modification-group">
-                    <label for="input-modify-left">区间修改:</label>
-                    <input type="number" id="input-modify-left" min="1" max="8" aria-label="输入修改区间的左端点" style="width: 80px;">
-                    <span>到</span>
-                    <input type="number" id="input-modify-right" min="1" max="8" aria-label="输入修改区间的右端点" style="width: 80px;">
-                    <span>增加</span>
-                    <input type="number" id="input-modify-value" aria-label="输入要增加的值" style="width: 90px;">
-                </div>
-            </div>            <!-- 按钮布局：构建树占一半，修改按钮占一半 -->            <div class="settings-row">
-                <button id="btn-update-custom-data-modify" class="btn" style="flex: 1;">🚀 更新可视化</button>
-                <div style="flex: 1; display: flex; gap: 5px;">                    <button id="btn-apply-modification-direct" class="btn" style="flex: 1;">⚡ 直接完成修改</button>
-                    <button id="btn-apply-modification-step" class="btn" style="flex: 1;">👣 步进修改</button>
-                </div>
+        <p>在此处输入新的数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>
+        <div class="data-input-container card">
+          <h4>线段树可视化操作:</h4> <!-- 输入控件在上方，左右各占一半并分别居中 -->
+          <div class="settings-row" style="display: flex;">
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+              <label>输入数据:</label>
+              <input type="text" id="input-custom-data-modify" value="" aria-label="输入自定义数组数据"
+                placeholder="例如: 1 2 3 4 (最多8个数字)">
+              <button id="btn-random-data-modify" class="btn" style="min-width: 100px;">🎲 随机生成</button>
             </div>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;"
+              class="modification-group">
+              <label for="input-modify-left">区间修改:</label>
+              <input type="number" id="input-modify-left" min="1" max="8" aria-label="输入修改区间的左端点" style="width: 80px;">
+              <span>到</span>
+              <input type="number" id="input-modify-right" min="1" max="8" aria-label="输入修改区间的右端点" style="width: 80px;">
+              <span>增加</span>
+              <input type="number" id="input-modify-value" aria-label="输入要增加的值" style="width: 90px;">
+            </div>
+          </div> <!-- 按钮布局：构建树占一半，修改按钮占一半 -->
+          <div class="settings-row">
+            <button id="btn-update-custom-data-modify" class="btn" style="flex: 1;">🚀 更新可视化</button>
+            <div style="flex: 1; display: flex; gap: 5px;"> <button id="btn-apply-modification-direct" class="btn"
+                style="flex: 1;">⚡ 直接完成修改</button>
+              <button id="btn-apply-modification-step" class="btn" style="flex: 1;">👣 步进修改</button>
+            </div>
+          </div>
 
-            <div id="modify-tree-visualizer-host" style="margin-top: 20px;"></div> <!-- Placeholder for the modify tree canvas -->
+          <div id="modify-tree-visualizer-host" style="margin-top: 20px;"></div>
+          <!-- Placeholder for the modify tree canvas -->
         </div>
 
         <h3>🔍 区间查询</h3>
@@ -234,29 +2858,33 @@ void push_down(int u, int llen, int rlen)
 }</code></pre>
 
         <h3>🔍 可视化查询与数据维护</h3>
-        <p>在此处输入数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据数据重建，并同时计算和显示数组的最大值、最小值与总和。输入查询区间后，可直接查询或步进查看查询过程。</p>
+        <p>在此处输入数组数据（以空格分隔，例如 <strong>1 1 4 5 1
+            4</strong>），然后点击更新按钮。线段树将根据数据重建，并同时计算和显示数组的最大值、最小值与总和。输入查询区间后，可直接查询或步进查看查询过程。</p>
         <div class="data-input-container card">
-            <h4>线段树可视化操作:</h4>
-            <div class="settings-row" style="display: flex;">
-                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                    <label>输入数据:</label>
-                    <input type="text" id="input-custom-data-query" value="" aria-label="输入自定义数组数据" placeholder="例如: 1 2 3 4 (最多8个数字)">
-                    <button id="btn-random-data-query" class="btn" style="min-width: 100px;">🎲 随机生成</button>
-                </div>
-                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;" class="query-group">
-                    <label for="input-query-left">区间查询:</label>
-                    <input type="number" id="input-query-left" min="1" max="8" aria-label="输入查询区间的左端点" style="width: 80px;">
-                    <span>到</span>
-                    <input type="number" id="input-query-right" min="1" max="8" aria-label="输入查询区间的右端点" style="width: 80px;">
-                </div>
+          <h4>线段树可视化操作:</h4>
+          <div class="settings-row" style="display: flex;">
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+              <label>输入数据:</label>
+              <input type="text" id="input-custom-data-query" value="" aria-label="输入自定义数组数据"
+                placeholder="例如: 1 2 3 4 (最多8个数字)">
+              <button id="btn-random-data-query" class="btn" style="min-width: 100px;">🎲 随机生成</button>
             </div>
-            <div class="settings-row">
-                <button id="btn-update-custom-data-query" class="btn" style="flex: 1;">🚀 更新可视化</button>
-                <div style="flex: 1; display: flex; gap: 5px;">                    <button id="btn-apply-query-direct" class="btn" style="flex: 1;">⚡ 直接完成查询</button>
-                    <button id="btn-apply-query-step" class="btn" style="flex: 1;">👣 步进查询</button>
-                </div>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;"
+              class="query-group">
+              <label for="input-query-left">区间查询:</label>
+              <input type="number" id="input-query-left" min="1" max="8" aria-label="输入查询区间的左端点" style="width: 80px;">
+              <span>到</span>
+              <input type="number" id="input-query-right" min="1" max="8" aria-label="输入查询区间的右端点" style="width: 80px;">
             </div>
-            <div id="query-tree-visualizer-host" style="margin-top: 20px;"></div>
+          </div>
+          <div class="settings-row">
+            <button id="btn-update-custom-data-query" class="btn" style="flex: 1;">🚀 更新可视化</button>
+            <div style="flex: 1; display: flex; gap: 5px;"> <button id="btn-apply-query-direct" class="btn"
+                style="flex: 1;">⚡ 直接完成查询</button>
+              <button id="btn-apply-query-step" class="btn" style="flex: 1;">👣 步进查询</button>
+            </div>
+          </div>
+          <div id="query-tree-visualizer-host" style="margin-top: 20px;"></div>
         </div>
 
         <h3>📌 小贴士</h3>
@@ -385,14 +3013,2767 @@ void push_down(int u, int llen, int rlen)
     <footer>
       <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
     </footer>
-  </main>  <!-- JavaScript 文件链接 -->
-  <script src="js/settings.js"></script>
-  <script src="js/generate_Visualizer_modify.js"></script>
-  <script src="js/generate_Visualizer_query.js"></script>
-  <script src="js/navigation.js"></script>
-  <script src="js/quiz.js"></script>
-  <script src="js/syntaxHighlighter.js"></script>
-  <script src="js/treeVisualizer.js"></script>
-  <script src="js/main.js"></script>
+  </main> <!-- JavaScript 文件链接 -->
+  <script>
+    /* 设置管理模块 */
+
+    // 全局变量
+    let currentTheme = 'light';
+    let currentFontSize = 15;
+    let currentLineHeight = 1.6;
+    let animationSpeed = 'normal';
+    let nodeColor = '#74b9ff';
+    let showValues = true;
+
+    // 缓存 DOM 元素
+    const DOM = {
+      themeSelect: null,
+      fontSizeSlider: null,
+      fontSizeDisplay: null,
+      lineHeightSlider: null,
+      lineHeightDisplay: null,
+      animationSpeed: null,
+      nodeColor: null,
+      showValues: null
+    };
+
+    // 初始化DOM缓存
+    function initDOM() {
+      DOM.themeSelect = document.getElementById('theme-select');
+      DOM.fontSizeSlider = document.getElementById('font-size-slider');
+      DOM.fontSizeDisplay = document.getElementById('font-size-display');
+      DOM.lineHeightSlider = document.getElementById('line-height-slider');
+      DOM.lineHeightDisplay = document.getElementById('line-height-display');
+      DOM.animationSpeed = document.getElementById('animation-speed');
+      DOM.nodeColor = document.getElementById('node-color');
+      DOM.showValues = document.getElementById('show-values');
+    }
+
+    // 切换代码高亮主题
+    function changeTheme() {
+      if (!DOM.themeSelect) return;
+
+      currentTheme = DOM.themeSelect.value;
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.className = `code-block ${currentTheme}`;
+        // 确保主题切换时重新应用高亮
+        if (block.dataset.originalCode && !block.dataset.highlighted) {
+          if (window.SyntaxHighlighter) {
+            block.innerHTML = window.SyntaxHighlighter.highlightCode(block.dataset.originalCode);
+            block.dataset.highlighted = true;
+          }
+        }
+      });
+      Settings.save();
+    }
+
+    // 调整字体大小
+    function changeFontSize(size) {
+      currentFontSize = parseInt(size);
+      if (DOM.fontSizeDisplay) {
+        DOM.fontSizeDisplay.textContent = size + 'px';
+      }
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.style.fontSize = size + 'px';
+      });
+      Settings.save();
+    }
+
+    // 调整行高
+    function changeLineHeight(height) {
+      currentLineHeight = parseFloat(height);
+      if (DOM.lineHeightDisplay) {
+        DOM.lineHeightDisplay.textContent = height;
+      }
+      document.querySelectorAll('.code-block').forEach(block => {
+        block.style.lineHeight = height;
+      });
+      Settings.save();
+    }
+
+    // 应用节点颜色
+    function applyNodeColor() {
+      if (!DOM.nodeColor) return;
+
+      nodeColor = DOM.nodeColor.value;
+      const style = document.createElement('style');
+      style.innerHTML = `
+    .tree-node { background: ${nodeColor} !important; }
+    .tree-node.depth-0 { background: ${nodeColor} !important; }
+    .tree-node.depth-1 { background: ${nodeColor} !important; }
+    .tree-node.depth-2 { background: ${nodeColor} !important; }
+    .tree-node.depth-3 { background: ${nodeColor} !important; }
+  `;
+      document.head.appendChild(style);
+      Settings.save();
+    }
+
+    // 切换节点值显示
+    function toggleNodeValues() {
+      if (!DOM.showValues) return;
+
+      showValues = DOM.showValues.checked;
+      document.querySelectorAll('.tree-node').forEach(node => {
+        node.style.display = showValues ? 'inline-block' : 'none';
+      });
+      Settings.save();
+    }
+
+    // 节流函数
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // 更新CSS动画变量
+    function updateAnimationVariables() {
+      const animationSpeed = window.animationSpeed || 'normal';
+      const durations = {
+        slow: { animation: '1.0s', transition: '0.6s' },
+        normal: { animation: '0.5s', transition: '0.3s' },
+        fast: { animation: '0.2s', transition: '0.15s' }
+      };
+
+      const speeds = durations[animationSpeed] || durations.normal;
+      document.documentElement.style.setProperty('--animation-duration', speeds.animation);
+      document.documentElement.style.setProperty('--transition-speed', speeds.transition);
+    }
+
+    // 设置管理
+    const Settings = {
+      defaults: {
+        theme: 'light',
+        fontSize: 15,
+        lineHeight: 1.6,
+        animationSpeed: 'normal',
+        nodeColor: '#74b9ff',
+        showValues: true
+      },
+      save() {
+        localStorage.setItem('segmentTreeSettings', JSON.stringify({
+          theme: currentTheme,
+          fontSize: currentFontSize,
+          lineHeight: currentLineHeight,
+          animationSpeed: animationSpeed,
+          nodeColor: nodeColor,
+          showValues: showValues
+        }));
+        updateGlobalVars();
+      },
+
+      load() {
+        const saved = localStorage.getItem('segmentTreeSettings');
+        if (saved) {
+          Object.assign(this.defaults, JSON.parse(saved));
+          currentTheme = this.defaults.theme;
+          currentFontSize = this.defaults.fontSize;
+          currentLineHeight = this.defaults.lineHeight;
+          animationSpeed = this.defaults.animationSpeed;
+          nodeColor = this.defaults.nodeColor;
+          showValues = this.defaults.showValues;
+
+          // 更新UI控件
+          if (DOM.themeSelect) DOM.themeSelect.value = currentTheme;
+          if (DOM.fontSizeSlider) DOM.fontSizeSlider.value = currentFontSize;
+          if (DOM.lineHeightSlider) DOM.lineHeightSlider.value = currentLineHeight;
+          if (DOM.animationSpeed) DOM.animationSpeed.value = animationSpeed;
+          if (DOM.nodeColor) DOM.nodeColor.value = nodeColor;
+          if (DOM.showValues) DOM.showValues.checked = showValues;      // 应用设置
+          changeFontSize(currentFontSize);
+          changeLineHeight(currentLineHeight);
+          changeTheme();
+          updateGlobalVars();
+          updateAnimationVariables(); // 确保CSS动画变量正确设置
+        }
+      },
+
+      export() {
+        const settings = {
+          theme: currentTheme,
+          fontSize: currentFontSize,
+          lineHeight: currentLineHeight,
+          animationSpeed: animationSpeed,
+          nodeColor: nodeColor,
+          showValues: showValues,
+          exportDate: new Date().toISOString()
+        };
+        const dataStr = JSON.stringify(settings, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = 'segment-tree-settings.json';
+        link.click();
+      },
+
+      reset() {
+        if (confirm('确定要重置所有设置吗？')) {
+          localStorage.removeItem('segmentTreeSettings');
+          location.reload();
+        }
+      }
+    };
+
+    // 初始化设置功能
+    function initSettings() {
+      initDOM();
+
+      // 首先更新全局变量和CSS动画变量
+      updateGlobalVars();
+      updateAnimationVariables();
+
+      // 设置事件监听器
+      if (DOM.themeSelect) {
+        DOM.themeSelect.addEventListener('change', changeTheme);
+      }
+
+      if (DOM.fontSizeSlider) {
+        DOM.fontSizeSlider.addEventListener('input', debounce(e => changeFontSize(e.target.value), 100));
+      }
+
+      if (DOM.lineHeightSlider) {
+        DOM.lineHeightSlider.addEventListener('input', debounce(e => changeLineHeight(e.target.value), 100));
+      }
+      if (DOM.animationSpeed) {
+        DOM.animationSpeed.addEventListener('change', () => {
+          animationSpeed = DOM.animationSpeed.value;
+          updateGlobalVars(); // 立即更新全局变量
+          updateAnimationVariables(); // 更新CSS动画变量
+          Settings.save();
+          // 广播动画速度变化事件
+          window.dispatchEvent(new CustomEvent('animationSpeedChanged', {
+            detail: { speed: animationSpeed }
+          }));
+        });
+      }
+
+      if (DOM.showValues) {
+        DOM.showValues.addEventListener('change', toggleNodeValues);
+      }
+
+      // 加载保存的设置
+      Settings.load();
+
+      // 确保字体大小和行高显示元素存在并设置正确值
+      if (DOM.fontSizeDisplay) {
+        DOM.fontSizeDisplay.textContent = currentFontSize + 'px';
+      }
+      if (DOM.lineHeightDisplay) {
+        DOM.lineHeightDisplay.textContent = currentLineHeight;
+      }
+    }
+
+    // 导出和重置设置（全局函数供HTML调用）
+    function exportSettings() {
+      Settings.export();
+    }
+
+    function resetSettings() {
+      Settings.reset();
+    }
+
+    // 导出到全局作用域供其他模块使用
+    window.currentTheme = currentTheme;
+    window.animationSpeed = animationSpeed;
+    window.nodeColor = nodeColor;
+
+    // 更新全局变量的函数
+    function updateGlobalVars() {
+      window.currentTheme = currentTheme;
+      window.animationSpeed = animationSpeed;
+      window.nodeColor = nodeColor;
+    }
+
+    // 导出函数供其他模块使用
+    window.SettingsManager = {
+      changeTheme,
+      changeFontSize,
+      changeLineHeight,
+      applyNodeColor,
+      toggleNodeValues,
+      initSettings,
+      Settings
+    };
+  </script>
+  <script>
+    /* 线段树区间修改可视化模块（修复懒标记下发，延迟上层节点更新） */
+
+    (function () {
+      // --- 状态管理 ---
+      // 创建独立的命名空间避免变量冲突
+      const ModifyVisualizerState = {
+        lastBuiltN: 0, // 上次构建的数组长度
+        lastBuiltContainer: null, // 上次构建的容器
+        isTreeRendered: false, // 线段树是否渲染完成
+        domNodeElements: new Map(), // 存储 DOM 节点，键为节点编号 u
+        globalTree: [], // 线段树数组，存储 {sum, max, min}
+        globalLazy: [], // 懒标记数组
+        currentTreeLevelsData: [], // 树层级数据
+        currentTreeBuildOrderData: [], // 构建顺序数据
+        activeBuildAnimationTimeout: null // 构建动画定时器
+      };
+
+      // 步进修改状态
+      let stepModifyState = {
+        isActive: false,
+        affectedNodes: [],
+        currentIndex: 0,
+        modifyL: 0,
+        modifyR: 0,
+        delta: 0,
+        container: null
+      };
+      // 防抖函数
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      // 获取动画延迟
+      function getAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 1000, normal: 500, fast: 200 };
+        return speeds[animationSpeed] || 500;
+      }
+
+      // 获取构建动画延迟
+      function getBuildAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 200, normal: 100, fast: 50 };
+        return speeds[animationSpeed] || 100;
+      }
+
+      // 构建线段树可视化
+      function buildTreeVisualizationWithData(dataArray, container, isResizeUpdate = false) {
+        console.log('🌲 构建线段树可视化', { dataArray, containerExists: !!container, isResizeUpdate });
+
+        let n = isResizeUpdate && dataArray === null ? ModifyVisualizerState.lastBuiltN : (dataArray ? dataArray.length : 0);
+        if (!isResizeUpdate) {
+          ModifyVisualizerState.lastBuiltN = n;
+          ModifyVisualizerState.lastBuiltContainer = container;
+          ModifyVisualizerState.isTreeRendered = false;
+          ModifyVisualizerState.domNodeElements.clear();
+          ModifyVisualizerState.currentTreeLevelsData = [];
+          ModifyVisualizerState.currentTreeBuildOrderData = [];
+          if (ModifyVisualizerState.activeBuildAnimationTimeout) {
+            clearTimeout(ModifyVisualizerState.activeBuildAnimationTimeout);
+            ModifyVisualizerState.activeBuildAnimationTimeout = null;
+          }
+
+          if (n < 1 || n > 8) {
+            showError('请输入 1-8 个数字');
+            return;
+          }
+
+          // 清空容器并创建结构
+          container.innerHTML = `
+        <h4>🔧 线段树区间修改过程:</h4>
+        <p><strong>数组数据:</strong> [${dataArray.join(', ')}]</p>
+        <p><strong>数组长度:</strong> ${n}</p>
+      `; const treeVisual = document.createElement('div');
+          treeVisual.className = 'tree-visual';
+          treeVisual.style.position = 'relative';
+          treeVisual.style.width = '100%';
+          treeVisual.style.padding = '25px';
+          treeVisual.style.background = 'transparent';
+          treeVisual.style.borderRadius = '12px';
+          // 移除边框和阴影
+          treeVisual.style.overflow = 'visible';
+          treeVisual.style.minHeight = '200px';
+          container.appendChild(treeVisual);
+        }
+
+        const treeVisual = container.querySelector('.tree-visual');
+        if (!treeVisual) {
+          console.error('树可视化元素未找到');
+          return;
+        }
+
+        const containerWidth = treeVisual.clientWidth - 50;
+        const nodeMinWidth = 50;
+        const levelHeight = 100;
+        const padding = 25;
+
+        // 初始化全局数组
+        if (!isResizeUpdate) {
+          ModifyVisualizerState.globalTree = new Array(4 * n).fill().map(() => ({ sum: 0, max: -Infinity, min: Infinity }));
+          ModifyVisualizerState.globalLazy = new Array(4 * n).fill(0);
+
+          // 构建线段树
+          function buildTree(arr, tree, node, start, end) {
+            if (start === end) {
+              const value = arr[start - 1];
+              tree[node] = { sum: value, max: value, min: value };
+            } else {
+              const mid = Math.floor((start + end) / 2);
+              buildTree(arr, tree, 2 * node, start, mid);
+              buildTree(arr, tree, 2 * node + 1, mid + 1, end);
+              const leftChild = tree[2 * node];
+              const rightChild = tree[2 * node + 1];
+              tree[node] = {
+                sum: leftChild.sum + rightChild.sum,
+                max: Math.max(leftChild.max, rightChild.max),
+                min: Math.min(leftChild.min, rightChild.min)
+              };
+            }
+          }
+          buildTree(dataArray, ModifyVisualizerState.globalTree, 1, 1, n);
+        }
+
+        // 收集层级数据
+        if (!isResizeUpdate) {
+          ModifyVisualizerState.currentTreeLevelsData = [];
+          function collectLevels(l, r, u, depth = 0) {
+            if (l > r) return;
+            if (!ModifyVisualizerState.currentTreeLevelsData[depth]) ModifyVisualizerState.currentTreeLevelsData[depth] = [];
+            const treeNode = ModifyVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+            const lazyValue = ModifyVisualizerState.globalLazy[u] || 0;
+            ModifyVisualizerState.currentTreeLevelsData[depth].push({ l, r, u, depth, lazy: lazyValue, sum: treeNode.sum, max: treeNode.max, min: treeNode.min });
+            if (l < r) {
+              const mid = Math.floor((l + r) / 2);
+              collectLevels(l, mid, u * 2, depth + 1);
+              collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+          collectLevels(1, n, 1);
+
+          const totalLevels = ModifyVisualizerState.currentTreeLevelsData.length;
+          const calculatedHeight = totalLevels * levelHeight + 100;
+          treeVisual.style.minHeight = `${calculatedHeight}px`;
+          treeVisual.style.height = `${calculatedHeight}px`;
+        }
+
+        // 计算节点位置
+        const nodePositions = new Map();
+        function calculateNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
+          const levelNodes = ModifyVisualizerState.currentTreeLevelsData[depth];
+          if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) return;
+
+          const y = depth * levelHeight + 30;
+          let x, nodeWidth;
+          if (u === 1) {
+            nodeWidth = containerWidth - (2 * padding);
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+            x = containerWidth / 2;
+          } else {
+            nodeWidth = parentW / 2;
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+            const isLeftChild = (u % 2 === 0);
+            x = isLeftChild ? parentX - parentW / 4 : parentX + parentW / 4;
+          }
+
+          const actualContainerWidth = containerWidth + 50;
+          const halfW = nodeWidth / 2;
+          if (x - halfW < padding) x = padding + halfW;
+          if (x + halfW > actualContainerWidth - padding) x = actualContainerWidth - padding - halfW;
+
+          nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
+
+          if (l < r) {
+            const mid = Math.floor((l + r) / 2);
+            calculateNodePositions(l, mid, u * 2, depth + 1, x, nodeWidth);
+            calculateNodePositions(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
+          }
+        }
+        calculateNodePositions(1, n, 1, 0, null, null);
+
+        // 渲染节点
+        if (!isResizeUpdate) {
+          ModifyVisualizerState.currentTreeBuildOrderData = [];
+          function generateBuildOrder(l, r, u, depth = 0) {
+            if (l > r) return;
+            const levelNodes = ModifyVisualizerState.currentTreeLevelsData[depth];
+            if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) return;
+            const treeNode = ModifyVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+            const lazyValue = ModifyVisualizerState.globalLazy[u] || 0;
+            ModifyVisualizerState.currentTreeBuildOrderData.push({ l, r, u, depth, lazy: lazyValue, sum: treeNode.sum, max: treeNode.max, min: treeNode.min });
+            if (l < r) {
+              const mid = Math.floor((l + r) / 2);
+              generateBuildOrder(l, mid, u * 2, depth + 1);
+              generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+          generateBuildOrder(1, n, 1);
+
+          let orderIndex = 0;
+          function renderNextNode() {
+            if (orderIndex >= ModifyVisualizerState.currentTreeBuildOrderData.length) {
+              ModifyVisualizerState.activeBuildAnimationTimeout = null;
+              setTimeout(() => {
+                ModifyVisualizerState.isTreeRendered = true;
+                console.log('🎉 线段树渲染完成');
+              }, 1000);
+              return;
+            }
+
+            const { l, r, u, depth, lazy, sum, max, min } = ModifyVisualizerState.currentTreeBuildOrderData[orderIndex];
+            const position = nodePositions.get(u);
+            if (!position) {
+              orderIndex++;
+              ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 50);
+              return;
+            }
+
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `tree-node depth-${depth}`;
+            nodeDiv.setAttribute('data-node-id', u);
+            const lazyDisplay = lazy === 0 ? '-' : lazy;
+            nodeDiv.innerHTML = `
+          <div class="node-interval">[${l},${r}]</div>
+          <div class="node-info">sum:${sum} min:${min}</div>
+          <div class="node-info">lazy:${lazyDisplay} max:${max}</div>
+        `;
+            nodeDiv.style.position = 'absolute';
+            nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+            nodeDiv.style.top = `${position.y}px`;
+            nodeDiv.style.width = `${position.nodeWidth}px`;
+            nodeDiv.style.zIndex = '10';
+            nodeDiv.style.minHeight = '80px';
+            nodeDiv.style.display = 'flex';
+            nodeDiv.style.flexDirection = 'column';
+            nodeDiv.style.justifyContent = 'center';
+            nodeDiv.style.alignItems = 'center';
+            nodeDiv.style.fontSize = '13px';
+            nodeDiv.style.padding = '6px';
+            nodeDiv.style.boxSizing = 'border-box';
+            nodeDiv.style.borderRadius = '8px';
+            nodeDiv.style.border = '2px solid #74b9ff';
+            nodeDiv.style.background = ' #0984e3';
+            nodeDiv.style.color = 'white';
+            nodeDiv.style.textAlign = 'center';
+            nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+
+            nodeDiv.style.opacity = '0';
+            nodeDiv.style.transform = 'translateY(-10px)';
+            treeVisual.appendChild(nodeDiv);
+            ModifyVisualizerState.domNodeElements.set(u, nodeDiv); setTimeout(() => {
+              nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+              nodeDiv.style.opacity = '1';
+              nodeDiv.style.transform = 'translateY(0)';
+            }, 50);
+
+            orderIndex++;
+            ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
+          }
+          ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay());
+        } else {
+          requestAnimationFrame(() => {
+            ModifyVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+              const position = nodePositions.get(u);
+              if (position) {
+                nodeDiv.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+                nodeDiv.style.top = `${position.y}px`;
+                nodeDiv.style.width = `${position.nodeWidth}px`;
+              }
+            });
+          });
+          ModifyVisualizerState.isTreeRendered = true;
+        }
+      }
+
+      // 下推懒标记
+      function pushDown(u, tl, tr) {
+        if (ModifyVisualizerState.globalLazy[u] !== 0) {
+          const delta = ModifyVisualizerState.globalLazy[u];
+          const len = tr - tl + 1;
+          console.log(`🔽 下推节点 u=${u} [${tl},${tr}] 懒标记 ${delta}`);
+          // 更新当前节点
+          ModifyVisualizerState.globalTree[u].sum += delta * len;
+          ModifyVisualizerState.globalTree[u].max += delta;
+          ModifyVisualizerState.globalTree[u].min += delta;
+          // 如果不是叶子节点，传播懒标记到子节点
+          if (tl !== tr) {
+            ModifyVisualizerState.globalLazy[u * 2] += delta;
+            ModifyVisualizerState.globalLazy[u * 2 + 1] += delta;
+            console.log(`  - 左子节点 u=${u * 2} 接收懒标记 ${ModifyVisualizerState.globalLazy[u * 2]}`);
+            console.log(`  - 右子节点 u=${u * 2 + 1} 接收懒标记 ${ModifyVisualizerState.globalLazy[u * 2 + 1]}`);
+          }
+          // 清除当前节点的懒标记
+          ModifyVisualizerState.globalLazy[u] = 0;
+          console.log(`  - 清除节点 u=${u} 懒标记，当前 lazy=${ModifyVisualizerState.globalLazy[u]}`);
+          // 更新当前节点和子节点的显示
+          updateNodeDisplaySafe(u, tl, tr);
+          if (tl !== tr) {
+            const mid = Math.floor((tl + tr) / 2);
+            updateNodeDisplaySafe(u * 2, tl, mid);
+            updateNodeDisplaySafe(u * 2 + 1, mid + 1, tr);
+          }
+        }
+      }
+
+      // 向上更新
+      function pushUp(u, tl, tr) {
+        if (tl === tr) return;
+        const mid = Math.floor((tl + tr) / 2);
+        let leftSum = ModifyVisualizerState.globalTree[u * 2].sum;
+        let leftMax = ModifyVisualizerState.globalTree[u * 2].max;
+        let leftMin = ModifyVisualizerState.globalTree[u * 2].min;
+        if (ModifyVisualizerState.globalLazy[u * 2] !== 0) {
+          const leftLen = mid - tl + 1;
+          leftSum += ModifyVisualizerState.globalLazy[u * 2] * leftLen;
+          leftMax += ModifyVisualizerState.globalLazy[u * 2];
+          leftMin += ModifyVisualizerState.globalLazy[u * 2];
+        }
+        let rightSum = ModifyVisualizerState.globalTree[u * 2 + 1].sum;
+        let rightMax = ModifyVisualizerState.globalTree[u * 2 + 1].max;
+        let rightMin = ModifyVisualizerState.globalTree[u * 2 + 1].min;
+        if (ModifyVisualizerState.globalLazy[u * 2 + 1] !== 0) {
+          const rightLen = tr - (mid + 1) + 1;
+          rightSum += ModifyVisualizerState.globalLazy[u * 2 + 1] * rightLen;
+          rightMax += ModifyVisualizerState.globalLazy[u * 2 + 1];
+          rightMin += ModifyVisualizerState.globalLazy[u * 2 + 1];
+        }
+        ModifyVisualizerState.globalTree[u].sum = leftSum + rightSum;
+        ModifyVisualizerState.globalTree[u].max = Math.max(leftMax, rightMax);
+        ModifyVisualizerState.globalTree[u].min = Math.min(leftMin, rightMin);
+        console.log(`🔼 pushUp 节点 u=${u} [${tl},${tr}] sum=${ModifyVisualizerState.globalTree[u].sum}, max=${ModifyVisualizerState.globalTree[u].max}, min=${ModifyVisualizerState.globalTree[u].min}`);
+        updateNodeDisplaySafe(u, tl, tr);
+      }
+
+      // 区间修改
+      function updateRange(l, r, tl, tr, u, delta) {
+        console.log(`🔧 updateRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}] 增加 ${delta}`);
+        if (l <= tl && tr <= r) {
+          ModifyVisualizerState.globalLazy[u] += delta;
+          console.log(`✅ 完全包含，节点 u=${u} 添加懒标记 ${ModifyVisualizerState.globalLazy[u]}`);
+          updateNodeDisplaySafe(u, tl, tr);
+          return;
+        }
+        if (r < tl || l > tr) {
+          console.log(`❌ 无交集，节点 u=${u} 跳过`);
+          return;
+        }
+        pushDown(u, tl, tr);
+        const mid = Math.floor((tl + tr) / 2);
+        updateRange(l, r, tl, mid, u * 2, delta);
+        updateRange(l, r, mid + 1, tr, u * 2 + 1, delta);
+        // 回溯时调用 pushUp 更新当前节点
+        pushUp(u, tl, tr);
+      }
+
+      // 直接修改
+      function performRangeUpdate(modifyL, modifyR, delta, container) {
+        if (!ModifyVisualizerState.isTreeRendered || !ModifyVisualizerState.lastBuiltContainer) {
+          showError('请先构建线段树！');
+          return;
+        }
+
+        console.log(`⚡ 直接修改: [${modifyL}, ${modifyR}] 增加 ${delta}`);
+        updateRange(modifyL, modifyR, 1, ModifyVisualizerState.lastBuiltN, 1, delta);
+
+        ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
+          nodeDiv.style.background = ' #0984e3';
+          nodeDiv.style.border = '2px solid #74b9ff';
+          nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+        });
+
+        const affectedNodes = [];
+        function collectNodes(u, tl, tr) {
+          if (modifyL > tr || modifyR < tl) return;
+          if (ModifyVisualizerState.globalLazy[u] !== 0) {
+            affectedNodes.push({ u, type: 'lazy', tl, tr });
+            return;
+          }
+          affectedNodes.push({ u, type: 'process', tl, tr });
+          if (tl < tr) {
+            const mid = Math.floor((tl + tr) / 2);
+            collectNodes(u * 2, tl, mid);
+            collectNodes(u * 2 + 1, mid + 1, tr);
+          }
+        }
+        collectNodes(1, 1, ModifyVisualizerState.lastBuiltN);
+
+        affectedNodes.forEach(({ u, type, tl, tr }, index) => {
+          const nodeDiv = ModifyVisualizerState.domNodeElements.get(u);
+          if (nodeDiv) {
+            setTimeout(() => {
+              if (type === 'lazy') {
+                nodeDiv.style.background = ' #ff6b6b';
+                nodeDiv.style.border = '2px solid #e74c3c';
+                nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
+                console.log(`🔴 高亮懒标记节点 u=${u} [${tl},${tr}] lazy=${ModifyVisualizerState.globalLazy[u]}`);
+                updateNodeDisplaySafe(u, tl, tr);
+              } else {
+                nodeDiv.style.background = ' #f39c12';
+                nodeDiv.style.border = '2px solid #e67e22';
+                nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+                console.log(`🟠 高亮过程节点 u=${u} [${tl},${tr}]`);
+                updateNodeDisplaySafe(u, tl, tr);
+                // 回溯更新祖先节点
+                let currentU = Math.floor(u / 2);
+                let parentTl = tl;
+                let parentTr = tr;
+                while (currentU >= 1) {
+                  const range = findNodeRange(currentU, 1, 1, ModifyVisualizerState.lastBuiltN);
+                  if (range) {
+                    parentTl = range.tl;
+                    parentTr = range.tr;
+                    pushUp(currentU, parentTl, parentTr);
+                    const parentDiv = ModifyVisualizerState.domNodeElements.get(currentU);
+                    if (parentDiv) {
+                      parentDiv.style.background = ' #f39c12';
+                      parentDiv.style.border = '2px solid #e67e22';
+                      parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+                    }
+                  }
+                  currentU = Math.floor(currentU / 2);
+                }
+              }
+            }, index * (getBuildAnimationDelay() * 2));
+          }
+        });
+      }
+
+      // 步进修改
+      function performRangeUpdateStep(modifyL, modifyR, delta, container) {
+        if (!ModifyVisualizerState.isTreeRendered || !ModifyVisualizerState.lastBuiltContainer) {
+          showError('请先构建线段树！');
+          return;
+        } if (!stepModifyState.isActive || stepModifyState.modifyL !== modifyL || stepModifyState.modifyR !== modifyR || stepModifyState.delta !== delta) {
+          console.log('👣 初始化步进修改');
+
+          // 清除之前的修改结果
+          const oldResults = container.querySelectorAll('.modify-result');
+          oldResults.forEach(result => result.remove());
+
+          // 重置所有节点样式
+          ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
+            nodeDiv.style.background = ' #0984e3';
+            nodeDiv.style.border = '2px solid #74b9ff';
+            nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+          });
+
+          // 移除旧的进度条
+          const oldProgress = container.querySelector('#modify-step-progress-container');
+          if (oldProgress) oldProgress.remove();
+
+          // 创建新的进度条
+          const progressContainer = document.createElement('div');
+          progressContainer.id = 'modify-step-progress-container';
+          progressContainer.style.margin = '10px';
+          progressContainer.style.padding = '10px';
+          progressContainer.style.borderRadius = '8px';
+          progressContainer.style.background = 'rgba(248, 249, 250, 0.95)';
+          progressContainer.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+          progressContainer.innerHTML = `
+          <div id="modify-step-progress-info" style="margin-bottom: 8px; font-size: 14px; color: #495057;">
+              步进修改进度: <span id="modify-step-current">0</span>/<span id="modify-step-total">0</span> (<span id="modify-step-percentage">0%</span>)
+          </div>
+          <div style="background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden;">
+              <div id="modify-step-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #e67e22, #f39c12); transition: width 0.3s ease;"></div>
+          </div>
+      `;
+          container.prepend(progressContainer);
+
+          stepModifyState.isActive = true;
+          stepModifyState.affectedNodes = [];
+          stepModifyState.currentIndex = 0;
+          stepModifyState.modifyL = modifyL;
+          stepModifyState.modifyR = modifyR;
+          stepModifyState.delta = delta;
+          stepModifyState.container = container;
+
+          updateRange(modifyL, modifyR, 1, ModifyVisualizerState.lastBuiltN, 1, delta);
+
+          function collectAffectedNodes(u, tl, tr) {
+            if (modifyL > tr || modifyR < tl) return;
+            if (modifyL <= tl && tr <= modifyR) {
+              stepModifyState.affectedNodes.push({ u, type: 'lazy', tl, tr });
+              return;
+            }
+            stepModifyState.affectedNodes.push({ u, type: 'process', tl, tr });
+            if (tl < tr) {
+              const mid = Math.floor((tl + tr) / 2);
+              collectAffectedNodes(u * 2, tl, mid);
+              collectAffectedNodes(u * 2 + 1, mid + 1, tr);
+            }
+          }
+          collectAffectedNodes(1, 1, ModifyVisualizerState.lastBuiltN);
+          console.log(`👣 初始化完成，受影响节点数: ${stepModifyState.affectedNodes.length}`);
+
+          // 更新总步数
+          const stepTotal = container.querySelector('#modify-step-total');
+          if (stepTotal) stepTotal.textContent = stepModifyState.affectedNodes.length;
+
+          // 初始化完成，等待下次点击执行第一步
+          return;
+        } if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
+          console.log('✅ 所有步进修改步骤完成');
+
+          // 显示修改完成结果
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'modify-result';
+          resultDiv.style.margin = '10px';
+          resultDiv.style.padding = '15px';
+          resultDiv.style.background = '#fff3cd';
+          resultDiv.style.borderRadius = '8px';
+          resultDiv.style.border = '1px solid #ffeaa7';
+          resultDiv.style.position = 'relative';
+          resultDiv.innerHTML = `
+          <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
+          <strong>修改完成 [${modifyL}, ${modifyR}] 增加 ${delta}:</strong><br>
+          所有受影响的节点已更新完毕！
+      `;
+
+          // 添加关闭按钮事件
+          const closeBtn = resultDiv.querySelector('.close-btn');
+          closeBtn.addEventListener('click', () => {
+            resultDiv.remove();
+          });
+
+          container.appendChild(resultDiv);
+
+          // 移除进度条
+          const progressContainer = container.querySelector('#modify-step-progress-container');
+          if (progressContainer) progressContainer.remove();
+
+          stepModifyState.isActive = false;
+          return;
+        }
+
+        const { u, type, tl, tr } = stepModifyState.affectedNodes[stepModifyState.currentIndex];
+        const nodeDiv = ModifyVisualizerState.domNodeElements.get(u);
+
+        console.log(`👣 执行步骤 ${stepModifyState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}] 类型=${type}`);
+
+        if (nodeDiv) {
+          if (type === 'lazy') {
+            nodeDiv.style.background = ' #ff6b6b';
+            nodeDiv.style.border = '2px solid #e74c3c';
+            nodeDiv.style.boxShadow = '0 2px 12px rgba(231, 76, 60, 0.3)';
+            console.log(`🔴 步进：懒标记节点 u=${u} [${tl},${tr}] lazy=${ModifyVisualizerState.globalLazy[u]}`);
+            updateNodeDisplaySafe(u, tl, tr);
+          } else {
+            nodeDiv.style.background = ' #f39c12';
+            nodeDiv.style.border = '2px solid #e67e22';
+            nodeDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+            console.log(`🟠 步进：过程节点 u=${u} [${tl},${tr}]`);
+            pushDown(u, tl, tr);
+            // 回溯更新祖先节点
+            let currentU = Math.floor(u / 2);
+            let parentTl = tl;
+            let parentTr = tr;
+            while (currentU >= 1) {
+              const range = findNodeRange(currentU, 1, 1, ModifyVisualizerState.lastBuiltN);
+              if (range) {
+                parentTl = range.tl;
+                parentTr = range.tr;
+                pushUp(currentU, parentTl, parentTr);
+                const parentDiv = ModifyVisualizerState.domNodeElements.get(currentU);
+                if (parentDiv) {
+                  parentDiv.style.background = ' #f39c12';
+                  parentDiv.style.border = '2px solid #e67e22';
+                  parentDiv.style.boxShadow = '0 2px 12px rgba(230, 126, 34, 0.3)';
+                }
+              }
+              currentU = Math.floor(currentU / 2);
+            }
+            updateNodeDisplaySafe(u, tl, tr);
+          }
+        } else {
+          console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
+        }
+
+        // 递增索引（在高亮节点后）
+        stepModifyState.currentIndex++;
+        console.log(`👣 步骤完成，索引递增到: ${stepModifyState.currentIndex}`);
+
+        // 更新进度（基于递增后的索引）
+        const currentStep = stepModifyState.currentIndex; // 已完成的步骤数
+        const totalSteps = stepModifyState.affectedNodes.length;
+
+        const stepCurrent = container.querySelector('#modify-step-current');
+        const stepPercentage = container.querySelector('#modify-step-percentage');
+        const progressBar = container.querySelector('#modify-step-progress-bar');
+
+        console.log(`📊 更新修改进度: ${currentStep}/${totalSteps} (${Math.round((currentStep / totalSteps) * 100)}%)`);
+
+        if (stepCurrent) stepCurrent.textContent = currentStep;
+        if (stepPercentage) stepPercentage.textContent = `${Math.round((currentStep / totalSteps) * 100)}%`;
+        if (progressBar) progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+      }
+
+      // 查找节点区间
+      function findNodeRange(targetU, u, tl, tr) {
+        if (u === targetU) return { tl, tr };
+        if (tl === tr) return null;
+        const mid = Math.floor((tl + tr) / 2);
+        const leftResult = findNodeRange(targetU, u * 2, tl, mid);
+        if (leftResult) return leftResult;
+        return findNodeRange(targetU, u * 2 + 1, mid + 1, tr);
+      }
+
+      // 安全更新节点显示
+      function updateNodeDisplaySafe(u, tl, tr) {
+        const nodeDiv = ModifyVisualizerState.domNodeElements.get(u);
+        if (!nodeDiv) return;
+        const lazyValue = ModifyVisualizerState.globalLazy[u] || 0;
+        const lazyDisplay = lazyValue === 0 ? '-' : lazyValue;
+        let treeNode = ModifyVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+        let displaySum = treeNode.sum;
+        let displayMax = treeNode.max;
+        let displayMin = treeNode.min;
+        if (lazyValue !== 0) {
+          const len = tr - tl + 1;
+          displaySum += lazyValue * len;
+          displayMax += lazyValue;
+          displayMin += lazyValue;
+        }
+        nodeDiv.innerHTML = `
+      <div class="node-interval">[${tl},${tr}]</div>
+      <div class="node-info">sum:${displaySum} min:${displayMin}</div>
+      <div class="node-info">lazy:${lazyDisplay} max:${displayMax}</div>
+    `;
+        console.log(`🔄 更新节点 u=${u} [${tl},${tr}] 显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}, lazy=${lazyDisplay}`);
+      }
+      // 显示错误
+      function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.color = 'red';
+        errorDiv.style.margin = '10px';
+        errorDiv.textContent = message;
+        ModifyVisualizerState.lastBuiltContainer.prepend(errorDiv);
+        setTimeout(() => errorDiv.remove(), getAnimationDelay() * 6);
+      }
+
+      // 初始化
+      function initTreeVisualizer() {
+        const inputCustomData = document.getElementById('input-custom-data-modify');
+        const btnRandomData = document.getElementById('btn-random-data-modify');
+        const btnUpdateCustomData = document.getElementById('btn-update-custom-data-modify');
+        const btnApplyModificationDirect = document.getElementById('btn-apply-modification-direct');
+        const btnApplyModificationStep = document.getElementById('btn-apply-modification-step');
+        const customTreeVisualizerHost = document.getElementById('modify-tree-visualizer-host');
+
+        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
+
+        if (btnRandomData) {
+          btnRandomData.addEventListener('click', () => {
+            const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1); // 1 到 10
+            inputCustomData.value = randomArray.join(' ');
+          });
+        }
+
+        if (btnUpdateCustomData && customTreeVisualizerHost) {
+          btnUpdateCustomData.addEventListener('click', () => {
+            const inputData = inputCustomData?.value?.trim() || '';
+            if (!inputData) {
+              showError('请输入数据！');
+              return;
+            }
+            try {
+              const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
+              if (dataArray.length === 0 || dataArray.length > 8) {
+                showError('请输入 1 到 8 个有效数字！');
+                return;
+              }
+              // 检查每个数字是否在 -50 到 50 之间
+              const outOfRange = dataArray.some(num => num < -50 || num > 50);
+              if (outOfRange) {
+                showError('每个数字必须在 -50 到 50 之间！');
+                return;
+              }
+              buildTreeVisualizationWithData(dataArray, customTreeVisualizerHost, false);
+            } catch (error) {
+              showError('数据格式不正确！');
+            }
+          });
+        }
+
+        if (btnApplyModificationDirect) {
+          btnApplyModificationDirect.addEventListener('click', () => {
+            if (!ModifyVisualizerState.isTreeRendered) {
+              showError('请先构建线段树！');
+              return;
+            }
+            const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
+            const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
+            const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
+            if (!Number.isInteger(modifyL) || !Number.isInteger(modifyR) || !Number.isInteger(modifyValue)) {
+              showError('请输入有效的整数参数！');
+              return;
+            }
+            if (modifyValue < -50 || modifyValue > 50) {
+              showError('修改值必须在 -50 到 +50 之间！');
+              return;
+            }
+            if (modifyL < 1 || modifyR > ModifyVisualizerState.lastBuiltN || modifyL > modifyR) {
+              showError(`请输入有效的区间 [1, ${ModifyVisualizerState.lastBuiltN}]！`);
+              return;
+            }
+            performRangeUpdate(modifyL, modifyR, modifyValue, ModifyVisualizerState.lastBuiltContainer);
+          });
+        }
+
+        if (btnApplyModificationStep) {
+          btnApplyModificationStep.addEventListener('click', () => {
+            if (!ModifyVisualizerState.isTreeRendered) {
+              showError('请先构建线段树！');
+              return;
+            }
+            const modifyL = parseInt(document.getElementById('input-modify-left')?.value);
+            const modifyR = parseInt(document.getElementById('input-modify-right')?.value);
+            const modifyValue = parseInt(document.getElementById('input-modify-value')?.value);
+            if (!Number.isInteger(modifyL) || !Number.isInteger(modifyR) || !Number.isInteger(modifyValue)) {
+              showError('请输入有效的整数参数！');
+              return;
+            }
+            if (modifyValue < -50 || modifyValue > 50) {
+              showError('修改值必须在 -50 到 +50 之间！');
+              return;
+            }
+            if (modifyL < 1 || modifyR > ModifyVisualizerState.lastBuiltN || modifyL > modifyR) {
+              showError(`请输入有效的区间 [1, ${ModifyVisualizerState.lastBuiltN}]！`);
+              return;
+            }
+            performRangeUpdateStep(modifyL, modifyR, modifyValue, ModifyVisualizerState.lastBuiltContainer);
+          });
+        }
+
+        window.addEventListener('resize', debounce(() => {
+          if (ModifyVisualizerState.isTreeRendered && ModifyVisualizerState.lastBuiltContainer && ModifyVisualizerState.lastBuiltN > 0) {
+            const containerStyle = window.getComputedStyle(ModifyVisualizerState.lastBuiltContainer);
+            if (containerStyle.display !== 'none' && ModifyVisualizerState.lastBuiltContainer.offsetParent !== null) {
+              buildTreeVisualizationWithData(null, ModifyVisualizerState.lastBuiltContainer, true);
+            }
+          }
+        }, 250));
+
+        // 监听动画速度变化事件
+        window.addEventListener('animationSpeedChanged', (event) => {
+          console.log('🎬 动画速度已更改为:', event.detail.speed);
+        });
+      }
+
+      // 暴露接口
+      window.ModifyTreeVisualizer = {
+        buildTreeVisualizationWithData,
+        initModifyTreeVisualizer: initTreeVisualizer
+      };
+    })();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 状态管理
+      const QueryVisualizerState = {
+        lastBuiltN: 0,
+        lastBuiltContainer: null,
+        isTreeRendered: false,
+        domNodeElements: new Map(),
+        globalTree: [],
+        globalLazy: [],
+        currentTreeLevelsData: [],
+        currentTreeBuildOrderData: [],
+        activeBuildAnimationTimeout: null
+      };
+
+      // 步进查询状态
+      let stepQueryState = {
+        isActive: false,
+        affectedNodes: [],
+        currentIndex: 0,
+        queryL: 0,
+        queryR: 0,
+        container: null,
+        result: { sum: 0, max: -Infinity, min: Infinity },
+        resultDisplayed: false
+      };
+
+      // 防抖函数
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      // 获取动画延迟
+      function getAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 1000, normal: 500, fast: 200 };
+        return speeds[animationSpeed] || 500;
+      }
+
+      // 获取构建动画延迟
+      function getBuildAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 200, normal: 100, fast: 50 };
+        return speeds[animationSpeed] || 100;
+      }
+
+      // 监听动画速度变化事件
+      window.addEventListener('animationSpeedChanged', (event) => {
+        console.log('🎬 查询可视化：动画速度已更改为:', event.detail.speed);
+      });
+
+      // 构建线段树可视化
+      function buildTreeVisualizationWithData(dataArray, container, isResizeUpdate = false) {
+        console.log('🌲 构建线段树可视化', { dataArray, containerExists: !!container, isResizeUpdate });
+
+        let n = isResizeUpdate && dataArray === null ? QueryVisualizerState.lastBuiltN : (dataArray ? dataArray.length : 0);
+        if (!isResizeUpdate) {
+          QueryVisualizerState.lastBuiltN = n;
+          QueryVisualizerState.lastBuiltContainer = container;
+          QueryVisualizerState.isTreeRendered = false;
+          QueryVisualizerState.domNodeElements.clear();
+          QueryVisualizerState.currentTreeLevelsData = [];
+          QueryVisualizerState.currentTreeBuildOrderData = [];
+          if (QueryVisualizerState.activeBuildAnimationTimeout) {
+            clearTimeout(QueryVisualizerState.activeBuildAnimationTimeout);
+            QueryVisualizerState.activeBuildAnimationTimeout = null;
+          }
+
+          if (n < 1 || n > 8) {
+            showError('请输入 1-8 个数字');
+            return;
+          }
+
+          container.innerHTML = `
+                <h4>🔍 线段树区间查询过程:</h4>
+                <p><strong>数组数据:</strong> [${dataArray ? dataArray.join(', ') : ''}]</p>
+                <p><strong>数组长度:</strong> ${n}</p>
+            `; const treeVisual = document.createElement('div');
+          treeVisual.className = 'tree-visual';
+          treeVisual.style.position = 'relative';
+          treeVisual.style.width = '100%';
+          treeVisual.style.padding = '25px';
+          treeVisual.style.background = 'transparent';
+          treeVisual.style.borderRadius = '12px';
+          // 移除边框和阴影
+          treeVisual.style.overflow = 'visible';
+          treeVisual.style.minHeight = '200px';
+          container.appendChild(treeVisual);
+        }
+
+        const treeVisual = container.querySelector('.tree-visual');
+        if (!treeVisual) {
+          console.error('树可视化元素未找到');
+          return;
+        }
+
+        const containerWidth = treeVisual.clientWidth - 50;
+        const nodeMinWidth = 50;
+        const levelHeight = 100;
+        const padding = 25;
+
+        if (!isResizeUpdate) {
+          QueryVisualizerState.globalTree = new Array(4 * n).fill().map(() => ({ sum: 0, max: -Infinity, min: Infinity }));
+          QueryVisualizerState.globalLazy = new Array(4 * n).fill(0);
+
+          function buildTree(arr, tree, node, start, end) {
+            if (start === end) {
+              const value = arr[start - 1];
+              tree[node] = { sum: value, max: value, min: value };
+            } else {
+              const mid = Math.floor((start + end) / 2);
+              buildTree(arr, tree, 2 * node, start, mid);
+              buildTree(arr, tree, 2 * node + 1, mid + 1, end);
+              const leftChild = tree[2 * node];
+              const rightChild = tree[2 * node + 1];
+              tree[node] = {
+                sum: leftChild.sum + rightChild.sum,
+                max: Math.max(leftChild.max, rightChild.max),
+                min: Math.min(leftChild.min, rightChild.min)
+              };
+            }
+          }
+          buildTree(dataArray, QueryVisualizerState.globalTree, 1, 1, n);
+        }
+
+        if (!isResizeUpdate) {
+          QueryVisualizerState.currentTreeLevelsData = [];
+          function collectLevels(l, r, u, depth = 0) {
+            if (l > r) return;
+            if (!QueryVisualizerState.currentTreeLevelsData[depth]) QueryVisualizerState.currentTreeLevelsData[depth] = [];
+            const treeNode = QueryVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+            const lazyValue = QueryVisualizerState.globalLazy[u] || 0;
+            QueryVisualizerState.currentTreeLevelsData[depth].push({ l, r, u, depth, lazy: lazyValue, sum: treeNode.sum, max: treeNode.max, min: treeNode.min });
+            if (l < r) {
+              const mid = Math.floor((l + r) / 2);
+              collectLevels(l, mid, u * 2, depth + 1);
+              collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+          collectLevels(1, n, 1);
+
+          const totalLevels = QueryVisualizerState.currentTreeLevelsData.length;
+          const calculatedHeight = totalLevels * levelHeight + 100;
+          treeVisual.style.minHeight = `${calculatedHeight}px`;
+          treeVisual.style.height = `${calculatedHeight}px`;
+        }
+
+        const nodePositions = new Map();
+        function calculateNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
+          const levelNodes = QueryVisualizerState.currentTreeLevelsData[depth];
+          if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) return;
+
+          const y = depth * levelHeight + 30;
+          let x, nodeWidth;
+          if (u === 1) {
+            nodeWidth = containerWidth - (2 * padding);
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+            x = containerWidth / 2;
+          } else {
+            nodeWidth = parentW / 2;
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+            const isLeftChild = (u % 2 === 0);
+            x = isLeftChild ? parentX - parentW / 4 : parentX + parentW / 4;
+          }
+
+          const actualContainerWidth = containerWidth;
+          const halfW = nodeWidth / 2;
+          if (x - halfW < padding) x = padding + halfW;
+          if (x + halfW > actualContainerWidth - padding) x = actualContainerWidth - padding - halfW;
+
+          nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
+
+          if (l < r) {
+            const mid = Math.floor((l + r) / 2);
+            calculateNodePositions(l, mid, u * 2, depth + 1, x, nodeWidth);
+            calculateNodePositions(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
+          }
+        }
+        calculateNodePositions(1, n, 1, 0, null, null);
+
+        if (!isResizeUpdate) {
+          QueryVisualizerState.currentTreeBuildOrderData = [];
+          function generateBuildOrder(l, r, u, depth = 0) {
+            if (l > r) return;
+            const levelNodes = QueryVisualizerState.currentTreeLevelsData[depth];
+            if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) return;
+            const treeNode = QueryVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+            const lazyValue = QueryVisualizerState.globalLazy[u] || 0;
+            QueryVisualizerState.currentTreeBuildOrderData.push({ l, r, u, depth, lazy: lazyValue, sum: treeNode.sum, max: treeNode.max, min: treeNode.min });
+            if (l < r) {
+              const mid = Math.floor((l + r) / 2);
+              generateBuildOrder(l, mid, u * 2, depth + 1);
+              generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+          generateBuildOrder(1, n, 1);
+
+          let orderIndex = 0;
+          function renderNextNode() {
+            if (orderIndex >= QueryVisualizerState.currentTreeBuildOrderData.length) {
+              QueryVisualizerState.activeBuildAnimationTimeout = null;
+              setTimeout(() => {
+                QueryVisualizerState.isTreeRendered = true;
+                console.log('🎉 线段树渲染完成');
+              }, getAnimationDelay());
+              return;
+            }
+
+            const { l, r, u, depth, lazy, sum, max, min } = QueryVisualizerState.currentTreeBuildOrderData[orderIndex];
+            const position = nodePositions.get(u); if (!position) {
+              orderIndex++;
+              QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
+              return;
+            }
+
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `tree-node depth-${depth}`;
+            nodeDiv.setAttribute('data-node-id', u);
+            const lazyDisplay = lazy === 0 ? '-' : lazy;
+            nodeDiv.innerHTML = `
+                    <div class="node-interval">[${l},${r}]</div>
+                    <div class="node-info">sum:${sum} min:${min}</div>
+                    <div class="node-info">lazy:${lazyDisplay} max:${max}</div>
+                `;
+            nodeDiv.style.position = 'absolute';
+            nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+            nodeDiv.style.top = `${position.y}px`;
+            nodeDiv.style.width = `${position.nodeWidth}px`;
+            nodeDiv.style.zIndex = '10';
+            nodeDiv.style.minHeight = '80px';
+            nodeDiv.style.display = 'flex';
+            nodeDiv.style.flexDirection = 'column';
+            nodeDiv.style.justifyContent = 'center';
+            nodeDiv.style.alignItems = 'center';
+            nodeDiv.style.fontSize = '13px';
+            nodeDiv.style.padding = '6px';
+            nodeDiv.style.boxSizing = 'border-box';
+            nodeDiv.style.borderRadius = '8px';
+            nodeDiv.style.border = '2px solid #74b9ff';
+            nodeDiv.style.background = '#0984e3';
+            nodeDiv.style.color = 'white';
+            nodeDiv.style.textAlign = 'center';
+            nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+
+            nodeDiv.style.opacity = '0';
+            nodeDiv.style.transform = 'translateY(-10px)';
+            treeVisual.appendChild(nodeDiv);
+            QueryVisualizerState.domNodeElements.set(u, nodeDiv); setTimeout(() => {
+              nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+              nodeDiv.style.opacity = '1';
+              nodeDiv.style.transform = 'translateY(0)';
+            }, getBuildAnimationDelay()); orderIndex++;
+            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
+          }
+          QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay());
+        } else {
+          requestAnimationFrame(() => {
+            QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+              const position = nodePositions.get(u);
+              if (position) {
+                nodeDiv.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+                nodeDiv.style.top = `${position.y}px`;
+                nodeDiv.style.width = `${position.nodeWidth}px`;
+              }
+            });
+          });
+          QueryVisualizerState.isTreeRendered = true;
+        }
+      }
+
+      // 下推懒标记
+      function pushDown(u, tl, tr) {
+        if (QueryVisualizerState.globalLazy[u] !== 0) {
+          const delta = QueryVisualizerState.globalLazy[u];
+          const len = tr - tl + 1;
+          console.log(`🔽 下推节点 u=${u} [${tl},${tr}] 懒标记 ${delta}`);
+          QueryVisualizerState.globalTree[u].sum += delta * len;
+          QueryVisualizerState.globalTree[u].max += delta;
+          QueryVisualizerState.globalTree[u].min += delta;
+          if (tl !== tr) {
+            QueryVisualizerState.globalLazy[u * 2] += delta;
+            QueryVisualizerState.globalLazy[u * 2 + 1] += delta;
+            console.log(`  - 左子节点 u=${u * 2} 接收懒标记 ${QueryVisualizerState.globalLazy[u * 2]}`);
+            console.log(`  - 右子节点 u=${u * 2 + 1} 接收懒标记 ${QueryVisualizerState.globalLazy[u * 2 + 1]}`);
+          }
+          QueryVisualizerState.globalLazy[u] = 0;
+          console.log(`  - 清除节点 u=${u} 懒标记，当前 lazy=${QueryVisualizerState.globalLazy[u]}`);
+          updateNodeDisplaySafe(u, tl, tr);
+          if (tl !== tr) {
+            const mid = Math.floor((tl + tr) / 2);
+            updateNodeDisplaySafe(u * 2, tl, mid);
+            updateNodeDisplaySafe(u * 2 + 1, mid + 1, tr);
+          }
+        }
+      }
+
+      // 区间查询
+      function queryRange(l, r, tl, tr, u) {
+        console.log(`🔍 queryRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}]`);
+        if (l > tr || r < tl) {
+          console.log(`❌ 无交集，节点 u=${u} 跳过`);
+          return { sum: 0, max: -Infinity, min: Infinity };
+        }
+        pushDown(u, tl, tr);
+        if (l <= tl && tr <= r) {
+          const sum = QueryVisualizerState.globalTree[u].sum;
+          const max = QueryVisualizerState.globalTree[u].max;
+          const min = QueryVisualizerState.globalTree[u].min;
+          console.log(`✅ 完全包含，节点 u=${u} 返回 sum=${sum}, max=${max}, min=${min}`);
+          const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+          if (nodeDiv) {
+            nodeDiv.dataset.fullyContained = 'true';
+          }
+          return { sum, max, min };
+        }
+        const mid = Math.floor((tl + tr) / 2);
+        const leftResult = queryRange(l, r, tl, mid, u * 2);
+        const rightResult = queryRange(l, r, mid + 1, tr, u * 2 + 1);
+        const result = {
+          sum: leftResult.sum + rightResult.sum,
+          max: Math.max(leftResult.max, rightResult.max),
+          min: Math.min(leftResult.min, rightResult.min)
+        };
+        console.log(`🔄 合并节点 u=${u} 结果: sum=${result.sum}, max=${result.max}, min=${result.min}`);
+        updateNodeDisplaySafe(u, tl, tr);
+        return result;
+      }
+
+      // 直接查询
+      function performRangeQuery(queryL, queryR, container) {
+        if (!QueryVisualizerState.isTreeRendered || !QueryVisualizerState.lastBuiltContainer) {
+          showError('请先构建线段树！');
+          return;
+        }
+
+        console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
+
+        const oldResults = container.querySelectorAll('.query-result');
+        oldResults.forEach(result => result.remove());
+
+        QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
+          nodeDiv.style.background = '#0984e3';
+          nodeDiv.style.border = '2px solid #74b9ff';
+          nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+          nodeDiv.dataset.fullyContained = 'false';
+        });
+
+        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
+        const affectedNodes = [];
+        function collectNodes(u, tl, tr) {
+          if (queryL > tr || queryR < tl) return;
+          affectedNodes.push({ u, tl, tr });
+          if (queryL <= tl && tr <= queryR) {
+            return;
+          }
+          if (tl < tr) {
+            const mid = Math.floor((tl + tr) / 2);
+            collectNodes(u * 2, tl, mid);
+            collectNodes(u * 2 + 1, mid + 1, tr);
+          }
+        }
+        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);
+
+        affectedNodes.forEach(({ u, tl, tr }, index) => {
+          const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+          if (nodeDiv) {
+            setTimeout(() => {
+              const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+              nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
+              nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
+              nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
+              console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
+              updateNodeDisplaySafe(u, tl, tr);
+            }, index * (getBuildAnimationDelay() * 2));
+          }
+        });
+
+        if (!document.querySelector('.query-result')) {
+          setTimeout(() => {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'query-result';
+            resultDiv.style.margin = '10px';
+            resultDiv.style.padding = '15px';
+            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.borderRadius = '8px';
+            resultDiv.style.border = '1px solid #ffeaa7';
+            resultDiv.style.position = 'relative';
+            resultDiv.innerHTML = `
+                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
+                    <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
+                    总和: ${result.sum}<br>
+                    最大值: ${result.max}<br>
+                    最小值: ${result.min}
+                `;
+            const closeBtn = resultDiv.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+              resultDiv.remove();
+            });
+            container.appendChild(resultDiv);
+          }, affectedNodes.length * (getBuildAnimationDelay() * 2) + getAnimationDelay());
+        }
+      }    // 步进查询
+      function performRangeQueryStep(queryL, queryR, container) {
+        console.log(`🚀 performRangeQueryStep 被调用: queryL=${queryL}, queryR=${queryR}, isActive=${stepQueryState.isActive}, currentIndex=${stepQueryState.currentIndex}`);
+
+        if (!QueryVisualizerState.isTreeRendered || !QueryVisualizerState.lastBuiltContainer) {
+          showError('请先构建线段树！');
+          return;
+        }
+
+        // 检查是否需要初始化
+        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
+          console.log('👣 初始化步进查询');
+
+          // 清除之前的查询结果
+          const oldResults = container.querySelectorAll('.query-result');
+          oldResults.forEach(result => result.remove());
+
+          // 重置所有节点样式
+          QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
+            nodeDiv.style.background = '#0984e3';
+            nodeDiv.style.border = '2px solid #74b9ff';
+            nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+            nodeDiv.dataset.fullyContained = 'false';
+          });
+
+          // 移除旧的进度条
+          const oldProgress = container.querySelector('#step-progress-container');
+          if (oldProgress) oldProgress.remove();
+
+          // 创建新的进度条
+          const progressContainer = document.createElement('div');
+          progressContainer.id = 'step-progress-container';
+          progressContainer.style.margin = '10px';
+          progressContainer.style.padding = '10px';
+          progressContainer.style.borderRadius = '8px';
+          progressContainer.innerHTML = `
+                <div id="step-progress-info">
+                    步进进度: <span id="step-current">0</span>/<span id="step-total">0</span> (<span id="step-percentage">0%</span>)
+                </div>
+                <div style="background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden;">
+                    <div id="step-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #28a745, #20c997);"></div>
+                </div>
+            `;
+          container.prepend(progressContainer);
+
+          // 重置步进状态
+          stepQueryState.isActive = true;
+          stepQueryState.affectedNodes = [];
+          stepQueryState.currentIndex = 0; // 从0开始
+          stepQueryState.queryL = queryL;
+          stepQueryState.queryR = queryR;
+          stepQueryState.container = container;
+          stepQueryState.result = { sum: 0, max: -Infinity, min: Infinity };
+          stepQueryState.resultDisplayed = false;
+
+          // 收集受影响的节点
+          function collectAffectedNodes(u, tl, tr) {
+            if (queryL > tr || queryR < tl) return;
+            stepQueryState.affectedNodes.push({ u, tl, tr });
+            // 如果当前节点被完全包含，就不继续向下递归
+            if (queryL <= tl && tr <= queryR) {
+              return;
+            }
+            if (tl < tr) {
+              const mid = Math.floor((tl + tr) / 2);
+              collectAffectedNodes(u * 2, tl, mid);
+              collectAffectedNodes(u * 2 + 1, mid + 1, tr);
+            }
+          } collectAffectedNodes(1, 1, QueryVisualizerState.lastBuiltN);
+          console.log(`👣 初始化完成，受影响节点数: ${stepQueryState.affectedNodes.length}`);
+
+          // 先保存当前的 fullyContained 状态
+          const savedStates = new Map();
+          QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+            savedStates.set(u, nodeDiv.dataset.fullyContained);
+          });
+
+          // 执行查询获取最终结果（但不显示）
+          stepQueryState.result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
+
+          // 恢复之前的 fullyContained 状态
+          QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+            nodeDiv.dataset.fullyContained = savedStates.get(u) || 'false';
+          });
+
+          // 更新总步数
+          const stepTotal = container.querySelector('#step-total');
+          if (stepTotal) stepTotal.textContent = stepQueryState.affectedNodes.length;
+
+          // 初始化完成，等待下次点击执行第一步
+          return;
+        }
+
+        // 检查是否完成所有步骤
+        if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
+          // 防止重复显示结果
+          if (stepQueryState.resultDisplayed) {
+            console.log('⚠️ 结果已显示，跳过重复显示');
+            return;
+          }
+
+          console.log('✅ 所有步进步骤完成');
+          stepQueryState.resultDisplayed = true;
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'query-result';
+          resultDiv.style.margin = '10px';
+          resultDiv.style.padding = '15px';
+          resultDiv.style.background = '#fff3cd';
+          resultDiv.style.borderRadius = '8px';
+          resultDiv.style.border = '1px solid #ffeaa7';
+          resultDiv.style.position = 'relative';
+          resultDiv.innerHTML = `
+                <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
+                <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
+                总和: ${stepQueryState.result.sum}<br>
+                最大值: ${stepQueryState.result.max}<br>
+                最小值: ${stepQueryState.result.min}
+            `;
+
+          // 添加关闭按钮事件
+          const closeBtn = resultDiv.querySelector('.close-btn');
+          closeBtn.addEventListener('click', () => {
+            resultDiv.remove();
+          });
+
+          container.appendChild(resultDiv);
+          const progressContainer = container.querySelector('#step-progress-container');
+          if (progressContainer) progressContainer.remove();
+          stepQueryState.isActive = false;
+          return;
+        }        // 执行当前步骤
+        const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
+        const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+
+        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}] (当前currentIndex=${stepQueryState.currentIndex})`);
+
+        if (nodeDiv) {
+          // 在步进过程中正确判断是否完全包含
+          const isFullyContained = (stepQueryState.queryL <= tl && tr <= stepQueryState.queryR);
+          nodeDiv.dataset.fullyContained = isFullyContained ? 'true' : 'false';
+
+          nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
+          nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
+          nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
+          console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
+          updateNodeDisplaySafe(u, tl, tr);
+        } else {
+          console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
+        }
+
+        // 递增索引（在高亮节点后）
+        stepQueryState.currentIndex++;
+        console.log(`👣 步骤完成，索引递增到: ${stepQueryState.currentIndex}`);
+
+        // 更新进度（基于递增后的索引）
+        const currentStep = stepQueryState.currentIndex; // 已完成的步骤数
+        const totalSteps = stepQueryState.affectedNodes.length;
+
+        const stepCurrent = container.querySelector('#step-current');
+        const stepPercentage = container.querySelector('#step-percentage');
+        const progressBar = container.querySelector('#step-progress-bar');
+
+        console.log(`📊 更新进度: ${currentStep}/${totalSteps} (${Math.round((currentStep / totalSteps) * 100)}%)`);
+
+        if (stepCurrent) stepCurrent.textContent = currentStep;
+        if (stepPercentage) stepPercentage.textContent = `${Math.round((currentStep / totalSteps) * 100)}%`;
+        if (progressBar) progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+      }
+
+      // 安全更新节点显示
+      function updateNodeDisplaySafe(u, tl, tr) {
+        const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+        if (!nodeDiv) return;
+        const lazyValue = QueryVisualizerState.globalLazy[u] || 0;
+        const lazyDisplay = lazyValue === 0 ? '-' : lazyValue;
+        let treeNode = QueryVisualizerState.globalTree[u] || { sum: 0, max: 0, min: 0 };
+        let displaySum = treeNode.sum;
+        let displayMax = treeNode.max;
+        let displayMin = treeNode.min;
+        if (lazyValue !== 0) {
+          const len = tr - tl + 1;
+          displaySum += lazyValue * len;
+          displayMax += lazyValue;
+          displayMin += lazyValue;
+        }
+        nodeDiv.innerHTML = `
+            <div class="node-interval">[${tl},${tr}]</div>
+            <div class="node-info">sum:${displaySum} min:${displayMin}</div>
+            <div class="node-info">lazy:${lazyDisplay} max:${displayMax}</div>
+        `;
+        console.log(`🔄 更新节点 u=${u} [${tl},${tr}] 显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}, lazy=${lazyDisplay}`);
+      }    // 显示错误
+      function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.color = 'red';
+        errorDiv.style.margin = '10px';
+        errorDiv.textContent = message;
+        QueryVisualizerState.lastBuiltContainer?.prepend(errorDiv);
+        setTimeout(() => errorDiv.remove(), getAnimationDelay() * 6);
+      }// 防止重复初始化的标记
+      let isInitialized = false;
+
+      // 初始化
+      function initQueryTreeVisualizer() {
+        if (isInitialized) {
+          console.log('⚠️ 查询可视化模块已初始化，跳过重复初始化');
+          return;
+        }
+
+        const inputCustomData = document.getElementById('input-custom-data-query');
+        const btnRandomData = document.getElementById('btn-random-data-query');
+        const btnUpdateCustomData = document.getElementById('btn-update-custom-data-query');
+        const btnApplyQueryDirect = document.getElementById('btn-apply-query-direct');
+        const btnApplyQueryStep = document.getElementById('btn-apply-query-step');
+        const customTreeNodesData = document.getElementById('query-tree-visualizer-host');
+
+        if (!inputCustomData || !btnRandomData || !btnUpdateCustomData || !btnApplyQueryDirect || !btnApplyQueryStep || !customTreeNodesData) {
+          console.error('初始化失败：缺少必要的 DOM 元素', {
+            inputCustomData: !!inputCustomData,
+            btnRandomData: !!btnRandomData,
+            btnUpdateCustomData: !!btnUpdateCustomData,
+            btnApplyQueryDirect: !!btnApplyQueryDirect,
+            btnApplyQueryStep: !!btnApplyQueryStep,
+            customTreeNodesData: !!customTreeNodesData
+          });
+          showError('页面元素加载失败，请检查 HTML 结构！');
+          return;
+        }
+
+        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
+
+        if (btnRandomData) {
+          btnRandomData.addEventListener('click', () => {
+            const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1);
+            if (inputCustomData) inputCustomData.value = randomArray.join(' ');
+          });
+        }
+
+        if (btnUpdateCustomData && customTreeNodesData) {
+          btnUpdateCustomData.addEventListener('click', () => {
+            const inputData = inputCustomData?.value?.trim();
+            if (!inputData) {
+              showError('请输入数据！');
+              return;
+            }
+            try {
+              const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
+              if (dataArray.length === 0 || dataArray.length > 8) {
+                showError('请输入 1 到 8 个有效数字！');
+                return;
+              }
+              const outOfRange = dataArray.some(num => num < -50 || num > 50);
+              if (outOfRange) {
+                showError('每个数字必须在 -50 到 50 之间！');
+                return;
+              }
+              buildTreeVisualizationWithData(dataArray, customTreeNodesData);
+            } catch (error) {
+              showError('数据格式不正确！');
+            }
+          });
+        }
+
+        if (btnApplyQueryDirect) {
+          btnApplyQueryDirect.addEventListener('click', () => {
+            if (!QueryVisualizerState.isTreeRendered) {
+              showError('请先构建线段树！');
+              return;
+            }
+            const queryL = parseInt(document.getElementById('input-query-left')?.value || '0');
+            const queryR = parseInt(document.getElementById('input-query-right')?.value || '0');
+            if (isNaN(queryL) || isNaN(queryR)) {
+              showError('请输入有效的整数参数！');
+              return;
+            }
+            if (queryL < 1 || queryR > QueryVisualizerState.lastBuiltN || queryL > queryR) {
+              showError(`请输入有效的区间 [1, ${QueryVisualizerState.lastBuiltN}]！`);
+              return;
+            }
+            performRangeQuery(queryL, queryR, QueryVisualizerState.lastBuiltContainer);
+          });
+        } if (btnApplyQueryStep) {
+          const handleStepQuery = () => {
+            console.log('🚀 步进查询按钮被点击');
+
+            if (!QueryVisualizerState.isTreeRendered) {
+              showError('请先构建线段树！');
+              return;
+            }
+            const queryL = parseInt(document.getElementById('input-query-left')?.value || '0');
+            const queryR = parseInt(document.getElementById('input-query-right')?.value || '0');
+            if (isNaN(queryL) || isNaN(queryR)) {
+              showError('请输入有效的整数参数！');
+              return;
+            }
+            if (queryL < 1 || queryR > QueryVisualizerState.lastBuiltN || queryL > queryR) {
+              showError(`请输入有效的区间 [1, ${QueryVisualizerState.lastBuiltN}]！`);
+              return;
+            }
+            performRangeQueryStep(queryL, queryR, QueryVisualizerState.lastBuiltContainer);
+          };
+
+          // 清除所有可能的旧事件监听器
+          const newButton = btnApplyQueryStep.cloneNode(true);
+          btnApplyQueryStep.parentNode.replaceChild(newButton, btnApplyQueryStep);
+          newButton.addEventListener('click', handleStepQuery);
+        } window.addEventListener('resize', debounce(() => {
+          if (QueryVisualizerState.isTreeRendered && QueryVisualizerState.lastBuiltContainer && QueryVisualizerState.lastBuiltN > 0) {
+            const containerStyle = window.getComputedStyle(QueryVisualizerState.lastBuiltContainer);
+            if (containerStyle.display !== 'none' && QueryVisualizerState.lastBuiltContainer.offsetParent !== null) {
+              buildTreeVisualizationWithData(null, QueryVisualizerState.lastBuiltContainer, true);
+            }
+          }
+        }, 250));
+
+        isInitialized = true;
+        console.log('✅ 查询可视化模块初始化完成');
+      }
+
+      window.QueryTreeVisualizer = {
+        buildTreeVisualizationWithData,
+        initQueryTreeVisualizer
+      };
+
+      initQueryTreeVisualizer();
+    });
+  </script>
+  <script>
+    /* 导航功能模块 */
+
+    // 导航切换
+    function showSection(id) {
+      document.querySelectorAll('main section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        const targetBtn = document.querySelector(`button[onclick="showSection('${id}')"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+      }
+    }
+
+    // 初始化导航事件
+    function initNavigation() {
+      // 导航事件委托
+      const nav = document.querySelector('nav');
+      if (nav) {
+        nav.addEventListener('click', (e) => {
+          if (e.target.tagName === 'BUTTON') {
+            const onclickAttr = e.target.getAttribute('onclick');
+            if (onclickAttr) {
+              const match = onclickAttr.match(/'([^']+)'/);
+              if (match) {
+                const sectionId = match[1];
+                showSection(sectionId);
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // 导出函数供其他模块使用
+    window.Navigation = {
+      showSection,
+      initNavigation
+    };
+  </script>
+  <script>
+    /* 测验功能模块 */
+
+    // 测试检查
+    function checkQuiz() {
+      const answers = { q1: 'b', q2: 'c', q3: 'b' };
+      let score = 0;
+      let results = [];
+
+      for (const [question, correct] of Object.entries(answers)) {
+        const selected = document.querySelector(`input[name="${question}"]:checked`);
+        if (!selected) {
+          results.push(`❌ 问题 ${question.slice(1)}: 未选择答案`);
+          continue;
+        }
+        if (selected.value === correct) {
+          score++;
+          results.push(`✅ 问题 ${question.slice(1)}: 正确`);
+        } else {
+          results.push(`❌ 问题 ${question.slice(1)}: 错误`);
+        }
+      }
+
+      const total = Object.keys(answers).length;
+      const quizResult = document.getElementById('quiz-result');
+
+      if (quizResult) {
+        quizResult.style.display = 'block';
+        quizResult.innerHTML = `
+            <h3>🎯 测试结果</h3>
+            <p><strong>得分: ${score}/${total} (${Math.round(score / total * 100)}%)</strong></p>
+            ${results.join('<br>')}
+            <p style="margin-top: 15px;">
+              ${score === total ? '🎉 完美！你已经完全掌握了线段树的基础知识！' :
+            score >= total * 0.7 ? '👍 不错！继续加油学习线段树！' :
+              '💪 还需要更多练习，建议重新阅读相关内容。'}
+            </p>
+          `;
+        quizResult.style.background = score === total ? 'var(--success-bg)' :
+          score >= total * 0.7 ? 'var(--warning-bg)' : 'var(--error-bg)';
+        quizResult.style.color = 'white';
+      }
+    }
+
+    // 初始化测验功能
+    function initQuiz() {
+      const quizOptionItems = document.querySelectorAll('.quiz-options .quiz-option-item');
+      quizOptionItems.forEach(item => {
+        item.addEventListener('click', function () {
+          const radioInput = this.querySelector('input[type="radio"]');
+          if (radioInput) {
+            radioInput.checked = true;
+          }
+        });
+      });
+      // 这里可以添加其他初始化逻辑
+    }
+
+    // 导出函数供其他模块使用
+    window.Quiz = {
+      checkQuiz,
+      initQuiz
+    };
+  </script>
+  <script>
+    /* 语法高亮功能模块 */
+
+    // 语法高亮规则 (来自附件)
+    const highlightRules = {
+      keywords: ['template', 'typename', 'if', 'else', 'for', 'while', 'do', 'return', 'struct', 'class', 'public',
+        'private', 'protected', 'const', 'static', 'break', 'continue', 'switch', 'case', 'default', 'namespace',
+        'using', 'include', 'define', 'ifdef', 'ifndef', 'endif', 'typedef', 'sizeof'],
+      types: ['T', 'signed', 'auto', 'bool', 'char', 'double', 'float', 'long', 'short', 'unsigned', 'void', 'int', 'Laz',
+        'Info', 'Node', 'vector', 'string', 'pair', 'map', 'set', 'queue', 'stack', 'priority_queue', 'MAXN'],
+      commonVars: ['info', 'lazy', 'tree', 'arr', 'a', 'n', 'l', 'r', 'u', 'mid', 'res', 'sum', 'k'],
+      commentSingle: /(\/\/.*?)(\n|$)/g,
+      commentMulti: /(\/\*[\s\S]*?\*\/)/g,
+      strings: /("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g,
+      numbers: /\b(\d+)\b/g,
+      operators: /(<<|>>|<=|>=|==|!=|&&|\|\||[+\-*%=!&|^~<>])/g,
+      functions: /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g,
+      brackets: /([(){}\[\]])/g,
+      symbols: /([;,.:?])/g, // Adjusted to include '?' as per attachment's tokenizer logic
+      pointers: /(\*|&)(?=\s*[a-zA-Z_])/g,
+      preprocessor: /(#\w+)/g
+    };
+
+    // C++ 语法高亮函数 - 精细高亮每个语法元素 (来自附件)
+    function highlightCode(code) {
+      // 预处理：保护字符串和注释
+      let protectedItems = [];
+      let protectedIndex = 0;
+
+      function saveItem(content, type) {
+        const placeholder = `__PROTECTED_${protectedIndex}__`;
+        protectedItems[protectedIndex] = {
+          placeholder: placeholder,
+          content: `<span class="${type}">${content}</span>`,
+          original: content
+        };
+        protectedIndex++;
+        return placeholder;
+      }
+
+      // 1. 保护字符串
+      code = code.replace(highlightRules.strings, (match) => {
+        return saveItem(match, 'string');
+      });
+
+      // 2. 保护注释
+      code = code.replace(highlightRules.commentSingle, (match, comment, ending) => {
+        return saveItem(comment, 'comment') + ending;
+      });
+      code = code.replace(highlightRules.commentMulti, (match) => {
+        return saveItem(match, 'comment');
+      });
+
+      // 3. 保护预处理指令
+      code = code.replace(highlightRules.preprocessor, (match) => {
+        return saveItem(match, 'preprocessor');
+      });
+
+      // 精细化token处理 - 逐字符分析
+      function tokenizeAndHighlight(text) {
+        const tokens = [];
+        let current = '';
+        let i = 0;
+
+        while (i < text.length) {
+          const char = text[i];
+
+          if (char === '_' && text.substr(i, 12) === '__PROTECTED_') {
+            if (current.trim()) {
+              tokens.push(...processTextToken(current));
+              current = '';
+            }
+            const endIndex = text.indexOf('__', i + 12);
+            if (endIndex !== -1) {
+              tokens.push(text.substring(i, endIndex + 2));
+              i = endIndex + 2;
+              continue;
+            }
+          }
+
+          if (/\s/.test(char)) {
+            if (current.trim()) {
+              tokens.push(...processTextToken(current));
+              current = '';
+            }
+            tokens.push(char);
+            i++;
+            continue;
+          }
+
+          if (/[+\-*%=!<>&|^~]/.test(char)) {
+            if (current.trim()) {
+              tokens.push(...processTextToken(current));
+              current = '';
+            }
+
+            let operator = char;
+            if (i + 1 < text.length) {
+              const nextChar = text[i + 1];
+              const twoChar = char + nextChar;
+              if (['<<', '>>', '<=', '>=', '==', '!=', '&&', '||'].includes(twoChar)) {
+                operator = twoChar;
+                i++;
+              }
+            }
+            tokens.push(`<span class="operator">${operator}</span>`);
+            i++;
+            continue;
+          }
+
+          if (/[(){}\[\]]/.test(char)) {
+            if (current.trim()) {
+              tokens.push(...processTextToken(current));
+              current = '';
+            }
+            tokens.push(`<span class="bracket">${char}</span>`);
+            i++;
+            continue;
+          }
+
+          if (/[;,.:?]/.test(char)) { // Using the regex from attachment's tokenizer
+            if (current.trim()) {
+              tokens.push(...processTextToken(current));
+              current = '';
+            }
+            tokens.push(`<span class="symbol">${char}</span>`);
+            i++;
+            continue;
+          }
+
+          current += char;
+          i++;
+        }
+
+        if (current.trim()) {
+          tokens.push(...processTextToken(current));
+        }
+
+        return tokens.join('');
+      }
+
+      function processTextToken(token) {
+        const trimmed = token.trim();
+        if (!trimmed) return [token];
+
+        const leadingSpace = token.match(/^\s*/)[0];
+        const trailingSpace = token.match(/\s*$/)[0];
+        const result = [];
+
+        if (leadingSpace) result.push(leadingSpace);
+
+        if (highlightRules.keywords.includes(trimmed)) {
+          result.push(`<span class="keyword">${trimmed}</span>`);
+        }
+        else if (highlightRules.types.includes(trimmed)) {
+          result.push(`<span class="type">${trimmed}</span>`);
+        }
+        else if (/^\d+$/.test(trimmed)) {
+          result.push(`<span class="number">${trimmed}</span>`);
+        }
+        else if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+          if (highlightRules.commonVars.includes(trimmed)) {
+            result.push(`<span class="variable">${trimmed}</span>`);
+          } else {
+            // Heuristic for functions (can be improved with lookahead for '(' if needed)
+            // For now, using the attachment's specific list and a general function class
+            if (['build', 'query', 'update', 'modify', 'push_up', 'push_down', 'insert', 'kth'].includes(trimmed) ||
+              (token.includes('(') && token.indexOf('(') > token.indexOf(trimmed))) { // Basic check
+              result.push(`<span class="function">${trimmed}</span>`);
+            } else {
+              result.push(`<span class="variable">${trimmed}</span>`); // Default to variable
+            }
+          }
+        }
+        else if (/[*&]/.test(trimmed)) { // For pointers/references attached to names
+          let parts = trimmed.split(/([*&])/).filter(Boolean);
+          parts.forEach(part => {
+            if (/[*&]/.test(part)) {
+              result.push(`<span class="pointer">${part}</span>`);
+            } else if (part.trim()) { // Process the remaining part
+              result.push(...processTextToken(part)); // Recursive call for the name part
+            }
+          });
+        }
+        else {
+          result.push(trimmed);
+        }
+
+        if (trailingSpace) result.push(trailingSpace);
+        return result;
+      }
+
+      const highlightedCode = tokenizeAndHighlight(code);
+
+      let finalCode = highlightedCode;
+      for (let i = protectedItems.length - 1; i >= 0; i--) {
+        const item = protectedItems[i];
+        finalCode = finalCode.replace(item.placeholder, item.content);
+      }
+
+      return `<code>${finalCode}</code>`;
+    }
+
+    function addCopyButton(preElement) {
+      // Ensure preElement has position:relative for absolute positioning of the button
+      if (getComputedStyle(preElement).position === 'static') {
+        preElement.style.position = 'relative';
+      }
+
+      // Avoid adding multiple buttons
+      if (preElement.querySelector('.copy-button')) {
+        return;
+      }
+
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-button';
+      copyButton.setAttribute('aria-label', 'Copy code'); // For accessibility
+
+      const bracketsSpan = document.createElement('span');
+      bracketsSpan.className = 'brackets';
+      bracketsSpan.textContent = '{}';
+
+      const messageSpan = document.createElement('span');
+      messageSpan.className = 'message';
+      messageSpan.textContent = 'Copied!'; // Default message text, will be shown on success
+
+      copyButton.appendChild(bracketsSpan);
+      copyButton.appendChild(messageSpan);
+
+      copyButton.addEventListener('click', async () => {
+        const codeElement = preElement.querySelector('code');
+        if (!codeElement) {
+          // console.warn('Could not find code element to copy.'); // Optional: user-facing feedback might be better
+          return;
+        }
+
+        const textToCopy = codeElement.innerText;
+
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+
+          // Clear any previous error state and set copied state
+          if (copyButton.classList.contains('error')) {
+            copyButton.classList.remove('error');
+            // Ensure messageSpan text is correct for 'copied' state if it was 'Error!'
+            messageSpan.textContent = 'Copied!';
+          }
+          copyButton.classList.add('copied');
+
+          setTimeout(() => {
+            copyButton.classList.remove('copied');
+          }, 2000);
+
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+
+          // Clear copied state (if any) and set error state
+          if (copyButton.classList.contains('copied')) {
+            copyButton.classList.remove('copied');
+          }
+          copyButton.classList.add('error');
+          messageSpan.textContent = 'Error!'; // Set message to 'Error!' for the error state
+
+          setTimeout(() => {
+            copyButton.classList.remove('error');
+            messageSpan.textContent = 'Copied!'; // Reset message text for next potential copy
+          }, 2000);
+        }
+      });
+
+      preElement.appendChild(copyButton);
+    }
+
+    // 立即应用语法高亮 (Adjusted)
+    function applyHighlighting() {
+      document.querySelectorAll('.code-block').forEach(block => {
+        if (!block.dataset.originalCode) {
+          const codeTag = block.querySelector('code');
+          if (codeTag) {
+            block.dataset.originalCode = codeTag.textContent;
+          } else {
+            block.dataset.originalCode = block.textContent;
+          }
+        }
+
+        if (!block.dataset.highlighted && block.dataset.originalCode) {
+          const highlightedContent = highlightCode(block.dataset.originalCode); // Returns "<code>...</code>"
+
+          const existingCodeTag = block.querySelector('code');
+          if (existingCodeTag) {
+            existingCodeTag.innerHTML = highlightedContent.substring('<code>'.length, highlightedContent.length - '</code>'.length);
+          } else {
+            block.innerHTML = highlightedContent;
+          }
+          block.dataset.highlighted = true;
+        }
+        addCopyButton(block); // Add copy button after highlighting
+      });
+    }
+
+    // 延迟加载语法高亮（用于动态添加的代码块）(Adjusted)
+    function setupLazyHighlighting() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const block = entry.target;
+            if (!block.dataset.highlighted) {
+              let originalCode = block.dataset.originalCode;
+              if (!originalCode) {
+                const codeTag = block.querySelector('code');
+                if (codeTag) {
+                  originalCode = codeTag.textContent;
+                  block.dataset.originalCode = originalCode; // Store if fetched now
+                } else {
+                  originalCode = block.textContent;
+                  block.dataset.originalCode = originalCode; // Store if fetched now
+                }
+              }
+
+              if (originalCode) {
+                const highlightedContent = highlightCode(originalCode); // Returns "<code>...</code>"
+                const existingCodeTag = block.querySelector('code');
+                if (existingCodeTag) {
+                  existingCodeTag.innerHTML = highlightedContent.substring('<code>'.length, highlightedContent.length - '</code>'.length);
+                } else {
+                  block.innerHTML = highlightedContent;
+                }
+                block.dataset.highlighted = true;
+              }
+            }
+            addCopyButton(block); // Add copy button when block becomes visible and is processed
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.code-block:not([data-observed])').forEach(block => {
+        if (!block.dataset.originalCode) {
+          const codeTag = block.querySelector('code');
+          if (codeTag) {
+            block.dataset.originalCode = codeTag.textContent;
+          } else {
+            block.dataset.originalCode = block.textContent;
+          }
+        }
+        block.dataset.observed = 'true';
+        observer.observe(block);
+      });
+    }
+
+    // 导出函数供其他模块使用
+    window.SyntaxHighlighter = {
+      highlightCode,
+      applyHighlighting,
+      setupLazyHighlighting
+    };
+  </script>
+  <script>
+    /* 线段树可视化模块 */
+
+    // --- Start of Adaptive Functionality State ---
+    let lastBuiltN = 0;
+    let lastBuiltContainer = null;
+    let isTreeRendered = false;
+    let domNodeElements = new Map(); // Stores DOM node elements, keyed by 'u'
+    let domLineElements = new Map(); // Stores DOM line elements, keyed by child 'u'
+    let currentTreeLevelsData = [];
+    let currentTreeBuildOrderData = [];
+    let activeBuildAnimationTimeout = null; // To cancel ongoing build animation
+    // --- End of Adaptive Functionality State ---
+
+    // Debounce function
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // 线段树可视化 - 基于边界的智能布局算法
+    function buildTreeVisualization(n, container, isResizeUpdate = false) {
+      if (!isResizeUpdate) {
+        // This is an initial build or a full rebuild
+        lastBuiltN = n;
+        lastBuiltContainer = container;
+        isTreeRendered = false; // Mark as not rendered until animation completes
+        domNodeElements.clear();
+        domLineElements.clear();
+        currentTreeLevelsData = [];
+        currentTreeBuildOrderData = [];
+
+        if (activeBuildAnimationTimeout) {
+          clearTimeout(activeBuildAnimationTimeout);
+          activeBuildAnimationTimeout = null;
+        }
+
+        if (n < 1 || n > 8) {
+          alert('请输入1-8');
+          return;
+        }
+
+        // 清空容器内容并创建固定的结构
+        container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
+        container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`; const treeVisual = document.createElement('div');
+        treeVisual.className = 'tree-visual';
+        treeVisual.style.position = 'relative';
+        treeVisual.style.width = '100%';
+        treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
+        treeVisual.style.background = 'transparent';
+        treeVisual.style.borderRadius = '12px'; // 改为12px圆角
+        // 移除边框和阴影
+        treeVisual.style.overflow = 'visible';
+        treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
+        container.appendChild(treeVisual);
+      }
+
+      const treeVisual = container.querySelector('.tree-visual');
+      if (!treeVisual) {
+        console.error("Tree visual element not found.");
+        return;
+      }
+
+      const containerWidth = treeVisual.clientWidth - 50; // Effective drawing width after treeVisual's own 25px padding
+      const nodeMinWidth = 50;
+      const levelHeight = 80;
+      const padding = 25; // Internal padding within the containerWidth
+
+      if (!isResizeUpdate) {
+        // This is an initial build: collect tree levels data
+        currentTreeLevelsData = []; // Clear for new build
+        function collectLevels(l, r, u, depth = 0) {
+          if (l > r) return; // Base case: invalid range, do not process
+          if (!currentTreeLevelsData[depth]) currentTreeLevelsData[depth] = [];
+          currentTreeLevelsData[depth].push({ l, r, u, depth });
+          if (l < r) { // Only recurse if the range can be split further
+            const mid = Math.floor((l + r) / 2);
+            collectLevels(l, mid, u * 2, depth + 1);
+            if (mid < r) { // Ensure right child is only processed if its range is valid
+              collectLevels(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+        }
+        collectLevels(1, n, 1);
+
+        const totalLevels = currentTreeLevelsData.length;
+        const baseHeight = 60;
+        const calculatedHeight = totalLevels * levelHeight + baseHeight + 40;
+        const minHeight = Math.max(200, calculatedHeight);
+        treeVisual.style.minHeight = `${minHeight}px`;
+        treeVisual.style.height = `${minHeight}px`;
+      }
+
+      const nodePositions = new Map();
+
+      // 修改后的 calculateNodePositions 函数
+      function calculateNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
+        // Check if this node should exist based on currentTreeLevelsData
+        // This is a more robust way to ensure we only calculate positions for valid nodes
+        const levelNodes = currentTreeLevelsData[depth];
+        if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+          return; // Do not calculate position for a node that doesn't exist in the collected levels
+        }
+
+        const y = depth * levelHeight + 30;
+        let x, nodeWidth;
+
+        if (u === 1) { // Root node
+          nodeWidth = containerWidth - (2 * padding); // Root spans containerWidth minus internal paddings
+          nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+          x = containerWidth / 2; // Centered within containerWidth
+        } else { // Child Node
+          if (parentW == null || parentX == null) {
+            console.error(`Parent data not passed for node ${u}`);
+            nodeWidth = nodeMinWidth; // Fallback
+            const tempParentPos = nodePositions.get(Math.floor(u / 2)); // Attempt to get from map if available
+            x = tempParentPos ? tempParentPos.x : containerWidth / 2; // Fallback center
+          } else {
+            nodeWidth = parentW / 2; // Child width is half of parent's width
+            nodeWidth = Math.max(nodeMinWidth, nodeWidth);
+
+            const isLeftChild = (u % 2 === 0);
+            if (isLeftChild) {
+              x = parentX - parentW / 4; // Center in parent's left half-width
+            } else { // Right child
+              x = parentX + parentW / 4; // Center in parent's right half-width
+            }
+          }
+        }
+
+        // Boundary clamping: Ensure the node (its edges) stays within the designated internal padding
+        const halfW = nodeWidth / 2;
+        if (x - halfW < padding) { // Left edge should not be less than internal 'padding'
+          x = padding + halfW;
+        }
+        if (x + halfW > containerWidth - padding) { // Right edge should not exceed 'containerWidth - padding'
+          x = containerWidth - padding - halfW;
+        }
+
+        nodePositions.set(u, { x, y, l, r, depth, nodeWidth });
+
+        if (l < r) { // If not a data leaf, recurse for children
+          const mid = Math.floor((l + r) / 2);
+          calculateNodePositions(l, mid, u * 2, depth + 1, x, nodeWidth);
+          if (mid < r) { // Ensure right child is only processed if its range is valid
+            calculateNodePositions(mid + 1, r, u * 2 + 1, depth + 1, x, nodeWidth);
+          }
+        }
+      }
+
+      // Initial call to the modified calculateNodePositions
+      calculateNodePositions(1, n, 1, 0, null, null);
+
+      if (!isResizeUpdate) {
+        // This is a new build: generate render order and start animation
+        currentTreeBuildOrderData = []; // Clear for new build
+
+        function generateBuildOrder(l, r, u, depth = 0) {
+          if (l > r) return;
+
+          const levelNodes = currentTreeLevelsData[depth];
+          if (!levelNodes || !levelNodes.find(node => node.u === u && node.l === l && node.r === r)) {
+            return;
+          }
+
+          currentTreeBuildOrderData.push({ l, r, u, depth });
+
+          if (l < r) {
+            const mid = Math.floor((l + r) / 2);
+            generateBuildOrder(l, mid, u * 2, depth + 1);
+            if (mid < r) {
+              generateBuildOrder(mid + 1, r, u * 2 + 1, depth + 1);
+            }
+          }
+        }
+        generateBuildOrder(1, n, 1);
+
+        let orderIndex = 0;
+        function renderNextNode() {
+          if (orderIndex >= currentTreeBuildOrderData.length) {
+            isTreeRendered = true;
+            activeBuildAnimationTimeout = null;
+            return;
+          }
+
+          const { l, r, u, depth } = currentTreeBuildOrderData[orderIndex];
+          const position = nodePositions.get(u);
+          if (!position) {
+            orderIndex++;
+            activeBuildAnimationTimeout = setTimeout(renderNextNode, 50);
+            return;
+          }
+          const nodeInfo = `${u}\\\\n[${l},${r}]`;
+
+          const nodeDiv = document.createElement('div');
+          nodeDiv.className = `tree-node depth-${depth}`;
+          nodeDiv.innerHTML = nodeInfo.replace(/\\\\n/g, '<br>');
+          nodeDiv.setAttribute('data-node-id', u);
+
+          nodeDiv.style.position = 'absolute';
+          nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+          nodeDiv.style.top = `${position.y}px`;
+          nodeDiv.style.width = `${position.nodeWidth}px`;
+          nodeDiv.style.zIndex = '10';
+
+          const nodeColor = window.nodeColor || '#74b9ff';
+          if (nodeColor !== '#74b9ff') {
+            nodeDiv.style.background = nodeColor;
+          }
+
+          nodeDiv.style.opacity = '0';
+          nodeDiv.style.transform = 'translateY(-10px)';
+
+          treeVisual.appendChild(nodeDiv);
+          domNodeElements.set(u, nodeDiv); // Store DOM element
+
+          if (depth > 0) {
+            addConnectionLine(u, nodePositions, treeVisual); // This will also store the line in domLineElements
+          }
+
+          setTimeout(() => {
+            nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            nodeDiv.style.opacity = '1';
+            nodeDiv.style.transform = 'translateY(0)';
+          }, 50); orderIndex++;
+          const animationDelay = getAnimationDelay();
+          activeBuildAnimationTimeout = setTimeout(renderNextNode, animationDelay / 6);
+        }
+        activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay()); // Initial call for animation
+      } else {
+        // This is a resize update: update existing DOM elements
+        domNodeElements.forEach((nodeDiv, u) => {
+          const position = nodePositions.get(u);
+          if (position) {
+            nodeDiv.style.left = `${position.x - position.nodeWidth / 2}px`;
+            nodeDiv.style.top = `${position.y}px`;
+            nodeDiv.style.width = `${position.nodeWidth}px`;
+          }
+        });
+
+        domLineElements.forEach((line, childId) => {
+          const parentId = Math.floor(childId / 2);
+          const childPos = nodePositions.get(childId);
+          const parentPos = nodePositions.get(parentId);
+          if (childPos && parentPos) {
+            const deltaX = childPos.x - parentPos.x;
+            const deltaY = childPos.y - parentPos.y - 35;
+            const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+
+            line.style.width = `${length}px`;
+            line.style.left = `${parentPos.x}px`;
+            line.style.top = `${parentPos.y + 35}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+          }
+        });
+        isTreeRendered = true; // Ensure flag is set after resize update
+      }
+    }
+
+    // Modified to store line element
+    function addConnectionLine(nodeId, nodePositions, treeVisual) {
+      const parentId = Math.floor(nodeId / 2);
+      const childPos = nodePositions.get(nodeId);
+      const parentPos = nodePositions.get(parentId);
+
+      if (!childPos || !parentPos) return;
+
+      const line = document.createElement('div');
+      line.className = 'tree-connection-line';
+      line.style.position = 'absolute';
+      line.style.background = 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))';
+      line.style.zIndex = '5';
+      line.style.opacity = '0';
+      line.style.borderRadius = '1px';
+
+      const deltaX = childPos.x - parentPos.x;
+      const deltaY = childPos.y - parentPos.y - 35;
+      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+
+      line.style.width = `${length}px`;
+      line.style.height = '2px';
+      line.style.left = `${parentPos.x}px`;
+      line.style.top = `${parentPos.y + 35}px`;
+      line.style.transformOrigin = '0 50%';
+      line.style.transform = `rotate(${angle}deg)`;
+
+      treeVisual.appendChild(line);
+      domLineElements.set(nodeId, line); // Store DOM element for the line
+
+      setTimeout(() => {
+        line.style.transition = 'opacity 0.4s ease-in-out';
+        line.style.opacity = '0.8';
+      }, 200);
+    }
+
+    // 获取动画延迟
+    function getAnimationDelay() {
+      const animationSpeed = window.animationSpeed || 'normal';
+      const speeds = { slow: 2000, normal: 1000, fast: 500 };
+      return speeds[animationSpeed] || 1000;
+    }
+
+    // 初始化显示构建过程可视化的容器
+    function initializeTreeContainer(container) {
+      container.innerHTML = ''; // 不显示任何标题
+      const treeVisual = document.createElement('div');
+      treeVisual.className = 'tree-visual';
+      treeVisual.style.position = 'relative';
+      treeVisual.style.width = '100%';
+      treeVisual.style.padding = '25px';
+      treeVisual.style.background = 'transparent';
+      treeVisual.style.borderRadius = '12px';
+      // 移除边框和阴影
+      treeVisual.style.overflow = 'visible';
+      treeVisual.style.minHeight = '200px';
+      treeVisual.style.display = 'flex';
+      treeVisual.style.alignItems = 'center';
+      treeVisual.style.justifyContent = 'center';
+      treeVisual.style.color = 'var(--text-color)';
+      treeVisual.style.fontSize = '16px';
+      treeVisual.style.opacity = '0.7';
+
+      treeVisual.innerHTML = '<div style="text-align: center;">📱 点击上方"开始构建"按钮查看线段树构建动画</div>';
+
+      container.appendChild(treeVisual);
+    }
+
+    // Modified initTreeVisualizer
+    function initTreeVisualizer() {
+      const inputN = document.getElementById('input-n');
+      const btnBuild = document.getElementById('btn-build');
+      const treeContainer = document.getElementById('tree-container');
+
+      // 初始化时显示构建过程可视化的盒子
+      if (treeContainer) {
+        initializeTreeContainer(treeContainer);
+      }
+      if (btnBuild && treeContainer) {
+        btnBuild.addEventListener('click', () => {
+          const n = parseInt(inputN?.value || '8'); // Default to 8 if input is empty
+          if (n >= 1 && n <= 8) {
+            buildTreeVisualization(n, treeContainer, false); // false for initial build
+          } else {
+            alert('请输入1到8之间的数组长度。');
+          }
+        });
+      }
+
+      window.addEventListener('resize', debounce(() => {
+        if (isTreeRendered && lastBuiltContainer && lastBuiltN > 0) {
+          // Check visibility before redrawing on resize
+          const containerStyle = window.getComputedStyle(lastBuiltContainer);
+          if (containerStyle.display !== 'none' && lastBuiltContainer.offsetParent !== null) {
+            buildTreeVisualization(lastBuiltN, lastBuiltContainer, true); // true for resize update
+          }
+        }
+      }, 250));
+    }
+
+    // Export functions
+    window.TreeVisualizer = {
+      buildTreeVisualization, // Might not be needed externally if only init is called
+      initTreeVisualizer
+    };
+  </script>
+  <script>
+    /* 主JavaScript文件 - 应用初始化和协调 */
+
+    // 应用初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 首先初始化主题切换，确保主题属性尽早设置
+      initThemeSwitcher(); // <--- 移到此处并优先执行
+
+      // 然后立即应用语法高亮
+      if (window.SyntaxHighlighter) {
+        window.SyntaxHighlighter.applyHighlighting();
+      }
+
+      // 初始化各个模块
+      if (window.Navigation) {
+        window.Navigation.initNavigation();
+      }
+
+      if (window.SettingsManager) {
+        window.SettingsManager.initSettings();
+      }
+      if (window.TreeVisualizer) {
+        window.TreeVisualizer.initTreeVisualizer();
+      }
+      if (window.ModifyTreeVisualizer) {
+        console.log('🔧 初始化区间修改可视化模块...');
+        window.ModifyTreeVisualizer.initModifyTreeVisualizer();
+      } else {
+        console.log('❌ ModifyTreeVisualizer 模块未找到');
+      }
+
+      if (window.QueryTreeVisualizer) {
+        console.log('🔍 初始化区间查询可视化模块...');
+        window.QueryTreeVisualizer.initQueryTreeVisualizer();
+      } else {
+        console.log('❌ QueryTreeVisualizer 模块未找到');
+      }
+
+      if (window.Quiz) {
+        window.Quiz.initQuiz();
+      }
+
+      // 设置延迟高亮监听
+      if (window.SyntaxHighlighter) {
+        window.SyntaxHighlighter.setupLazyHighlighting();
+      }
+    });
+
+    // 全局函数（供HTML内联事件调用）
+    function showSection(id) {
+      if (window.Navigation) {
+        window.Navigation.showSection(id);
+      }
+    }
+
+    function checkQuiz() {
+      if (window.Quiz) {
+        window.Quiz.checkQuiz();
+      }
+    }
+
+    function applyNodeColor() {
+      if (window.SettingsManager) {
+        window.SettingsManager.applyNodeColor();
+      }
+    }
+
+    function exportSettings() {
+      if (window.SettingsManager && window.SettingsManager.Settings) {
+        window.SettingsManager.Settings.export();
+      }
+    }
+
+    function resetSettings() {
+      if (window.SettingsManager && window.SettingsManager.Settings) {
+        window.SettingsManager.Settings.reset();
+      }
+    }
+
+    // 主题切换功能
+    function switchTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName); // <--- 修改：应用到 documentElement
+      localStorage.setItem('selectedTheme', themeName); // 保存用户选择
+
+      const themeButtons = document.querySelectorAll('.theme-option');
+      let activeIndex = 0;
+      themeButtons.forEach((button, index) => {
+        if (button.dataset.theme === themeName) {
+          button.classList.add('active');
+          activeIndex = index;
+        } else {
+          button.classList.remove('active');
+        }
+      });
+
+      updateSliderPosition(activeIndex); // 更新滑块位置
+    }
+
+    // 更新滑块位置的函数
+    function updateSliderPosition(activeIndex) {
+      const slider = document.querySelector('.theme-slider');
+      if (slider) {
+        const buttonWidth = slider.parentElement.querySelector('.theme-option').offsetWidth;
+        slider.style.transform = `translateX(${activeIndex * buttonWidth}px)`;
+        // 更新滑块背景色以匹配当前主题的主色
+        const currentThemeColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+        if (currentThemeColor) {
+          slider.style.backgroundColor = currentThemeColor;
+        }
+      }
+    }
+
+    // 辅助函数，避免在循环中创建匿名函数导致潜在的重复监听器问题
+    function handleThemeButtonClick(event) {
+      switchTheme(event.currentTarget.dataset.theme);
+    }
+
+    function initThemeSwitcher() {
+      const savedTheme = localStorage.getItem('selectedTheme');
+      const initialTheme = savedTheme || 'light'; // 默认主题为 'light'
+      switchTheme(initialTheme); // 应用初始主题并更新滑块
+
+      const themeButtons = document.querySelectorAll('.theme-option');
+      themeButtons.forEach(button => {
+        button.removeEventListener('click', handleThemeButtonClick); // 确保移除旧监听器
+        button.addEventListener('click', handleThemeButtonClick);
+      });
+
+      // 首次加载时，确保滑块位置正确（在按钮渲染完毕后）
+      // 使用 setTimeout 确保 offsetWidth 可用
+      setTimeout(() => {
+        const activeButton = document.querySelector('.theme-option.active');
+        if (activeButton) {
+          const activeIndex = Array.from(themeButtons).indexOf(activeButton);
+          updateSliderPosition(activeIndex);
+        }
+      }, 0);
+    }
+  </script>
 </body>
-</html>  
+</html>

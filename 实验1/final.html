@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>线段树全方位介绍</title>
+  
+  <!-- CSS 文件链接 -->  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/tree.css">
+  <link rel="stylesheet" href="styles/quiz.css">
+  <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/Visualizer_modify.css">
+  <link rel="stylesheet" href="styles/Visualizer_query.css">
+</head>
+<body>
+  <!-- 三级主题开关 -->
+  <div class="theme-switcher">
+    <div class="theme-slider"></div> <!-- 新增滑块指示器 -->
+    <button class="theme-option active" data-theme="light" onclick="switchTheme('light')" title="白天模式">☀️</button>
+    <button class="theme-option" data-theme="eye-care" onclick="switchTheme('eye-care')" title="护眼模式">🌿</button>
+    <button class="theme-option" data-theme="dark" onclick="switchTheme('dark')" title="黑夜模式">🌙</button>
+  </div>
+  <header>🌲 线段树介绍</header>
+
+  <nav>
+    <button class="nav-btn active" onclick="showSection('intro')" aria-label="线段树简介">📚 线段树简介</button>
+    <button class="nav-btn" onclick="showSection('basic')" aria-label="基本操作">🔧 基本操作</button>
+    <!-- <button class="nav-btn" onclick="showSection('advanced')" aria-label="高级技巧">🚀 高级技巧</button> -->
+    <button class="nav-btn" onclick="showSection('quiz')" aria-label="互动测试">🎯 互动测试</button>
+    <button class="nav-btn" onclick="showSection('settings')" aria-label="自定义设置">⚙️ 自定义设置</button>
+  </nav>
+
+  <main>
+    <section id="intro" class="active">
+      <div class="card">
+        <h2>🌳 什么是线段树？</h2>
+        <p>线段树(<strong>Segment Tree</strong>)是一个能够高效处理区间查询和更新的数据结构，时间复杂度为 <strong>O(log n)</strong>，适用于静态或动态数组。</p>
+        <p>它以二叉树的形式递归划分区间，直到每个段表示单个元素，每个节点表示一个区间。</p>
+
+        <h3>📊 线段树可维护的区间信息</h3>
+        <ul>
+          <li><strong>区间和</strong>：计算区间内所有元素的总和</li>
+          <li><strong>区间最值(RMQ)</strong>：查询区间内的最大值或最小值</li>
+          <li><strong>区间GCD</strong>：计算区间内所有数的最大公约数</li>
+          <li><strong>区间最大子段和</strong>：寻找区间内连续子数组的最大和</li>
+          <li><strong>区间最长连续相同值段</strong>：统计相同值的最长连续长度</li>
+          <li><strong>区间最长递增/递减段</strong>：寻找最长的单调序列</li>
+          <li><strong>……</strong></li>
+        </ul>
+
+        <h3>⚡ 线段树支持的区间修改操作</h3>
+        <ul>
+          <li><strong>区间加法</strong>：给区间内所有元素加上某个值</li>
+          <li><strong>区间乘法</strong>：给区间内所有元素乘以某个值</li>
+          <li><strong>区间赋值</strong>：将区间内所有元素设为某个值</li>
+          <li><strong>区间异或</strong>：对区间内所有元素进行异或操作</li>
+          <li><strong>区间取反</strong>：对区间内所有元素取反</li>
+          <li><strong>区间拼接</strong>：连接多个区间</li>
+          <li><strong>……</strong></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="basic">
+      <div class="card">
+        <h2>🔧 线段树的构建与操作</h2>
+
+        <h3>📦 信息与更新结构</h3>
+        <ul>
+          <li><strong>Info 结构体</strong>：每个节点维护区间的信息，比如区间和、最大值、最小值等；支持合并（<strong> operator+ </strong>）和更新（<strong> apply </strong>）。</li>
+          <li><strong>Laz 结构体</strong>：用于记录对某一段区间的修改请求。它可作用于 <strong> Info </strong>的懒更新。</li>
+        </ul>        <pre class="code-block"><code>struct Laz 
+{
+    int add = 0;
+    void apply(const Laz &tag) 
+    { 
+        if (tag.add)
+            add += tag.add; 
+    }
+};
+
+template &lt;typename T&gt;
+struct Info 
+{
+    int sum = 0, mx = 0, mn = 0;
+    Info() {}
+    Info(T x) : sum(x), mx(x), mn(x) {}
+    void apply(const Laz &tag, int len) 
+    {
+        if (tag.add) 
+        {
+            mn += tag.add;
+            mx += tag.add;
+            sum += tag.add * len;
+        }
+    }
+
+    Info operator+(const Info &a) const 
+    {
+        Info res;
+        res.mn = min(mn, a.mn);
+        res.mx = max(mx, a.mx);
+        res.sum = sum + a.sum;
+        return res;
+    }
+};</code></pre>
+
+        <h3>🧱 构建线段树</h3>
+         <p>线段树的构建通常采用递归的方式，设当前节点为 <strong> u </strong>，若其管辖区间的长度已为 <strong> 1 </strong>，则可根据所需初始化该节点。
+          否则将该区间对半划分为两个子区间，分别进入左右子节点递归建树，最后合并两个子节点的信息（<strong> push_up </strong>）。</p>
+        <pre class="code-block"><code>void build(int l, int r, int u)
+{
+    // 对 [l, r] 区间简历线段树，当前根的编号为 u
+    if (l == r)
+    {
+        info[u] = Info(arr[l]);
+        return;
+    }
+
+    int mid = (l + r) >> 1;
+    // 递归对左右区间建树
+    build(l, mid, u << 1);
+    build(mid + 1, r, u << 1 | 1);
+    // 合并左右子节点的信息
+    push_up(u);
+}</code></pre>
+
+        <h3>🎯 构建过程可视化</h3>
+          <div class="settings-row">
+            <label>数组长度 n:</label>
+            <input type="number" id="input-n" value="8" min="1" max="8" aria-label="输入数组长度" />
+            <button class="btn" id="btn-build" aria-label="开始构建线段树">🚀 开始构建</button>
+          </div>          <div id="tree-container">
+            <!-- 构建过程可视化容器将通过 JavaScript 初始化 -->
+          </div>
+
+
+        <h3>⚙️ 信息维护：push_up 与 push_down</h3>
+        <ul> 
+          <li><strong> push_up </strong>：用于更新当前节点的信息。它的作用是将左右子节点的信息通过区间合并（<strong> operator+ </strong>）向上传递，
+            更新当前节点的统计数据（如区间和、最小值、最大值等）。这个过程确保了每次修改或查询操作后，整棵线段树的状态始终是最新的。</li> 
+          <li><strong> push_down </strong>：用于懒标记（<strong> lazy tag </strong>）的传递。当一个节点上存在尚未向下传播的更新信息时，调用此函数会将该节点的懒标记应用到它的左右子节点，使得这些子节点的数据能够正确反映出应有的更新效果。随后，将当前节点的懒标记清空，避免重复更新。懒标记能减少重复更新操作，提高效率。</li>
+        </ul>
+        <pre class="code-block"><code>void apply(int u, Laz tag, int len) 
+{
+    laz[u].apply(tag);
+    info[u].apply(tag, len);
+}
+
+void push_up(int u) { info[u] = info[u << 1] + info[u << 1 | 1]; }
+
+void push_down(int u, int llen, int rlen) 
+{
+    apply(u << 1, laz[u], llen);
+    apply(u << 1 | 1, laz[u], rlen);
+    // 清空当前节点的懒标记
+    laz[u] = Laz();
+}</code></pre>
+
+        <h3>✏️ 区间修改</h3>
+        <p>线段树的区间修改可以对一个连续子区间统一修改。懒标记允许先记录修改指令，而不立即递归更新所有子节点，从而提升修改效率，直到真正访问子节点时再下传修改。</p>
+        <ul>
+          <li>如果当前节点负责的区间<strong> [l, r] </strong>完全被覆盖，直接用<strong> apply </strong>应用懒标记并返回。</li>
+          <li>否则先通过 <strong>push_down</strong> 把当前节点的懒标记传递给左右子节点，保证子节点信息最新。</li>
+          <li>递归修改左子区间（如果有交集）和右子区间（如果有交集）。</li>
+          <li>最后用<strong> push_up </strong>合并左右子节点的信息，更新当前节点。</li>
+        </ul>
+        <pre class="code-block"><code>void modify(int jobl, int jobr, Laz tag, int l, int r, int u) 
+{
+    // [jobl, jobr] 为修改区间，[l, r] 为当前节点包含的区间，u 为当前节点编号
+    if (jobl <= l && jobr >= r) 
+    {
+        // 当前区间为查询区间的子集时直接修改当前节点的值，然后打标记，结束修改
+        apply(u, tag, r - l + 1);
+        return;
+    }
+
+    int mid = (l + r) >> 1;
+    // 下传懒标记到左右子节点
+    push_down(u, mid - l + 1, r - mid);
+    // 如果修改区间与左节点区间有交集，则递归修改左子节点
+    if (jobl <= mid) modify(jobl, jobr, tag, l, mid, u << 1);
+    // 如果修改区间与右节点区间有交集，则递归修改右子节点
+    if (jobr > mid) modify(jobl, jobr, tag, mid + 1, r, u << 1 | 1);
+    push_up(u);
+}</code></pre>
+
+        <h3>🔧 可视化修改与数据维护</h3>
+        <p>在此处输入新的数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据新数据重建，并同时计算和显示数组的最大值、最小值与总和。</p>        <div class="data-input-container card">            <h4>线段树可视化操作:</h4>            <!-- 输入控件在上方，左右各占一半并分别居中 -->
+            <div class="settings-row" style="display: flex;">
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <label>输入数据:</label>
+                    <input type="text" id="input-custom-data-modify" value="" aria-label="输入自定义数组数据" placeholder="例如: 1 2 3 4 (最多8个数字)">
+                    <button id="btn-random-data-modify" class="btn" style="min-width: 100px;">🎲 随机生成</button>
+                </div>                  <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;" class="modification-group">
+                    <label for="input-modify-left">区间修改:</label>
+                    <input type="number" id="input-modify-left" min="1" max="8" aria-label="输入修改区间的左端点" style="width: 80px;">
+                    <span>到</span>
+                    <input type="number" id="input-modify-right" min="1" max="8" aria-label="输入修改区间的右端点" style="width: 80px;">
+                    <span>增加</span>
+                    <input type="number" id="input-modify-value" aria-label="输入要增加的值" style="width: 90px;">
+                </div>
+            </div>            <!-- 按钮布局：构建树占一半，修改按钮占一半 -->            <div class="settings-row">
+                <button id="btn-update-custom-data-modify" class="btn" style="flex: 1;">🚀 更新可视化</button>
+                <div style="flex: 1; display: flex; gap: 5px;">                    <button id="btn-apply-modification-direct" class="btn" style="flex: 1;">⚡ 直接完成修改</button>
+                    <button id="btn-apply-modification-step" class="btn" style="flex: 1;">👣 步进修改</button>
+                </div>
+            </div>
+
+            <div id="modify-tree-visualizer-host" style="margin-top: 20px;"></div> <!-- Placeholder for the modify tree canvas -->
+        </div>
+
+        <h3>🔍 区间查询</h3>
+        <p>查询指定区间的合并结果：</p>
+        <pre class="code-block"><code>Info query(int jobl, int jobr, int l, int r, int u) 
+{
+    // [jobl, jobr] 为查询区间，[l, r] 为当前节点包含的区间，u 为当前节点编号
+    if (jobl <= l && jobr >= r) 
+        // 当前区间为查询区间的子集时直接返回当前节点的信息
+        return info[u];
+
+    int mid = (l + r) >> 1;
+    push_down(u, mid - l + 1, r - mid);
+    // 如果查询区间与左右子节点区间均有交集，则递归查询左右子节点，并合并二者信息
+    if (jobl <= mid && jobr > mid) 
+        return query(jobl, jobr, l, mid, u << 1) + query(jobl, jobr, mid + 1, r, u << 1 | 1);
+    // 如果查询区间与左子节点区间有交集，则递归查询左子节点
+    else if (jobl <= mid) 
+        return query(jobl, jobr, l, mid, u << 1);
+    // 如果查询区间与右子节点区间有交集，则递归查询右子节点
+    else
+        return query(jobl, jobr, mid + 1, r, u << 1 | 1);
+}</code></pre>
+
+        <h3>🔍 可视化查询与数据维护</h3>
+        <p>在此处输入数组数据（以空格分隔，例如 <strong>1 1 4 5 1 4</strong>），然后点击更新按钮。线段树将根据数据重建，并同时计算和显示数组的最大值、最小值与总和。输入查询区间后，可直接查询或步进查看查询过程。</p>
+        <div class="data-input-container card">
+            <h4>线段树可视化操作:</h4>
+            <div class="settings-row" style="display: flex;">
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <label>输入数据:</label>
+                    <input type="text" id="input-custom-data-query" value="" aria-label="输入自定义数组数据" placeholder="例如: 1 2 3 4 (最多8个数字)">
+                    <button id="btn-random-data-query" class="btn" style="min-width: 100px;">🎲 随机生成</button>
+                </div>
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px;" class="query-group">
+                    <label for="input-query-left">区间查询:</label>
+                    <input type="number" id="input-query-left" min="1" max="8" aria-label="输入查询区间的左端点" style="width: 80px;">
+                    <span>到</span>
+                    <input type="number" id="input-query-right" min="1" max="8" aria-label="输入查询区间的右端点" style="width: 80px;">
+                </div>
+            </div>
+            <div class="settings-row">
+                <button id="btn-update-custom-data-query" class="btn" style="flex: 1;">🚀 更新可视化</button>
+                <div style="flex: 1; display: flex; gap: 5px;">                    <button id="btn-apply-query-direct" class="btn" style="flex: 1;">⚡ 直接完成查询</button>
+                    <button id="btn-apply-query-step" class="btn" style="flex: 1;">👣 步进查询</button>
+                </div>
+            </div>
+            <div id="query-tree-visualizer-host" style="margin-top: 20px;"></div>
+        </div>
+
+        <h3>📌 小贴士</h3>
+        <ul>
+          <li>建议使用堆式存储法：设节点编号为 <strong>u</strong>，其左右儿子分别为 <strong>2u</strong> 与 <strong>2u+1</strong>。</li>
+          <li>实际应用中空间开辟可使用 <strong>4n</strong> 作为数组大小上限。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="advanced">
+      <div class="card"></div>
+    </section>
+
+    <section id="quiz">
+      <div class="card">
+        <h2>🎯 互动小测</h2>
+        <p>通过以下选择题测试你对线段树的理解程度！</p>
+        <div id="quiz-container">
+          <div class="quiz-question">
+            <h3>问题 1: 线段树的单次区间操作的时间复杂度是？</h3>
+            <div class="quiz-options">
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="a" id="q1a" aria-label="选项A: O(n)">
+                <label for="q1a">A. O(n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="b" id="q1b" aria-label="选项B: O(log n)">
+                <label for="q1b">B. O(log n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="c" id="q1c" aria-label="选项C: O(n log n)">
+                <label for="q1c">C. O(n log n)</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q1" value="d" id="q1d" aria-label="选项D: O(n²)">
+                <label for="q1d">D. O(n²)</label>
+              </div>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 2: 线段树的空间复杂度通常是？</h3>
+            <div class="quiz-options">
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="a" id="q2a" aria-label="选项A: 输入规模的1倍">
+                <label for="q2a">A. 输入规模的 1 倍</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="b" id="q2b" aria-label="选项B: 输入规模的2倍">
+                <label for="q2b">B. 输入规模的 2 倍</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="c" id="q2c" aria-label="选项C: 空输入规模的4倍">
+                <label for="q2c">C. 输入规模的 4 倍</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q2" value="d" id="q2d" aria-label="选项D: 输入规模的 n log n 倍">
+                <label for="q2d">D. 输入规模的 n log n 倍</label>
+              </div>
+            </div>
+          </div>
+          <div class="quiz-question">
+            <h3>问题 3: 懒惰标记的主要作用是？</h3>
+            <div class="quiz-options">
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="a" id="q3a" aria-label="选项A: 减少内存使用">
+                <label for="q3a">A. 减少内存使用</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="b" id="q3b" aria-label="选项B: 优化区间修改操作">
+                <label for="q3b">B. 优化区间修改操作</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="c" id="q3c" aria-label="选项C: 简化代码实现">
+                <label for="q3c">C. 简化代码实现</label>
+              </div>
+              <div class="quiz-option-item">
+                <input type="radio" name="q3" value="d" id="q3d" aria-label="选项D: 提高查询速度">
+                <label for="q3d">D. 提高查询速度</label>
+              </div>
+            </div>
+          </div>
+          <button class="btn" onclick="checkQuiz()" aria-label="提交测试答案">📊 提交答案</button>
+          <div id="quiz-result" class="quiz-result"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings">
+      <div class="card">
+        <h2>⚙️ 自定义设置</h2>
+        <div class="settings-panel">
+          <h3>🎨 代码高亮主题</h3>
+          <div class="settings-row">
+            <label>字体大小:</label>
+            <input type="range" id="font-size-slider" min="12" max="20" value="15" aria-label="调整代码字体大小">
+            <span id="font-size-display">15px</span>
+          </div>
+          <div class="settings-row">
+            <label>行高:</label>
+            <input type="range" id="line-height-slider" min="1.2" max="2.0" step="0.1" value="1.6" aria-label="调整代码行高">
+            <span id="line-height-display">1.6</span>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>🌲 可视化设置</h3>
+          <div class="settings-row">
+            <label>动画速度:</label>
+            <select id="animation-speed" aria-label="选择动画速度">
+              <option value="slow">🐌 慢速 (2秒)</option>
+              <option value="normal" selected>🚀 正常 (1秒)</option>
+              <option value="fast">⚡ 快速 (0.5秒)</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-panel">
+          <h3>💾 导出设置</h3>
+          <div class="settings-row">
+            <button class="btn" onclick="exportSettings()" aria-label="导出配置">📤 导出配置</button>
+            <button class="btn" onclick="resetSettings()" aria-label="重置设置">🔄 重置设置</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2025 线段树探索者 | 🌟 让数据结构变得有趣 🌟</p>
+    </footer>
+  </main>  <!-- JavaScript 文件链接 -->
+  <script src="js/settings.js"></script>
+  <script src="js/generate_Visualizer_modify.js"></script>
+  <script src="js/generate_Visualizer_query.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/syntaxHighlighter.js"></script>
+  <script src="js/treeVisualizer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>  
