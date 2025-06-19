@@ -430,15 +430,41 @@
     if (!ModifyVisualizerState.isTreeRendered || !ModifyVisualizerState.lastBuiltContainer) {
       showError('请先构建线段树！');
       return;
-    }
-
-    if (!stepModifyState.isActive || stepModifyState.modifyL !== modifyL || stepModifyState.modifyR !== modifyR || stepModifyState.delta !== delta) {
+    }    if (!stepModifyState.isActive || stepModifyState.modifyL !== modifyL || stepModifyState.modifyR !== modifyR || stepModifyState.delta !== delta) {
       console.log('👣 初始化步进修改');
+      
+      // 清除之前的修改结果
+      const oldResults = container.querySelectorAll('.modify-result');
+      oldResults.forEach(result => result.remove());
+      
+      // 重置所有节点样式
       ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
         nodeDiv.style.background = ' #0984e3';
         nodeDiv.style.border = '2px solid #74b9ff';
         nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
       });
+
+      // 移除旧的进度条
+      const oldProgress = container.querySelector('#modify-step-progress-container');
+      if (oldProgress) oldProgress.remove();
+
+      // 创建新的进度条
+      const progressContainer = document.createElement('div');
+      progressContainer.id = 'modify-step-progress-container';
+      progressContainer.style.margin = '10px';
+      progressContainer.style.padding = '10px';
+      progressContainer.style.borderRadius = '8px';
+      progressContainer.style.background = 'rgba(248, 249, 250, 0.95)';
+      progressContainer.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+      progressContainer.innerHTML = `
+          <div id="modify-step-progress-info" style="margin-bottom: 8px; font-size: 14px; color: #495057;">
+              步进修改进度: <span id="modify-step-current">0</span>/<span id="modify-step-total">0</span> (<span id="modify-step-percentage">0%</span>)
+          </div>
+          <div style="background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden;">
+              <div id="modify-step-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #e67e22, #f39c12); transition: width 0.3s ease;"></div>
+          </div>
+      `;
+      container.prepend(progressContainer);
 
       stepModifyState.isActive = true;
       stepModifyState.affectedNodes = [];
@@ -465,10 +491,43 @@
       }
       collectAffectedNodes(1, 1, ModifyVisualizerState.lastBuiltN);
       console.log(`👣 初始化完成，受影响节点数: ${stepModifyState.affectedNodes.length}`);
-    }
-
-    if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
-      console.log('✅ 所有步进步骤完成');
+      
+      // 更新总步数
+      const stepTotal = container.querySelector('#modify-step-total');
+      if (stepTotal) stepTotal.textContent = stepModifyState.affectedNodes.length;
+      
+      // 初始化完成，等待下次点击执行第一步
+      return;
+    }    if (stepModifyState.currentIndex >= stepModifyState.affectedNodes.length) {
+      console.log('✅ 所有步进修改步骤完成');
+      
+      // 显示修改完成结果
+      const resultDiv = document.createElement('div');
+      resultDiv.className = 'modify-result';
+      resultDiv.style.margin = '10px';
+      resultDiv.style.padding = '15px';
+      resultDiv.style.background = '#fff3cd';
+      resultDiv.style.borderRadius = '8px';
+      resultDiv.style.border = '1px solid #ffeaa7';
+      resultDiv.style.position = 'relative';
+      resultDiv.innerHTML = `
+          <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
+          <strong>修改完成 [${modifyL}, ${modifyR}] 增加 ${delta}:</strong><br>
+          所有受影响的节点已更新完毕！
+      `;
+      
+      // 添加关闭按钮事件
+      const closeBtn = resultDiv.querySelector('.close-btn');
+      closeBtn.addEventListener('click', () => {
+          resultDiv.remove();
+      });
+      
+      container.appendChild(resultDiv);
+      
+      // 移除进度条
+      const progressContainer = container.querySelector('#modify-step-progress-container');
+      if (progressContainer) progressContainer.remove();
+      
       stepModifyState.isActive = false;
       return;
     }
@@ -511,13 +570,27 @@
           currentU = Math.floor(currentU / 2);
         }
         updateNodeDisplaySafe(u, tl, tr);
-      }
-    } else {
+      }    } else {
       console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
     }
 
+    // 递增索引（在高亮节点后）
     stepModifyState.currentIndex++;
-    console.log(`👣 步骤完成，currentIndex=${stepModifyState.currentIndex}`);
+    console.log(`👣 步骤完成，索引递增到: ${stepModifyState.currentIndex}`);
+
+    // 更新进度（基于递增后的索引）
+    const currentStep = stepModifyState.currentIndex; // 已完成的步骤数
+    const totalSteps = stepModifyState.affectedNodes.length;
+    
+    const stepCurrent = container.querySelector('#modify-step-current');
+    const stepPercentage = container.querySelector('#modify-step-percentage');
+    const progressBar = container.querySelector('#modify-step-progress-bar');
+    
+    console.log(`📊 更新修改进度: ${currentStep}/${totalSteps} (${Math.round((currentStep / totalSteps) * 100)}%)`);
+    
+    if (stepCurrent) stepCurrent.textContent = currentStep;
+    if (stepPercentage) stepPercentage.textContent = `${Math.round((currentStep / totalSteps) * 100)}%`;
+    if (progressBar) progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
   }
 
   // 查找节点区间
