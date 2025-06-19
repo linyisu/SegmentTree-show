@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 清空容器并创建结构
             container.innerHTML = `
                 <h4>🔍 线段树区间查询过程:</h4>
                 <p><strong>数组数据:</strong> [${dataArray ? dataArray.join(', ') : ''}]</p>
@@ -90,12 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const levelHeight = 100;
         const padding = 25;
 
-        // 初始化全局数组
         if (!isResizeUpdate) {
             QueryVisualizerState.globalTree = new Array(4 * n).fill().map(() => ({ sum: 0, max: -Infinity, min: Infinity }));
             QueryVisualizerState.globalLazy = new Array(4 * n).fill(0);
 
-            // 构建线段树
             function buildTree(arr, tree, node, start, end) {
                 if (start === end) {
                     const value = arr[start - 1];
@@ -116,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             buildTree(dataArray, QueryVisualizerState.globalTree, 1, 1, n);
         }
 
-        // 收集层级数据
         if (!isResizeUpdate) {
             QueryVisualizerState.currentTreeLevelsData = [];
             function collectLevels(l, r, u, depth = 0) {
@@ -139,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
             treeVisual.style.height = `${calculatedHeight}px`;
         }
 
-        // 计算节点位置
         const nodePositions = new Map();
         function calculateNodePositions(l, r, u, depth = 0, parentX = null, parentW = null) {
             const levelNodes = QueryVisualizerState.currentTreeLevelsData[depth];
@@ -173,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         calculateNodePositions(1, n, 1, 0, null, null);
 
-        // 渲染节点
         if (!isResizeUpdate) {
             QueryVisualizerState.currentTreeBuildOrderData = [];
             function generateBuildOrder(l, r, u, depth = 0) {
@@ -337,11 +331,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
         
-        // 清除之前的查询结果
         const oldResults = container.querySelectorAll('.query-result');
         oldResults.forEach(result => result.remove());
         
-        // 重置所有节点样式并清除完全包含标志
         QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
             nodeDiv.style.background = '#0984e3';
             nodeDiv.style.border = '2px solid #74b9ff';
@@ -379,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 独立显示直接查询结果
         if (!document.querySelector('.query-result')) {
             setTimeout(() => {
                 const resultDiv = document.createElement('div');
@@ -413,8 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        console.log('👣 进入步进查询', { isActive: stepQueryState.isActive, currentIndex: stepQueryState.currentIndex, queryL, queryR });
+
         // 初始化或继续步进查询
-        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
+        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR || stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
             console.log('👣 初始化步进查询');
             const oldResults = container.querySelectorAll('.query-result');
             oldResults.forEach(result => result.remove());
@@ -466,23 +459,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             collectAffectedNodes(1, 1, QueryVisualizerState.lastBuiltN);
-            console.log(`👣 初始化完成，受影响节点数: ${stepQueryState.affectedNodes.length}`);
+            console.log(`👣 初始化完成，受影响节点数: ${stepQueryState.affectedNodes.length}`, stepQueryState.affectedNodes);
             stepQueryState.result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
 
             const stepTotal = container.querySelector('#step-total');
             if (stepTotal) stepTotal.textContent = stepQueryState.affectedNodes.length;
+
+            // 首次步进
+            if (stepQueryState.currentIndex < stepQueryState.affectedNodes.length) {
+                const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
+                const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+                console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
+                if (nodeDiv) {
+                    const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+                    nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
+                    nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
+                    nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
+                    console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
+                    updateNodeDisplaySafe(u, tl, tr);
+                }
+                stepQueryState.currentIndex++;
+                console.log(`👣 步骤完成，currentIndex=${stepQueryState.currentIndex}`);
+            }
+        } else if (stepQueryState.currentIndex < stepQueryState.affectedNodes.length) {
+            // 后续单步
+            const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
+            const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+            console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
+            if (nodeDiv) {
+                const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+                nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
+                nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
+                nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
+                console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
+                updateNodeDisplaySafe(u, tl, tr);
+            }
+            stepQueryState.currentIndex++;
+            console.log(`👣 步骤完成，currentIndex=${stepQueryState.currentIndex}`);
         }
+
+        // 更新进度
+        const stepCurrent = container.querySelector('#step-current');
+        const stepPercentage = container.querySelector('#step-percentage');
+        const progressBar = container.querySelector('#step-progress-bar');
+        const totalSteps = stepQueryState.affectedNodes.length;
+        const currentStep = stepQueryState.currentIndex;
+        if (stepCurrent) stepCurrent.textContent = currentStep;
+        if (stepPercentage) stepPercentage.textContent = `${Math.round((currentStep / totalSteps) * 100)}%`;
+        if (progressBar) progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
 
         // 检查是否完成
         if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
             if (stepQueryState.currentIndex === 0 && stepQueryState.affectedNodes.length === 0) {
                 console.log('⚠️ 没有受影响的节点，直接显示结果');
-            } else if (stepQueryState.currentIndex === 0) {
-                console.log('⚠️ 步进查询尚未开始，跳过结果显示');
-                return;
-            }
-            console.log('✅ 所有步进步骤完成');
-            if (!stepQueryState.resultDisplayed) {
+            } else if (stepQueryState.currentIndex > 0 && !stepQueryState.resultDisplayed) {
+                console.log('✅ 所有步进步骤完成');
                 const resultDiv = document.createElement('div');
                 resultDiv.className = 'query-result';
                 resultDiv.style.margin = '10px';
@@ -508,36 +539,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const progressContainer = container.querySelector('#step-progress-container');
             if (progressContainer) progressContainer.remove();
             stepQueryState.isActive = false;
-            return;
+            stepQueryState.currentIndex = 0; // 确保下次查询能重新开始
         }
-
-        // 执行单步
-        const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
-        const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
-        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
-        if (nodeDiv) {
-            const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
-            nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
-            nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
-            nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
-            console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
-            updateNodeDisplaySafe(u, tl, tr);
-        } else {
-            console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
-        }
-
-        const stepCurrent = container.querySelector('#step-current');
-        const stepPercentage = container.querySelector('#step-percentage');
-        const progressBar = container.querySelector('#step-progress-bar');
-        const totalSteps = stepQueryState.affectedNodes.length;
-        const currentStep = stepQueryState.currentIndex + 1;
-        if (stepCurrent) stepCurrent.textContent = currentStep;
-        if (stepPercentage) stepPercentage.textContent = `${Math.round((currentStep / totalSteps) * 100)}%`;
-        if (progressBar) progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
-
-        // 仅在此处递增，确保单步执行
-        stepQueryState.currentIndex++;
-        console.log(`👣 步骤完成，currentIndex=${stepQueryState.currentIndex}`);
     }
 
     // 安全更新节点显示
@@ -584,7 +587,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnApplyQueryStep = document.getElementById('btn-apply-query-step');
         const customTreeNodesData = document.getElementById('query-tree-visualizer-host');
 
-        // 检查所有必要元素是否存在
         if (!inputCustomData || !btnRandomData || !btnUpdateCustomData || !btnApplyQueryDirect || !btnApplyQueryStep || !customTreeNodesData) {
             console.error('初始化失败：缺少必要的 DOM 元素', {
                 inputCustomData: !!inputCustomData,
@@ -598,10 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 初始化默认值
         if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
 
-        // 随机数据按钮
         if (btnRandomData) {
             btnRandomData.addEventListener('click', () => {
                 const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1);
@@ -609,7 +609,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 更新自定义数据按钮
         if (btnUpdateCustomData && customTreeNodesData) {
             btnUpdateCustomData.addEventListener('click', () => {
                 const inputData = inputCustomData?.value?.trim();
@@ -635,7 +634,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 直接查询按钮
         if (btnApplyQueryDirect) {
             btnApplyQueryDirect.addEventListener('click', () => {
                 if (!QueryVisualizerState.isTreeRendered) {
@@ -656,9 +654,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 步进查询按钮
         if (btnApplyQueryStep) {
-            btnApplyQueryStep.addEventListener('click', () => {
+            const handleStepQuery = debounce(() => {
                 if (!QueryVisualizerState.isTreeRendered) {
                     showError('请先构建线段树！');
                     return;
@@ -674,10 +671,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 performRangeQueryStep(queryL, queryR, QueryVisualizerState.lastBuiltContainer);
-            });
+            }, 300); // 增加防抖时间到 300ms
+
+            // 确保只绑定一次事件
+            btnApplyQueryStep.removeEventListener('click', handleStepQuery);
+            btnApplyQueryStep.addEventListener('click', handleStepQuery);
         }
 
-        // 窗口调整事件
         window.addEventListener('resize', debounce(() => {
             if (QueryVisualizerState.isTreeRendered && QueryVisualizerState.lastBuiltContainer && QueryVisualizerState.lastBuiltN > 0) {
                 const containerStyle = window.getComputedStyle(QueryVisualizerState.lastBuiltContainer);
@@ -688,12 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 250));
     }
 
-    // 暴露接口
     window.QueryTreeVisualizer = {
         buildTreeVisualizationWithData,
         initQueryTreeVisualizer
     };
 
-    // 自动初始化
     initQueryTreeVisualizer();
 });
