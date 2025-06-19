@@ -10,9 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTreeLevelsData: [],
         currentTreeBuildOrderData: [],
         activeBuildAnimationTimeout: null
-    };
-
-    // 步进查询状态
+    };    // 步进查询状态
     let stepQueryState = {
         isActive: false,
         affectedNodes: [],
@@ -20,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
         queryL: 0,
         queryR: 0,
         container: null,
-        result: { sum: 0, max: -Infinity, min: Infinity }
+        result: { sum: 0, max: -Infinity, min: Infinity },
+        resultDisplayed: false // 添加标志防止重复显示结果
     };
 
     // 防抖函数
@@ -293,9 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateNodeDisplaySafe(u * 2 + 1, mid + 1, tr);
             }
         }
-    }
-
-    // 区间查询
+    }    // 区间查询
     function queryRange(l, r, tl, tr, u) {
         console.log(`🔍 queryRange: [${l},${r}] 在节点 u=${u} [${tl},${tr}]`);
         if (l > tr || r < tl) {
@@ -336,30 +333,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
+        
+        // 清除之前的查询结果
+        const oldResults = container.querySelectorAll('.query-result');
+        oldResults.forEach(result => result.remove());
+        
         // 重置所有节点样式并清除完全包含标志
         QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
             nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
             nodeDiv.style.border = '2px solid #74b9ff';
             nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-            nodeDiv.classList.remove('active');
             nodeDiv.dataset.fullyContained = 'false';
         });
 
-        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
-
-        const affectedNodes = [];
+        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);        const affectedNodes = [];
         function collectNodes(u, tl, tr) {
             if (queryL > tr || queryR < tl) return;
             affectedNodes.push({ u, tl, tr });
+            // 如果当前节点被完全包含，就不继续向下递归
+            if (queryL <= tl && tr <= queryR) {
+                return;
+            }
             if (tl < tr) {
                 const mid = Math.floor((tl + tr) / 2);
                 collectNodes(u * 2, tl, mid);
                 collectNodes(u * 2 + 1, mid + 1, tr);
             }
         }
-        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);
-
-        affectedNodes.forEach(({ u, tl, tr }, index) => {
+        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);        affectedNodes.forEach(({ u, tl, tr }, index) => {
             const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
             if (nodeDiv) {
                 setTimeout(() => {
@@ -373,28 +374,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     nodeDiv.style.boxShadow = isFullyContained
                         ? '0 2px 12px rgba(192, 57, 43, 0.3)'
                         : '0 2px 12px rgba(230, 126, 34, 0.3)';
-                    nodeDiv.classList.add('active');
-                    console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
+                    console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
                     updateNodeDisplaySafe(u, tl, tr);
                 }, index * 200);
             }
-        });
-
-        setTimeout(() => {
+        });        setTimeout(() => {
             const resultDiv = document.createElement('div');
             resultDiv.className = 'query-result';
             resultDiv.style.margin = '10px';
-            resultDiv.style.padding = '10px';
+            resultDiv.style.padding = '15px';
             resultDiv.style.background = '#e8f4f8';
             resultDiv.style.borderRadius = '8px';
+            resultDiv.style.border = '1px solid #bee5eb';
+            resultDiv.style.position = 'relative';
             resultDiv.innerHTML = `
+                <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
                 <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
                 总和: ${result.sum}<br>
                 最大值: ${result.max}<br>
                 最小值: ${result.min}
             `;
+            
+            // 添加关闭按钮事件
+            const closeBtn = resultDiv.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+                resultDiv.remove();
+            });
+            
             container.appendChild(resultDiv);
-            setTimeout(() => resultDiv.remove(), 5000);
         }, affectedNodes.length * 200 + 500);
     }
 
@@ -403,15 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!QueryVisualizerState.isTreeRendered || !QueryVisualizerState.lastBuiltContainer) {
             showError('请先构建线段树！');
             return;
-        }
-
-        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
+        }        if (!stepQueryState.isActive || stepQueryState.queryL !== queryL || stepQueryState.queryR !== queryR) {
             console.log('👣 初始化步进查询');
+            
+            // 清除之前的查询结果
+            const oldResults = container.querySelectorAll('.query-result');
+            oldResults.forEach(result => result.remove());
+            
             QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
                 nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
                 nodeDiv.style.border = '2px solid #74b9ff';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-                nodeDiv.classList.remove('active');
                 nodeDiv.dataset.fullyContained = 'false';
             });
 
@@ -439,11 +448,13 @@ document.addEventListener('DOMContentLoaded', () => {
             stepQueryState.queryL = queryL;
             stepQueryState.queryR = queryR;
             stepQueryState.container = container;
-            stepQueryState.result = { sum: 0, max: -Infinity, min: Infinity };
-
-            function collectAffectedNodes(u, tl, tr) {
+            stepQueryState.result = { sum: 0, max: -Infinity, min: Infinity };            function collectAffectedNodes(u, tl, tr) {
                 if (queryL > tr || queryR < tl) return;
                 stepQueryState.affectedNodes.push({ u, tl, tr });
+                // 如果当前节点被完全包含，就不继续向下递归
+                if (queryL <= tl && tr <= queryR) {
+                    return;
+                }
                 if (tl < tr) {
                     const mid = Math.floor((tl + tr) / 2);
                     collectAffectedNodes(u * 2, tl, mid);
@@ -456,24 +467,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const stepTotal = container.querySelector('#step-total');
             if (stepTotal) stepTotal.textContent = stepQueryState.affectedNodes.length;
-        }
-
-        if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
+        }        if (stepQueryState.currentIndex >= stepQueryState.affectedNodes.length) {
+            // 确保至少进行了一步，避免在初始化时立即显示结果
+            if (stepQueryState.currentIndex === 0 && stepQueryState.affectedNodes.length === 0) {
+                console.log('⚠️ 没有受影响的节点，直接显示结果');
+            } else if (stepQueryState.currentIndex === 0) {
+                console.log('⚠️ 步进查询尚未开始，跳过结果显示');
+                return;
+            }
+            
             console.log('✅ 所有步进步骤完成');
             const resultDiv = document.createElement('div');
             resultDiv.className = 'query-result';
             resultDiv.style.margin = '10px';
-            resultDiv.style.padding = '10px';
+            resultDiv.style.padding = '15px';
             resultDiv.style.background = '#e8f4f8';
             resultDiv.style.borderRadius = '8px';
+            resultDiv.style.border = '1px solid #bee5eb';
+            resultDiv.style.position = 'relative';
             resultDiv.innerHTML = `
+                <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
                 <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
                 总和: ${stepQueryState.result.sum}<br>
                 最大值: ${stepQueryState.result.max}<br>
                 最小值: ${stepQueryState.result.min}
             `;
+            
+            // 添加关闭按钮事件
+            const closeBtn = resultDiv.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+                resultDiv.remove();
+            });
+            
             container.appendChild(resultDiv);
-            setTimeout(() => resultDiv.remove(), 5000);
             const progressContainer = container.querySelector('#step-progress-container');
             if (progressContainer) progressContainer.remove();
             stepQueryState.isActive = false;
@@ -483,9 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { u, tl, tr } = stepQueryState.affectedNodes[stepQueryState.currentIndex];
         const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
 
-        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
-
-        if (nodeDiv) {
+        console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);        if (nodeDiv) {
             const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
             nodeDiv.style.background = isFullyContained
                 ? 'linear-gradient(135deg, #ff6b6b, #e74c3c)'
@@ -496,8 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nodeDiv.style.boxShadow = isFullyContained
                 ? '0 2px 12px rgba(192, 57, 43, 0.3)'
                 : '0 2px 12px rgba(230, 126, 34, 0.3)';
-            nodeDiv.classList.add('active');
-            console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
+            console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
             updateNodeDisplaySafe(u, tl, tr);
         } else {
             console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
