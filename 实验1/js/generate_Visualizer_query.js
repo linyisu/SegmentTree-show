@@ -1,5 +1,4 @@
-/* 线段树区间查询可视化模块 */
-(function () {
+document.addEventListener('DOMContentLoaded', () => {
     // 状态管理
     const QueryVisualizerState = {
         lastBuiltN: 0,
@@ -62,7 +61,7 @@
             // 清空容器并创建结构
             container.innerHTML = `
                 <h4>🔍 线段树区间查询过程:</h4>
-                <p><strong>数组数据:</strong> [${dataArray.join(', ')}]</p>
+                <p><strong>数组数据:</strong> [${dataArray ? dataArray.join(', ') : ''}]</p>
                 <p><strong>数组长度:</strong> ${n}</p>
             `;
             const treeVisual = document.createElement('div');
@@ -309,6 +308,11 @@
             const max = QueryVisualizerState.globalTree[u].max;
             const min = QueryVisualizerState.globalTree[u].min;
             console.log(`✅ 完全包含，节点 u=${u} 返回 sum=${sum}, max=${max}, min=${min}`);
+            // 标记完全包含的节点
+            const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
+            if (nodeDiv) {
+                nodeDiv.dataset.fullyContained = 'true';
+            }
             return { sum, max, min };
         }
         const mid = Math.floor((tl + tr) / 2);
@@ -332,14 +336,16 @@
         }
 
         console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
-        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
-
+        // 重置所有节点样式并清除完全包含标志
         QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
             nodeDiv.style.background = 'linear-gradient(135deg, #74b9ff, #0984e3)';
             nodeDiv.style.border = '2px solid #74b9ff';
             nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
             nodeDiv.classList.remove('active');
+            nodeDiv.dataset.fullyContained = 'false';
         });
+
+        const result = queryRange(queryL, queryR, 1, QueryVisualizerState.lastBuiltN, 1);
 
         const affectedNodes = [];
         function collectNodes(u, tl, tr) {
@@ -357,11 +363,18 @@
             const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
             if (nodeDiv) {
                 setTimeout(() => {
-                    nodeDiv.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-                    nodeDiv.style.border = '2px solid #27ae60';
-                    nodeDiv.style.boxShadow = '0 2px 12px rgba(39, 174, 96, 0.3)';
+                    const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+                    nodeDiv.style.background = isFullyContained 
+                        ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
+                        : 'linear-gradient(135deg, #2ecc71, #27ae60)';
+                    nodeDiv.style.border = isFullyContained 
+                        ? '2px solid #c0392b'
+                        : '2px solid #27ae60';
+                    nodeDiv.style.boxShadow = isFullyContained 
+                        ? '0 2px 12px rgba(192, 57, 43, 0.3)'
+                        : '0 2px 12px rgba(39, 174, 96, 0.3)';
                     nodeDiv.classList.add('active');
-                    console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]`);
+                    console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
                     updateNodeDisplaySafe(u, tl, tr);
                 }, index * 200);
             }
@@ -399,6 +412,7 @@
                 nodeDiv.style.border = '2px solid #74b9ff';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                 nodeDiv.classList.remove('active');
+                nodeDiv.dataset.fullyContained = 'false';
             });
 
             const oldProgress = container.querySelector('#step-progress-container');
@@ -472,11 +486,18 @@
         console.log(`👣 执行步骤 ${stepQueryState.currentIndex + 1}: 节点 u=${u} [${tl},${tr}]`);
 
         if (nodeDiv) {
-            nodeDiv.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-            nodeDiv.style.border = '2px solid #27ae60';
-            nodeDiv.style.boxShadow = '0 2px 12px rgba(39, 174, 96, 0.3)';
+            const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+            nodeDiv.style.background = isFullyContained 
+                ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
+                : 'linear-gradient(135deg, #2ecc71, #27ae60)';
+            nodeDiv.style.border = isFullyContained 
+                ? '2px solid #c0392b'
+                : '2px solid #27ae60';
+            nodeDiv.style.boxShadow = isFullyContained 
+                ? '0 2px 12px rgba(192, 57, 43, 0.3)'
+                : '0 2px 12px rgba(39, 174, 96, 0.3)';
             nodeDiv.classList.add('active');
-            console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]`);
+            console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
             updateNodeDisplaySafe(u, tl, tr);
         } else {
             console.warn(`❌ 节点 u=${u} 的 DOM 元素未找到`);
@@ -526,70 +547,75 @@
         errorDiv.style.color = 'red';
         errorDiv.style.margin = '10px';
         errorDiv.textContent = message;
-        QueryVisualizerState.lastBuiltContainer.prepend(errorDiv);
+        QueryVisualizerState.lastBuiltContainer?.prepend(errorDiv);
         setTimeout(() => errorDiv.remove(), 3000);
     }
 
     // 初始化
     function initQueryTreeVisualizer() {
-        const inputCustomData = document.getElementById('input-custom-data');
-        const btnRandomData = document.getElementById('btn-random-data');
-        const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
+        const inputCustomData = document.getElementById('input-custom-data-query');
+        const btnRandomData = document.getElementById('btn-random-data-query');
+        const btnUpdateCustomData = document.getElementById('btn-update-custom-data-query');
         const btnApplyQueryDirect = document.getElementById('btn-apply-query-direct');
         const btnApplyQueryStep = document.getElementById('btn-apply-query-step');
-        const customTreeVisualizerHost = document.getElementById('custom-tree-visualizer-host');
+        const customTreeNodesData = document.getElementById('query-tree-visualizer-host');
 
-        if (!inputCustomData || !btnRandomData || !btnUpdateCustomData || !btnApplyQueryDirect || !btnApplyQueryStep || !customTreeVisualizerHost) {
+        // 检查所有必要元素是否存在
+        if (!inputCustomData || !btnRandomData || !btnUpdateCustomData || !btnApplyQueryDirect || !btnApplyQueryStep || !customTreeNodesData) {
             console.error('初始化失败：缺少必要的 DOM 元素', {
                 inputCustomData: !!inputCustomData,
                 btnRandomData: !!btnRandomData,
                 btnUpdateCustomData: !!btnUpdateCustomData,
                 btnApplyQueryDirect: !!btnApplyQueryDirect,
                 btnApplyQueryStep: !!btnApplyQueryStep,
-                customTreeVisualizerHost: !!customTreeVisualizerHost
+                customTreeNodesData: !!customTreeNodesData
             });
             showError('页面元素加载失败，请检查 HTML 结构！');
             return;
         }
 
-        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
+        // 初始化默认值
+        if (inputCustomData) inputCustomData.value = "1 0 1 4 5 1 3";
 
+        // 随机数据按钮
         if (btnRandomData) {
             btnRandomData.addEventListener('click', () => {
-                const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1);
-                inputCustomData.value = randomArray.join(' ');
+                const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 1 }, () => Math.floor(Math.random() * 10) + 1);
+                if (inputCustomData) inputCustomData.value = randomArray.join(' ');
             });
         }
 
-        if (btnUpdateCustomData && customTreeVisualizerHost) {
+        // 更新自定义数据按钮
+        if (btnUpdateCustomData && customTreeNodesData) {
             btnUpdateCustomData.addEventListener('click', () => {
-                const inputData = inputCustomData?.value?.trim() || '';
+                const inputData = inputCustomData?.value?.trim();
                 if (!inputData) {
                     showError('请输入数据！');
                     return;
                 }
                 try {
                     const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
-                    if (dataArray.length === 0 || dataArray.length > 8) {
+                    if (dataArray.length === 0 || dataArray.length > 8) { // 调整为 HTML 中的最大值 8
                         showError('请输入 1 到 8 个有效数字！');
                         return;
                     }
-                    buildTreeVisualizationWithData(dataArray, customTreeVisualizerHost, false);
+                    buildTreeVisualizationWithData(dataArray, customTreeNodesData);
                 } catch (error) {
                     showError('数据格式不正确！');
                 }
             });
         }
 
+        // 直接查询按钮
         if (btnApplyQueryDirect) {
             btnApplyQueryDirect.addEventListener('click', () => {
                 if (!QueryVisualizerState.isTreeRendered) {
                     showError('请先构建线段树！');
                     return;
                 }
-                const queryL = parseInt(document.getElementById('input-query-left')?.value);
-                const queryR = parseInt(document.getElementById('input-query-right')?.value);
-                if (!Number.isInteger(queryL) || !Number.isInteger(queryR)) {
+                const queryL = parseInt(document.getElementById('input-query-left')?.value || '0');
+                const queryR = parseInt(document.getElementById('input-query-right')?.value || '0');
+                if (isNaN(queryL) || isNaN(queryR)) {
                     showError('请输入有效的整数参数！');
                     return;
                 }
@@ -601,15 +627,16 @@
             });
         }
 
+        // 步进查询按钮
         if (btnApplyQueryStep) {
             btnApplyQueryStep.addEventListener('click', () => {
                 if (!QueryVisualizerState.isTreeRendered) {
                     showError('请先构建线段树！');
                     return;
                 }
-                const queryL = parseInt(document.getElementById('input-query-left')?.value);
-                const queryR = parseInt(document.getElementById('input-query-right')?.value);
-                if (!Number.isInteger(queryL) || !Number.isInteger(queryR)) {
+                const queryL = parseInt(document.getElementById('input-query-left')?.value || '0');
+                const queryR = parseInt(document.getElementById('input-query-right')?.value || '0');
+                if (isNaN(queryL) || isNaN(queryR)) {
                     showError('请输入有效的整数参数！');
                     return;
                 }
@@ -621,6 +648,7 @@
             });
         }
 
+        // 窗口调整事件
         window.addEventListener('resize', debounce(() => {
             if (QueryVisualizerState.isTreeRendered && QueryVisualizerState.lastBuiltContainer && QueryVisualizerState.lastBuiltN > 0) {
                 const containerStyle = window.getComputedStyle(QueryVisualizerState.lastBuiltContainer);
@@ -636,4 +664,7 @@
         buildTreeVisualizationWithData,
         initQueryTreeVisualizer
     };
-})();
+
+    // 自动初始化
+    initQueryTreeVisualizer();
+});

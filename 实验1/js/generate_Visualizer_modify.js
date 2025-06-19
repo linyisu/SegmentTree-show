@@ -562,17 +562,16 @@
     errorDiv.style.margin = '10px';
     errorDiv.textContent = message;
     ModifyVisualizerState.lastBuiltContainer.prepend(errorDiv);
-    setTimeout(() => errorDiv.remove(), 3000);
-  }
+    setTimeout(() => errorDiv.remove(), 3000);  }
 
   // 初始化
   function initTreeVisualizer() {
-    const inputCustomData = document.getElementById('input-custom-data');
-    const btnRandomData = document.getElementById('btn-random-data');
-    const btnUpdateCustomData = document.getElementById('btn-update-custom-data');
+    const inputCustomData = document.getElementById('input-custom-data-modify');
+    const btnRandomData = document.getElementById('btn-random-data-modify');
+    const btnUpdateCustomData = document.getElementById('btn-update-custom-data-modify');
     const btnApplyModificationDirect = document.getElementById('btn-apply-modification-direct');
     const btnApplyModificationStep = document.getElementById('btn-apply-modification-step');
-    const customTreeVisualizerHost = document.getElementById('custom-tree-visualizer-host');
+    const customTreeVisualizerHost = document.getElementById('modify-tree-visualizer-host');
 
     if (inputCustomData) inputCustomData.value = "1 1 4 5 1 4";
 

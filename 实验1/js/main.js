@@ -21,11 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.TreeVisualizer) {
     window.TreeVisualizer.initTreeVisualizer();
   }
-    if (window.ModifyTreeVisualizer) {
+  if (window.ModifyTreeVisualizer) {
     console.log('🔧 初始化区间修改可视化模块...');
     window.ModifyTreeVisualizer.initModifyTreeVisualizer();
   } else {
     console.log('❌ ModifyTreeVisualizer 模块未找到');
+  }
+  
+  if (window.QueryTreeVisualizer) {
+    console.log('🔍 初始化区间查询可视化模块...');
+    window.QueryTreeVisualizer.initQueryTreeVisualizer();
+  } else {
+    console.log('❌ QueryTreeVisualizer 模块未找到');
   }
   
   if (window.Quiz) {

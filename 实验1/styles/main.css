@@ -321,10 +321,6 @@ select:focus {
 /* --- Theme Definitions --- */
 
 /* Light Theme (relies on :root defaults mostly) */
-html[data-theme="light"] {
-  /* Variables defined in :root are used by default for light theme */
-  /* We can override specific ones if needed, but usually :root is the light theme baseline */
-}
 html[data-theme="light"] body {
   background: #e9eafc; /* Was linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) - simplified to a light variant */
   /* Other light-theme specific body styles if any */
