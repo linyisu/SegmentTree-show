@@ -562,7 +562,8 @@
     errorDiv.style.margin = '10px';
     errorDiv.textContent = message;
     ModifyVisualizerState.lastBuiltContainer.prepend(errorDiv);
-    setTimeout(() => errorDiv.remove(), 3000);  }
+    setTimeout(() => errorDiv.remove(), 3000);
+  }
 
   // 初始化
   function initTreeVisualizer() {
@@ -577,7 +578,7 @@
 
     if (btnRandomData) {
       btnRandomData.addEventListener('click', () => {
-        const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1);
+        const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1); // 1 到 10
         inputCustomData.value = randomArray.join(' ');
       });
     }
@@ -593,6 +594,12 @@
           const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
           if (dataArray.length === 0 || dataArray.length > 8) {
             showError('请输入 1 到 8 个有效数字！');
+            return;
+          }
+          // 检查每个数字是否在 -50 到 50 之间
+          const outOfRange = dataArray.some(num => num < -50 || num > 50);
+          if (outOfRange) {
+            showError('每个数字必须在 -50 到 50 之间！');
             return;
           }
           buildTreeVisualizationWithData(dataArray, customTreeVisualizerHost, false);

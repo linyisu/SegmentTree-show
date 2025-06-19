@@ -364,15 +364,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (nodeDiv) {
                 setTimeout(() => {
                     const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
-                    nodeDiv.style.background = isFullyContained 
-                        ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
-                        : 'linear-gradient(135deg, #2ecc71, #27ae60)';
-                    nodeDiv.style.border = isFullyContained 
-                        ? '2px solid #c0392b'
-                        : '2px solid #27ae60';
-                    nodeDiv.style.boxShadow = isFullyContained 
+                    nodeDiv.style.background = isFullyContained
+                        ? 'linear-gradient(135deg, #ff6b6b, #e74c3c)'
+                        : 'linear-gradient(135deg, #f39c12, #e67e22)';
+                    nodeDiv.style.border = isFullyContained
+                        ? '2px solid #e74c3c'
+                        : '2px solid #e67e22';
+                    nodeDiv.style.boxShadow = isFullyContained
                         ? '0 2px 12px rgba(192, 57, 43, 0.3)'
-                        : '0 2px 12px rgba(39, 174, 96, 0.3)';
+                        : '0 2px 12px rgba(230, 126, 34, 0.3)';
                     nodeDiv.classList.add('active');
                     console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
                     updateNodeDisplaySafe(u, tl, tr);
@@ -487,15 +487,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (nodeDiv) {
             const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
-            nodeDiv.style.background = isFullyContained 
-                ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
-                : 'linear-gradient(135deg, #2ecc71, #27ae60)';
-            nodeDiv.style.border = isFullyContained 
-                ? '2px solid #c0392b'
-                : '2px solid #27ae60';
-            nodeDiv.style.boxShadow = isFullyContained 
+            nodeDiv.style.background = isFullyContained
+                ? 'linear-gradient(135deg, #ff6b6b, #e74c3c)'
+                : 'linear-gradient(135deg, #f39c12, #e67e22)';
+            nodeDiv.style.border = isFullyContained
+                ? '2px solid #e74c3c'
+                : '2px solid #e67e22';
+            nodeDiv.style.boxShadow = isFullyContained
                 ? '0 2px 12px rgba(192, 57, 43, 0.3)'
-                : '0 2px 12px rgba(39, 174, 96, 0.3)';
+                : '0 2px 12px rgba(230, 126, 34, 0.3)';
             nodeDiv.classList.add('active');
             console.log(`🟢 步进：高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ''}`);
             updateNodeDisplaySafe(u, tl, tr);
@@ -575,12 +575,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 初始化默认值
-        if (inputCustomData) inputCustomData.value = "1 0 1 4 5 1 3";
+        if (inputCustomData) inputCustomData.value = "1 1 4 5 1 3";
 
         // 随机数据按钮
         if (btnRandomData) {
             btnRandomData.addEventListener('click', () => {
-                const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 1 }, () => Math.floor(Math.random() * 10) + 1);
+                const randomArray = Array.from({ length: Math.floor(Math.random() * 4) + 5 }, () => Math.floor(Math.random() * 10) + 1); // 1 到 10
                 if (inputCustomData) inputCustomData.value = randomArray.join(' ');
             });
         }
@@ -597,6 +597,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dataArray = inputData.split(/\s+/).map(x => parseInt(x)).filter(x => !isNaN(x));
                     if (dataArray.length === 0 || dataArray.length > 8) { // 调整为 HTML 中的最大值 8
                         showError('请输入 1 到 8 个有效数字！');
+                        return;
+                    }
+                    // 检查每个数字是否在 -50 到 50 之间
+                    const outOfRange = dataArray.some(num => num < -50 || num > 50);
+                    if (outOfRange) {
+                        showError('每个数字必须在 -50 到 50 之间！');
                         return;
                     }
                     buildTreeVisualizationWithData(dataArray, customTreeNodesData);
