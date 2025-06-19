@@ -403,24 +403,3 @@
     margin: 10px !important;
     font-size: 14px !important;
 }
-
-/* 按钮基本样式 */
-.btn {
-    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 10px 20px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-}
-
-.btn:hover {
-    background: linear-gradient(135deg, #5a6268, #4b5156) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-}
-
-.btn:active {
-    transform: scale(0.98) !important;
-}
