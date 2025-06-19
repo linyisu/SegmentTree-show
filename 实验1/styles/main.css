@@ -335,7 +335,7 @@ html[data-theme="dark"] {
   --card-bg: rgba(45, 52, 54, 0.85); /* Dark card background */
   --text-primary: #dfe6e9;       /* Light text for dark theme */
   --text-secondary: #b2bec3;    /* Lighter grey text for dark theme */
-  --input-bg: #2d3436;          /* Dark input background */
+  --input-bg: #485563;          /* 更亮的深色输入框背景，提高可见度 */
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   --primary-color-rgb: 129, 236, 236; /* Corresponds to #81ecec */
 }

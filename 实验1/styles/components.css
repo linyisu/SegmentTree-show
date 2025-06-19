@@ -505,3 +505,30 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
   transform: translateY(-1px) scale(0.98);
 }
 
+/* 暗色主题输入框优化 */
+html[data-theme="dark"] .settings-panel input,
+html[data-theme="dark"] .settings-panel select,
+html[data-theme="dark"] .settings-panel textarea,
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="number"] {
+  background: var(--input-bg);
+  border: 1px solid rgba(129, 236, 236, 0.3); /* 使用主色调的边框 */
+  color: #ffffff; /* 确保文字是白色 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .settings-panel input:focus,
+html[data-theme="dark"] .settings-panel select:focus,
+html[data-theme="dark"] .settings-panel textarea:focus,
+html[data-theme="dark"] input[type="text"]:focus,
+html[data-theme="dark"] input[type="number"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(129, 236, 236, 0.2);
+}
+
+html[data-theme="dark"] .settings-panel input::placeholder,
+html[data-theme="dark"] input[type="text"]::placeholder,
+html[data-theme="dark"] input[type="number"]::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
