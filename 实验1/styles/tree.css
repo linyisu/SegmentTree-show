@@ -4,7 +4,7 @@ css 层叠样式表
 #tree-container {
   margin-top: 30px;
   padding: 25px 25px 10px 25px; /* Modified from padding: 25px; */
-  background: var(--card-bg);
+  background: transparent;
   border-radius: 18px;
   border-left: 5px solid var(--primary-color);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -48,8 +48,7 @@ css 层叠样式表
   position: relative;
   box-sizing: border-box;
   min-height: 300px;
-  background: var(--card-bg);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* 添加轻微阴影增强效果 */
+  background: transparent;
 }
 
 .tree-level {
@@ -187,4 +186,17 @@ css 层叠样式表
     box-sizing: border-box;
     min-height: 200px;
   }
+}
+
+/* 主题特定的tree-container背景 */
+html[data-theme="light"] #tree-container {
+  background: rgba(108, 92, 231, 0.05);
+}
+
+html[data-theme="dark"] #tree-container {
+  background: rgba(129, 236, 236, 0.08);
+}
+
+html[data-theme="eye-care"] #tree-container {
+  background: rgba(46, 204, 113, 0.06);
 }

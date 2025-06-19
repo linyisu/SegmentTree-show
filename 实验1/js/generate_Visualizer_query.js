@@ -63,16 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h4>🔍 线段树区间查询过程:</h4>
                 <p><strong>数组数据:</strong> [${dataArray ? dataArray.join(', ') : ''}]</p>
                 <p><strong>数组长度:</strong> ${n}</p>
-            `;
-            const treeVisual = document.createElement('div');
+            `;            const treeVisual = document.createElement('div');
             treeVisual.className = 'tree-visual';
             treeVisual.style.position = 'relative';
             treeVisual.style.width = '100%';
             treeVisual.style.padding = '25px';
-            treeVisual.style.background = '#f8f9fa';
+            treeVisual.style.background = 'transparent';
             treeVisual.style.borderRadius = '12px';
-            treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
-            treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+            // 移除边框和阴影
             treeVisual.style.overflow = 'visible';
             treeVisual.style.minHeight = '200px';
             container.appendChild(treeVisual);

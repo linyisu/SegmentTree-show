@@ -47,16 +47,14 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
     
     // 清空容器内容并创建固定的结构
     container.innerHTML = '<h4>🌲 线段树构建过程:</h4>';
-    container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;
-    const treeVisual = document.createElement('div');
+    container.innerHTML += `<p><strong>数组长度:</strong> ${n}</p>`;    const treeVisual = document.createElement('div');
     treeVisual.className = 'tree-visual';
     treeVisual.style.position = 'relative';
     treeVisual.style.width = '100%';
     treeVisual.style.padding = '25px'; // Padding is part of treeVisual itself
-    treeVisual.style.background = 'var(--card-bg)';
+    treeVisual.style.background = 'transparent';
     treeVisual.style.borderRadius = '12px'; // 改为12px圆角
-    treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)'; // 添加白边
-    treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)'; // 调整阴影
+    // 移除边框和阴影
     treeVisual.style.overflow = 'visible';
     treeVisual.style.minHeight = '200px'; // 设置最小高度，确保盒子可见
     container.appendChild(treeVisual);
@@ -314,16 +312,14 @@ function getAnimationDelay() {
 // 初始化显示构建过程可视化的容器
 function initializeTreeContainer(container) {
   container.innerHTML = ''; // 不显示任何标题
-  
   const treeVisual = document.createElement('div');
   treeVisual.className = 'tree-visual';
   treeVisual.style.position = 'relative';
   treeVisual.style.width = '100%';
   treeVisual.style.padding = '25px';
-  treeVisual.style.background = 'var(--card-bg)';
+  treeVisual.style.background = 'transparent';
   treeVisual.style.borderRadius = '12px';
-  treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
-  treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+  // 移除边框和阴影
   treeVisual.style.overflow = 'visible';
   treeVisual.style.minHeight = '200px';
   treeVisual.style.display = 'flex';
