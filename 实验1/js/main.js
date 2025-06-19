@@ -93,6 +93,14 @@ function switchTheme(themeName) {
   });
 
   updateSliderPosition(activeIndex); // 更新滑块位置
+  
+  // 通知查询和修改可视化更新节点样式
+  if (window.updateQueryNodeStyles) {
+    window.updateQueryNodeStyles();
+  }
+  if (window.updateModifyNodeStyles) {
+    window.updateModifyNodeStyles();
+  }
 }
 
 // 更新滑块位置的函数

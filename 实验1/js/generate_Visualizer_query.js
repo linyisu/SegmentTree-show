@@ -1,57 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 根据深度获取节点颜色（与构建可视化保持一致）
-    function getNodeStylesByDepth(depth) {
-        const theme = document.documentElement.getAttribute('data-theme') || 'light';
-        
-        const colorSchemes = {
-            light: {
-                0: { background: '#8b7ed8', border: '#4a3fb8' },
-                1: { background: '#e89ac7', border: '#a14070' },
-                2: { background: '#4db6ac', border: '#236660' },
-                3: { background: '#ffb74d', border: '#b87a15' }
-            },
-            dark: {
-                0: { background: '#5a4fcf', border: '#2d1f6b' },
-                1: { background: '#c1578a', border: '#6b2742' },
-                2: { background: '#2d8a7f', border: '#164039' },
-                3: { background: '#d4941e', border: '#7a5210' }
-            },
-            'eye-care': {
-                0: { background: '#9c88e6', border: '#655398' },
-                1: { background: '#f0a7d1', border: '#b5688c' },
-                2: { background: '#66c2b8', border: '#3c8a7d' },
-                3: { background: '#ffc266', border: '#cc8f38' }
-            }
-        };
-        
-        const scheme = colorSchemes[theme] || colorSchemes.light;
-        return scheme[depth] || scheme[0];
-    }    // 计算节点深度
-    function calculateNodeDepth(nodeIndex, totalNodes) {
-        if (totalNodes <= 1) return 0;
-        
-        // 使用二进制表示计算深度
-        let depth = 0;
-        let temp = nodeIndex;
-        while (temp > 1) {
-            temp = Math.floor(temp / 2);
-            depth++;
-        }
-        
-        return Math.min(depth, 3); // 最大深度为3
-    }
-
-    // 获取动画延迟时间（根据设置中的动画速度）
-    function getAnimationDelay(baseDelay = 100) {
-        const speed = window.animationSpeed || 'normal';
-        const speedMultipliers = {
-            'slow': 2.0,    // 慢速：2倍时间
-            'normal': 1.0,  // 正常：基础时间
-            'fast': 0.5     // 快速：0.5倍时间
-        };
-        return Math.round(baseDelay * (speedMultipliers[speed] || 1.0));
-    }
-
     // 状态管理
     const QueryVisualizerState = {
         lastBuiltN: 0,
@@ -116,14 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h4>🔍 线段树区间查询过程:</h4>
                 <p><strong>数组数据:</strong> [${dataArray ? dataArray.join(', ') : ''}]</p>
                 <p><strong>数组长度:</strong> ${n}</p>
-            `;            const treeVisual = document.createElement('div');
+            `;
+            const treeVisual = document.createElement('div');
             treeVisual.className = 'tree-visual';
             treeVisual.style.position = 'relative';
             treeVisual.style.width = '100%';
             treeVisual.style.padding = '25px';
             treeVisual.style.background = 'transparent';
             treeVisual.style.borderRadius = '12px';
-            // 移除边框和阴影
+            treeVisual.style.border = '2px solid rgba(255, 255, 255, 0.8)';
+            treeVisual.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
             treeVisual.style.overflow = 'visible';
             treeVisual.style.minHeight = '200px';
             container.appendChild(treeVisual);
@@ -269,10 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.top = `${position.y}px`;
                 nodeDiv.style.width = `${position.nodeWidth}px`;
                 nodeDiv.style.zIndex = '10';
-                nodeDiv.style.minHeight = '80px';                // 计算节点深度和获取对应颜色
-                const nodeDepth = calculateNodeDepth(u, n);
-                const styles = getNodeStylesByDepth(nodeDepth);
-                
+                nodeDiv.style.minHeight = '80px';
                 nodeDiv.style.display = 'flex';
                 nodeDiv.style.flexDirection = 'column';
                 nodeDiv.style.justifyContent = 'center';
@@ -281,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.padding = '6px';
                 nodeDiv.style.boxSizing = 'border-box';
                 nodeDiv.style.borderRadius = '8px';
-                nodeDiv.style.border = `2px solid ${styles.border}`;
-                nodeDiv.style.background = styles.background;
+                nodeDiv.style.border = '2px solid #74b9ff';
+                nodeDiv.style.background = '#0984e3';
                 nodeDiv.style.color = 'white';
                 nodeDiv.style.textAlign = 'center';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -290,16 +236,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.opacity = '0';
                 nodeDiv.style.transform = 'translateY(-10px)';
                 treeVisual.appendChild(nodeDiv);
-                QueryVisualizerState.domNodeElements.set(u, nodeDiv);                setTimeout(() => {
+                QueryVisualizerState.domNodeElements.set(u, nodeDiv);
+
+                setTimeout(() => {
                     nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
                     nodeDiv.style.opacity = '1';
                     nodeDiv.style.transform = 'translateY(0)';
-                }, getAnimationDelay(50));
+                }, 50);
 
                 orderIndex++;
-                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(100));
+                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 100);
             }
-            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(500));
+            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 500);
         } else {
             requestAnimationFrame(() => {
                 QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
@@ -382,14 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
-          const oldResults = container.querySelectorAll('.query-result');
+        
+        const oldResults = container.querySelectorAll('.query-result');
         oldResults.forEach(result => result.remove());
         
-        QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
-            const nodeDepth = calculateNodeDepth(u, QueryVisualizerState.lastBuiltN);
-            const styles = getNodeStylesByDepth(nodeDepth);
-            nodeDiv.style.background = styles.background;
-            nodeDiv.style.border = `2px solid ${styles.border}`;
+        QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
+            nodeDiv.style.background = '#0984e3';
+            nodeDiv.style.border = '2px solid #74b9ff';
             nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
             nodeDiv.dataset.fullyContained = 'false';
         });
@@ -408,30 +355,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 collectNodes(u * 2 + 1, mid + 1, tr);
             }
         }
-        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);        affectedNodes.forEach(({ u, tl, tr }, index) => {
+        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);
+
+        affectedNodes.forEach(({ u, tl, tr }, index) => {
             const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
             if (nodeDiv) {
                 setTimeout(() => {
                     const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
-                    // 使用红色和橙色突出显示查询相关节点，与主题无关
                     nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
                     nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
                     nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
                     console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
                     updateNodeDisplaySafe(u, tl, tr);
-                }, index * getAnimationDelay(200));
+                }, index * 200);
             }
-        });        if (!document.querySelector('.query-result')) {
-            setTimeout(() => {                const resultDiv = document.createElement('div');
+        });
+
+        if (!document.querySelector('.query-result')) {
+            setTimeout(() => {
+                const resultDiv = document.createElement('div');
                 resultDiv.className = 'query-result';
                 resultDiv.style.margin = '10px';
                 resultDiv.style.padding = '15px';
-                resultDiv.style.background = '#fff3cd';
+                resultDiv.style.background = '#e8f4f8';
                 resultDiv.style.borderRadius = '8px';
-                resultDiv.style.border = '1px solid #ffeaa7';
+                resultDiv.style.border = '1px solid #bee5eb';
                 resultDiv.style.position = 'relative';
                 resultDiv.innerHTML = `
-                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
+                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">×</button>
                     <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
                     总和: ${result.sum}<br>
                     最大值: ${result.max}<br>
@@ -440,8 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const closeBtn = resultDiv.querySelector('.close-btn');
                 closeBtn.addEventListener('click', () => {
                     resultDiv.remove();
-                });                container.appendChild(resultDiv);
-            }, affectedNodes.length * getAnimationDelay(200) + getAnimationDelay(500));
+                });
+                container.appendChild(resultDiv);
+            }, affectedNodes.length * 200 + 500);
         }
     }    // 步进查询
     function performRangeQueryStep(queryL, queryR, container) {
@@ -459,12 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // 清除之前的查询结果
             const oldResults = container.querySelectorAll('.query-result');
             oldResults.forEach(result => result.remove());
-              // 重置所有节点样式
-            QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
-                const nodeDepth = calculateNodeDepth(u, QueryVisualizerState.lastBuiltN);
-                const styles = getNodeStylesByDepth(nodeDepth);
-                nodeDiv.style.background = styles.background;
-                nodeDiv.style.border = `2px solid ${styles.border}`;
+            
+            // 重置所有节点样式
+            QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
+                nodeDiv.style.background = '#0984e3';
+                nodeDiv.style.border = '2px solid #74b9ff';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                 nodeDiv.dataset.fullyContained = 'false';
             });
@@ -547,13 +498,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('✅ 所有步进步骤完成');
             stepQueryState.resultDisplayed = true;
-              const resultDiv = document.createElement('div');
+            
+            const resultDiv = document.createElement('div');
             resultDiv.className = 'query-result';
             resultDiv.style.margin = '10px';
             resultDiv.style.padding = '15px';
-            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.background = '#e8f4f8';
             resultDiv.style.borderRadius = '8px';
-            resultDiv.style.border = '1px solid #ffeaa7';
+            resultDiv.style.border = '1px solid #bee5eb';
             resultDiv.style.position = 'relative';
             resultDiv.innerHTML = `
                 <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
