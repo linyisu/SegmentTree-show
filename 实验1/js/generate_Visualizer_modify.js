@@ -1,6 +1,50 @@
 /* 线段树区间修改可视化模块（修复懒标记下发，延迟上层节点更新） */
 
 (function () {
+  // 根据深度获取节点颜色（与构建可视化保持一致）
+  function getNodeStylesByDepth(depth) {
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    
+    const colorSchemes = {
+      light: {
+        0: { background: '#8b7ed8', border: '#4a3fb8' },
+        1: { background: '#e89ac7', border: '#a14070' },
+        2: { background: '#4db6ac', border: '#236660' },
+        3: { background: '#ffb74d', border: '#b87a15' }
+      },
+      dark: {
+        0: { background: '#5a4fcf', border: '#2d1f6b' },
+        1: { background: '#c1578a', border: '#6b2742' },
+        2: { background: '#2d8a7f', border: '#164039' },
+        3: { background: '#d4941e', border: '#7a5210' }
+      },
+      'eye-care': {
+        0: { background: '#9c88e6', border: '#655398' },
+        1: { background: '#f0a7d1', border: '#b5688c' },
+        2: { background: '#66c2b8', border: '#3c8a7d' },
+        3: { background: '#ffc266', border: '#cc8f38' }
+      }
+    };
+    
+    const scheme = colorSchemes[theme] || colorSchemes.light;
+    return scheme[depth] || scheme[0];
+  }
+
+  // 计算节点深度
+  function calculateNodeDepth(nodeIndex, totalNodes) {
+    if (totalNodes <= 1) return 0;
+    
+    // 使用二进制表示计算深度
+    let depth = 0;
+    let temp = nodeIndex;
+    while (temp > 1) {
+      temp = Math.floor(temp / 2);
+      depth++;
+    }
+    
+    return Math.min(depth, 3); // 最大深度为3
+  }
+
   // --- 状态管理 ---
   // 创建独立的命名空间避免变量冲突
   const ModifyVisualizerState = {
@@ -227,14 +271,17 @@
         nodeDiv.style.minHeight = '80px';
         nodeDiv.style.display = 'flex';
         nodeDiv.style.flexDirection = 'column';
-        nodeDiv.style.justifyContent = 'center';
+        nodeDiv.style.justifyContent = 'center';        // 计算节点深度和获取对应颜色
+        const nodeDepth = calculateNodeDepth(u, n);
+        const styles = getNodeStylesByDepth(nodeDepth);
+        
         nodeDiv.style.alignItems = 'center';
         nodeDiv.style.fontSize = '13px';
         nodeDiv.style.padding = '6px';
         nodeDiv.style.boxSizing = 'border-box';
         nodeDiv.style.borderRadius = '8px';
-        nodeDiv.style.border = '2px solid #74b9ff';
-        nodeDiv.style.background = ' #0984e3';
+        nodeDiv.style.border = `2px solid ${styles.border}`;
+        nodeDiv.style.background = styles.background;
         nodeDiv.style.color = 'white';
         nodeDiv.style.textAlign = 'center';
         nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -355,14 +402,14 @@
     if (!ModifyVisualizerState.isTreeRendered || !ModifyVisualizerState.lastBuiltContainer) {
       showError('请先构建线段树！');
       return;
-    }
-
-    console.log(`⚡ 直接修改: [${modifyL}, ${modifyR}] 增加 ${delta}`);
+    }    console.log(`⚡ 直接修改: [${modifyL}, ${modifyR}] 增加 ${delta}`);
     updateRange(modifyL, modifyR, 1, ModifyVisualizerState.lastBuiltN, 1, delta);
 
-    ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
-      nodeDiv.style.background = ' #0984e3';
-      nodeDiv.style.border = '2px solid #74b9ff';
+    ModifyVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+      const nodeDepth = calculateNodeDepth(u, ModifyVisualizerState.lastBuiltN);
+      const styles = getNodeStylesByDepth(nodeDepth);
+      nodeDiv.style.background = styles.background;
+      nodeDiv.style.border = `2px solid ${styles.border}`;
       nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
     });
 
@@ -434,11 +481,12 @@
       // 清除之前的修改结果
       const oldResults = container.querySelectorAll('.modify-result');
       oldResults.forEach(result => result.remove());
-      
-      // 重置所有节点样式
-      ModifyVisualizerState.domNodeElements.forEach((nodeDiv) => {
-        nodeDiv.style.background = ' #0984e3';
-        nodeDiv.style.border = '2px solid #74b9ff';
+        // 重置所有节点样式
+      ModifyVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+        const nodeDepth = calculateNodeDepth(u, ModifyVisualizerState.lastBuiltN);
+        const styles = getNodeStylesByDepth(nodeDepth);
+        nodeDiv.style.background = styles.background;
+        nodeDiv.style.border = `2px solid ${styles.border}`;
         nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
       });
 

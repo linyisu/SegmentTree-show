@@ -92,7 +92,6 @@ css 层叠样式表
   white-space: pre-line;
   box-sizing: border-box;
   border-radius: 5px; /* 添加圆角 */
-  border: 1px solid transparent;
 }
 
 .tree-node.depth-0 {
@@ -243,15 +242,65 @@ html[data-theme="eye-care"] #tree-container {
   background: rgba(46, 204, 113, 0.06);
 }
 
-/* 构建过程可视化节点边框 - 与页面背景色相同 */
+/* 构建过程可视化节点边框 - 使用更深的颜色提供分割效果 */
 .tree-node {
-  border: 1px solid #ffffff !important; /* 默认浅色主题背景色 */
+  border: 2px solid rgba(0, 0, 0, 0.25) !important; /* 加粗边框，增强对比度 */
 }
 
+.tree-node.depth-0 {
+  border: 2px solid #4a3fb8 !important; /* 更深的紫色边框 */
+}
+
+.tree-node.depth-1 {
+  border: 2px solid #a14070 !important; /* 更深的粉色边框 */
+}
+
+.tree-node.depth-2 {
+  border: 2px solid #236660 !important; /* 更深的青绿色边框 */
+}
+
+.tree-node.depth-3 {
+  border: 2px solid #b87a15 !important; /* 更深的橙色边框 */
+}
+
+/* 暗色主题的边框 */
 html[data-theme="dark"] .tree-node {
-  border: 1px solid var(--dark-background-color) !important; /* 暗色主题背景色 */
+  border: 2px solid rgba(255, 255, 255, 0.3) !important; /* 加粗浅白色边框 */
 }
 
+html[data-theme="dark"] .tree-node.depth-0 {
+  border: 2px solid #2d1f6b !important; /* 更深的紫色 */
+}
+
+html[data-theme="dark"] .tree-node.depth-1 {
+  border: 2px solid #6b2742 !important; /* 更深的粉色 */
+}
+
+html[data-theme="dark"] .tree-node.depth-2 {
+  border: 2px solid #164039 !important; /* 更深的青绿色 */
+}
+
+html[data-theme="dark"] .tree-node.depth-3 {
+  border: 2px solid #7a5210 !important; /* 更深的橙色 */
+}
+
+/* 护眼主题的边框 */
 html[data-theme="eye-care"] .tree-node {
-  border: 1px solid var(--eye-care-background-color) !important; /* 护眼主题背景色 */
+  border: 2px solid rgba(0, 0, 0, 0.2) !important; /* 加粗淡灰色边框 */
+}
+
+html[data-theme="eye-care"] .tree-node.depth-0 {
+  border: 2px solid #655398 !important; /* 更深的紫色 */
+}
+
+html[data-theme="eye-care"] .tree-node.depth-1 {
+  border: 2px solid #b5688c !important; /* 更深的粉色 */
+}
+
+html[data-theme="eye-care"] .tree-node.depth-2 {
+  border: 2px solid #3c8a7d !important; /* 更深的青绿色 */
+}
+
+html[data-theme="eye-care"] .tree-node.depth-3 {
+  border: 2px solid #cc8f38 !important; /* 更深的橙色 */
 }

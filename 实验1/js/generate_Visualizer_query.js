@@ -1,4 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 根据深度获取节点颜色（与构建可视化保持一致）
+    function getNodeStylesByDepth(depth) {
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        
+        const colorSchemes = {
+            light: {
+                0: { background: '#8b7ed8', border: '#4a3fb8' },
+                1: { background: '#e89ac7', border: '#a14070' },
+                2: { background: '#4db6ac', border: '#236660' },
+                3: { background: '#ffb74d', border: '#b87a15' }
+            },
+            dark: {
+                0: { background: '#5a4fcf', border: '#2d1f6b' },
+                1: { background: '#c1578a', border: '#6b2742' },
+                2: { background: '#2d8a7f', border: '#164039' },
+                3: { background: '#d4941e', border: '#7a5210' }
+            },
+            'eye-care': {
+                0: { background: '#9c88e6', border: '#655398' },
+                1: { background: '#f0a7d1', border: '#b5688c' },
+                2: { background: '#66c2b8', border: '#3c8a7d' },
+                3: { background: '#ffc266', border: '#cc8f38' }
+            }
+        };
+        
+        const scheme = colorSchemes[theme] || colorSchemes.light;
+        return scheme[depth] || scheme[0];
+    }
+
+    // 计算节点深度
+    function calculateNodeDepth(nodeIndex, totalNodes) {
+        if (totalNodes <= 1) return 0;
+        
+        // 使用二进制表示计算深度
+        let depth = 0;
+        let temp = nodeIndex;
+        while (temp > 1) {
+            temp = Math.floor(temp / 2);
+            depth++;
+        }
+        
+        return Math.min(depth, 3); // 最大深度为3
+    }
+
     // 状态管理
     const QueryVisualizerState = {
         lastBuiltN: 0,
@@ -216,7 +260,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.top = `${position.y}px`;
                 nodeDiv.style.width = `${position.nodeWidth}px`;
                 nodeDiv.style.zIndex = '10';
-                nodeDiv.style.minHeight = '80px';
+                nodeDiv.style.minHeight = '80px';                // 计算节点深度和获取对应颜色
+                const nodeDepth = calculateNodeDepth(u, n);
+                const styles = getNodeStylesByDepth(nodeDepth);
+                
                 nodeDiv.style.display = 'flex';
                 nodeDiv.style.flexDirection = 'column';
                 nodeDiv.style.justifyContent = 'center';
@@ -225,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.padding = '6px';
                 nodeDiv.style.boxSizing = 'border-box';
                 nodeDiv.style.borderRadius = '8px';
-                nodeDiv.style.border = '2px solid #74b9ff';
-                nodeDiv.style.background = '#0984e3';
+                nodeDiv.style.border = `2px solid ${styles.border}`;
+                nodeDiv.style.background = styles.background;
                 nodeDiv.style.color = 'white';
                 nodeDiv.style.textAlign = 'center';
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -328,13 +375,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log(`⚡ 直接查询: [${queryL}, ${queryR}]`);
-        
-        const oldResults = container.querySelectorAll('.query-result');
+          const oldResults = container.querySelectorAll('.query-result');
         oldResults.forEach(result => result.remove());
         
-        QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
-            nodeDiv.style.background = '#0984e3';
-            nodeDiv.style.border = '2px solid #74b9ff';
+        QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+            const nodeDepth = calculateNodeDepth(u, QueryVisualizerState.lastBuiltN);
+            const styles = getNodeStylesByDepth(nodeDepth);
+            nodeDiv.style.background = styles.background;
+            nodeDiv.style.border = `2px solid ${styles.border}`;
             nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
             nodeDiv.dataset.fullyContained = 'false';
         });
@@ -353,13 +401,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 collectNodes(u * 2 + 1, mid + 1, tr);
             }
         }
-        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);
-
-        affectedNodes.forEach(({ u, tl, tr }, index) => {
+        collectNodes(1, 1, QueryVisualizerState.lastBuiltN);        affectedNodes.forEach(({ u, tl, tr }, index) => {
             const nodeDiv = QueryVisualizerState.domNodeElements.get(u);
             if (nodeDiv) {
                 setTimeout(() => {
                     const isFullyContained = nodeDiv.dataset.fullyContained === 'true';
+                    // 使用红色和橙色突出显示查询相关节点，与主题无关
                     nodeDiv.style.background = isFullyContained ? '#ff6b6b' : '#f39c12';
                     nodeDiv.style.border = isFullyContained ? '2px solid #e74c3c' : '2px solid #e67e22';
                     nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
@@ -408,11 +455,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // 清除之前的查询结果
             const oldResults = container.querySelectorAll('.query-result');
             oldResults.forEach(result => result.remove());
-            
-            // 重置所有节点样式
-            QueryVisualizerState.domNodeElements.forEach((nodeDiv) => {
-                nodeDiv.style.background = '#0984e3';
-                nodeDiv.style.border = '2px solid #74b9ff';
+              // 重置所有节点样式
+            QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
+                const nodeDepth = calculateNodeDepth(u, QueryVisualizerState.lastBuiltN);
+                const styles = getNodeStylesByDepth(nodeDepth);
+                nodeDiv.style.background = styles.background;
+                nodeDiv.style.border = `2px solid ${styles.border}`;
                 nodeDiv.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
                 nodeDiv.dataset.fullyContained = 'false';
             });
