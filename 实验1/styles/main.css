@@ -119,6 +119,8 @@ main {
   --eye-care-text-primary: #3a3a3a; /* Specific for eye-care, as it\'s on a light bg */
   --eye-care-text-secondary: #5c5c5c; /* Specific for eye-care */
   --primary-color-rgb: 108, 92, 231; /* Default for light theme */
+  --animation-duration: 0.5s; /* Default animation duration */
+  --transition-speed: 0.3s; /* Default transition speed */
 }
 
 /* ... existing body, header, nav, main, footer, scrollbar, focus styles ... */
@@ -335,7 +337,7 @@ html[data-theme="dark"] {
   --card-bg: rgba(45, 52, 54, 0.85); /* Dark card background */
   --text-primary: #dfe6e9;       /* Light text for dark theme */
   --text-secondary: #b2bec3;    /* Lighter grey text for dark theme */
-  --input-bg: #2d3436;          /* Dark input background */
+  --input-bg: #4a5568;          /* Lighter dark input background for better visibility */
   --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   --primary-color-rgb: 129, 236, 236; /* Corresponds to #81ecec */
 }

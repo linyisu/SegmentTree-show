@@ -37,6 +37,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // 获取动画延迟
+    function getAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 1000, normal: 500, fast: 200 };
+        return speeds[animationSpeed] || 500;
+    }
+
+    // 获取构建动画延迟
+    function getBuildAnimationDelay() {
+        const animationSpeed = window.animationSpeed || 'normal';
+        const speeds = { slow: 200, normal: 100, fast: 50 };
+        return speeds[animationSpeed] || 100;
+    }
+
+    // 监听动画速度变化事件
+    window.addEventListener('animationSpeedChanged', (event) => {
+        console.log('🎬 查询可视化：动画速度已更改为:', event.detail.speed);
+    });
+
     // 构建线段树可视化
     function buildTreeVisualizationWithData(dataArray, container, isResizeUpdate = false) {
         console.log('🌲 构建线段树可视化', { dataArray, containerExists: !!container, isResizeUpdate });

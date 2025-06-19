@@ -9,7 +9,7 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
   text-transform: none;
@@ -466,15 +466,14 @@ html[data-theme="eye-care"] .code-block .copy-button.error .message {
 }
 
 .settings-panel button {
-  padding: 12px 24px;
-  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
+  padding: 12px 24px;  background: var(--primary-color); /* Was linear-gradient(135deg, var(--primary-color), var(--secondary-color)) */
   color: white;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
   text-transform: none;

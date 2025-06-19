@@ -435,3 +435,14 @@
         transform: translateY(0);
     }
 }
+
+/* 输入框样式 - 确保使用主题变量 */
+input[type="number"], 
+input[type="text"], 
+input[type="range"],
+select,
+textarea {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}

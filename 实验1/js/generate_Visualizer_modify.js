@@ -25,7 +25,6 @@
     delta: 0,
     container: null
   };
-
   // 防抖函数
   function debounce(func, wait) {
     let timeout;
@@ -37,6 +36,20 @@
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
     };
+  }
+
+  // 获取动画延迟
+  function getAnimationDelay() {
+    const animationSpeed = window.animationSpeed || 'normal';
+    const speeds = { slow: 1000, normal: 500, fast: 200 };
+    return speeds[animationSpeed] || 500;
+  }
+
+  // 获取构建动画延迟
+  function getBuildAnimationDelay() {
+    const animationSpeed = window.animationSpeed || 'normal';
+    const speeds = { slow: 200, normal: 100, fast: 50 };
+    return speeds[animationSpeed] || 100;
   }
 
   // 构建线段树可视化
@@ -242,18 +255,16 @@
         nodeDiv.style.opacity = '0';
         nodeDiv.style.transform = 'translateY(-10px)';
         treeVisual.appendChild(nodeDiv);
-        ModifyVisualizerState.domNodeElements.set(u, nodeDiv);
-
-        setTimeout(() => {
+        ModifyVisualizerState.domNodeElements.set(u, nodeDiv);        setTimeout(() => {
           nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
           nodeDiv.style.opacity = '1';
           nodeDiv.style.transform = 'translateY(0)';
         }, 50);
 
         orderIndex++;
-        ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 100);
+        ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
       }
-      ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 500);
+      ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay());
     } else {
       requestAnimationFrame(() => {
         ModifyVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
@@ -418,7 +429,7 @@
               currentU = Math.floor(currentU / 2);
             }
           }
-        }, index * 200);
+        }, index * (getBuildAnimationDelay() * 2));
       }
     });
   }
@@ -738,6 +749,11 @@
         }
       }
     }, 250));
+
+    // 监听动画速度变化事件
+    window.addEventListener('animationSpeedChanged', (event) => {
+      console.log('🎬 动画速度已更改为:', event.detail.speed);
+    });
   }
 
   // 暴露接口

@@ -111,6 +111,20 @@ function debounce(func, wait) {
   };
 }
 
+// 更新CSS动画变量
+function updateAnimationVariables() {
+  const animationSpeed = window.animationSpeed || 'normal';
+  const durations = { 
+    slow: { animation: '1.0s', transition: '0.6s' },
+    normal: { animation: '0.5s', transition: '0.3s' },
+    fast: { animation: '0.2s', transition: '0.15s' }
+  };
+  
+  const speeds = durations[animationSpeed] || durations.normal;
+  document.documentElement.style.setProperty('--animation-duration', speeds.animation);
+  document.documentElement.style.setProperty('--transition-speed', speeds.transition);
+}
+
 // 设置管理
 const Settings = {
   defaults: {
@@ -155,6 +169,7 @@ const Settings = {
       changeLineHeight(currentLineHeight);
       changeTheme();
       updateGlobalVars();
+      updateAnimationVariables(); // 确保CSS动画变量正确设置
     }
   },
   
@@ -188,8 +203,9 @@ const Settings = {
 function initSettings() {
   initDOM();
   
-  // 首先更新全局变量
+  // 首先更新全局变量和CSS动画变量
   updateGlobalVars();
+  updateAnimationVariables();
   
   // 设置事件监听器
   if (DOM.themeSelect) {
@@ -203,11 +219,16 @@ function initSettings() {
   if (DOM.lineHeightSlider) {
     DOM.lineHeightSlider.addEventListener('input', debounce(e => changeLineHeight(e.target.value), 100));
   }
-  
   if (DOM.animationSpeed) {
     DOM.animationSpeed.addEventListener('change', () => {
       animationSpeed = DOM.animationSpeed.value;
+      updateGlobalVars(); // 立即更新全局变量
+      updateAnimationVariables(); // 更新CSS动画变量
       Settings.save();
+      // 广播动画速度变化事件
+      window.dispatchEvent(new CustomEvent('animationSpeedChanged', { 
+        detail: { speed: animationSpeed } 
+      }));
     });
   }
   

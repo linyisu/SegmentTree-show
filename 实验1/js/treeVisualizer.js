@@ -304,7 +304,7 @@ function addConnectionLine(nodeId, nodePositions, treeVisual) {
 
 // 获取动画延迟
 function getAnimationDelay() {
-  const animationSpeed = window.animationSpeed || 'fast'; // Assuming animationSpeed might be set globally
+  const animationSpeed = window.animationSpeed || 'normal';
   const speeds = { slow: 2000, normal: 1000, fast: 500 };
   return speeds[animationSpeed] || 1000;
 }
