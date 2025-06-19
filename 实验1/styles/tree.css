@@ -92,35 +92,77 @@ css 层叠样式表
   white-space: pre-line;
   box-sizing: border-box;
   border-radius: 5px; /* 添加圆角 */
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid transparent;
 }
 
 .tree-node.depth-0 {
-  background: #6c5ce7; /* Was linear-gradient(135deg, #6c5ce7, #a29bfe) */
+  background: #8b7ed8; /* 更柔和的紫色，从 #6c5ce7 调整 */
   height: 40px;
   font-weight: 640;
-  box-shadow: 0 6px 16px rgba(108, 92, 231, 0.4);
+  box-shadow: 0 6px 16px rgba(139, 126, 216, 0.3);
 }
 
 .tree-node.depth-1 {
-  background: #fd79a8; /* Was linear-gradient(135deg, #fd79a8, #e84393) */
+  background: #e89ac7; /* 更柔和的粉色，从 #fd79a8 调整 */
   height: 35px;
   font-weight: 640;
-  box-shadow: 0 5px 14px rgba(253, 121, 168, 0.3);
+  box-shadow: 0 5px 14px rgba(232, 154, 199, 0.3);
 }
 
 .tree-node.depth-2 {
-  background: #00b894; /* Was linear-gradient(135deg, #00b894, #00cec9) */
+  background: #4db6ac; /* 更柔和的青绿色，从 #00b894 调整 */
   height: 35px;
   font-weight: 640;
-  box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+  box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);
 }
 
 .tree-node.depth-3 {
-  background: #fdcb6e; /* Was linear-gradient(135deg, #fdcb6e, #e17055) */
+  background: #ffb74d; /* 更柔和的橙色，从 #fdcb6e 调整 */
   height: 35px;
   font-weight: 640;
-  box-shadow: 0 3px 10px rgba(253, 203, 110, 0.3);
+  box-shadow: 0 3px 10px rgba(255, 183, 77, 0.3);
+}
+
+/* 暗色主题 - 使用更暗的颜色 */
+html[data-theme="dark"] .tree-node.depth-0 {
+  background: #5a4fcf !important; /* 暗紫色 */
+  box-shadow: 0 6px 16px rgba(90, 79, 207, 0.3) !important;
+}
+
+html[data-theme="dark"] .tree-node.depth-1 {
+  background: #c1578a !important; /* 暗粉色 */
+  box-shadow: 0 5px 14px rgba(193, 87, 138, 0.3) !important;
+}
+
+html[data-theme="dark"] .tree-node.depth-2 {
+  background: #2d8a7f !important; /* 暗青绿色 */
+  box-shadow: 0 4px 12px rgba(45, 138, 127, 0.3) !important;
+}
+
+html[data-theme="dark"] .tree-node.depth-3 {
+  background: #d4941e !important; /* 暗橙色 */
+  box-shadow: 0 3px 10px rgba(212, 148, 30, 0.3) !important;
+}
+
+/* 护眼主题 - 使用与其他主题相似但更温和的颜色 */
+html[data-theme="eye-care"] .tree-node.depth-0 {
+  background: #9c88e6 !important; /* 温和紫色，比浅色主题稍浅 */
+  box-shadow: 0 6px 16px rgba(156, 136, 230, 0.3) !important;
+}
+
+html[data-theme="eye-care"] .tree-node.depth-1 {
+  background: #f0a7d1 !important; /* 温和粉色，比浅色主题稍浅 */
+  box-shadow: 0 5px 14px rgba(240, 167, 209, 0.3) !important;
+}
+
+html[data-theme="eye-care"] .tree-node.depth-2 {
+  background: #66c2b8 !important; /* 温和青绿色，比浅色主题稍浅 */
+  box-shadow: 0 4px 12px rgba(102, 194, 184, 0.3) !important;
+}
+
+html[data-theme="eye-care"] .tree-node.depth-3 {
+  background: #ffc266 !important; /* 温和橙色，比浅色主题稍浅 */
+  box-shadow: 0 3px 10px rgba(255, 194, 102, 0.3) !important;
 }
 
 /* 连接线样式 */
@@ -199,4 +241,17 @@ html[data-theme="dark"] #tree-container {
 
 html[data-theme="eye-care"] #tree-container {
   background: rgba(46, 204, 113, 0.06);
+}
+
+/* 构建过程可视化节点边框 - 与页面背景色相同 */
+.tree-node {
+  border: 1px solid #ffffff !important; /* 默认浅色主题背景色 */
+}
+
+html[data-theme="dark"] .tree-node {
+  border: 1px solid var(--dark-background-color) !important; /* 暗色主题背景色 */
+}
+
+html[data-theme="eye-care"] .tree-node {
+  border: 1px solid var(--eye-care-background-color) !important; /* 护眼主题背景色 */
 }
