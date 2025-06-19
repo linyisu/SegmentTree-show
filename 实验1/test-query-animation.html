@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询动画速度测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .control-panel { margin: 10px 0; }
+        button { margin: 5px; padding: 10px 15px; }
+        select { margin: 5px; padding: 5px; }
+        .result { margin: 10px 0; padding: 10px; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>查询动画速度测试</h1>
+    
+    <div class="control-panel">
+        <label>动画速度：</label>
+        <select id="animation-speed" onchange="testAnimationSpeed()">
+            <option value="slow">慢速 (1000ms)</option>
+            <option value="normal" selected>正常 (500ms)</option>
+            <option value="fast">快速 (200ms)</option>
+        </select>
+    </div>
+
+    <div class="control-panel">
+        <button onclick="testGlobalVariable()">测试全局变量</button>
+        <button onclick="testDelayFunctions()">测试延迟函数</button>
+        <button onclick="testEventBroadcast()">测试事件广播</button>
+    </div>
+
+    <div id="test-results" class="result">
+        测试结果将显示在这里...
+    </div>
+
+    <script>
+        // 模拟设置功能的核心部分
+        let animationSpeed = 'normal';
+        
+        // 更新全局变量
+        function updateGlobalVars() {
+            window.animationSpeed = animationSpeed;
+        }
+        
+        // 初始化全局变量
+        updateGlobalVars();
+        
+        // 模拟查询模块的延迟函数
+        function getAnimationDelay() {
+            const animationSpeed = window.animationSpeed || 'normal';
+            const speeds = { slow: 1000, normal: 500, fast: 200 };
+            return speeds[animationSpeed] || 500;
+        }
+
+        function getBuildAnimationDelay() {
+            const animationSpeed = window.animationSpeed || 'normal';
+            const speeds = { slow: 200, normal: 100, fast: 50 };
+            return speeds[animationSpeed] || 100;
+        }
+        
+        // 测试函数
+        function testAnimationSpeed() {
+            const select = document.getElementById('animation-speed');
+            animationSpeed = select.value;
+            updateGlobalVars();
+            
+            // 广播事件
+            window.dispatchEvent(new CustomEvent('animationSpeedChanged', { 
+                detail: { speed: animationSpeed } 
+            }));
+            
+            logResult(`✅ 动画速度已更改为: ${animationSpeed}`);
+            logResult(`🔧 当前getAnimationDelay(): ${getAnimationDelay()}ms`);
+            logResult(`🔧 当前getBuildAnimationDelay(): ${getBuildAnimationDelay()}ms`);
+        }
+        
+        function testGlobalVariable() {
+            logResult(`📊 window.animationSpeed = ${window.animationSpeed}`);
+            logResult(`📊 本地 animationSpeed = ${animationSpeed}`);
+        }
+        
+        function testDelayFunctions() {
+            logResult(`⏱️ getAnimationDelay() = ${getAnimationDelay()}ms`);
+            logResult(`⏱️ getBuildAnimationDelay() = ${getBuildAnimationDelay()}ms`);
+        }
+        
+        function testEventBroadcast() {
+            // 监听事件
+            window.addEventListener('animationSpeedChanged', (event) => {
+                logResult(`🎬 接收到事件: animationSpeedChanged, speed = ${event.detail.speed}`);
+            });
+            
+            // 广播事件
+            window.dispatchEvent(new CustomEvent('animationSpeedChanged', { 
+                detail: { speed: animationSpeed } 
+            }));
+        }
+        
+        function logResult(message) {
+            const resultsDiv = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+        
+        // 初始测试
+        window.onload = function() {
+            logResult('🚀 测试页面已加载');
+            testGlobalVariable();
+            testDelayFunctions();
+        };
+    </script>
+</body>
+</html>

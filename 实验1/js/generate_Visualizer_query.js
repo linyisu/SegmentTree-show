@@ -203,21 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
             generateBuildOrder(1, n, 1);
 
             let orderIndex = 0;
-            function renderNextNode() {
-                if (orderIndex >= QueryVisualizerState.currentTreeBuildOrderData.length) {
+            function renderNextNode() {                if (orderIndex >= QueryVisualizerState.currentTreeBuildOrderData.length) {
                     QueryVisualizerState.activeBuildAnimationTimeout = null;
                     setTimeout(() => {
                         QueryVisualizerState.isTreeRendered = true;
                         console.log('🎉 线段树渲染完成');
-                    }, 1000);
+                    }, getAnimationDelay());
                     return;
                 }
 
                 const { l, r, u, depth, lazy, sum, max, min } = QueryVisualizerState.currentTreeBuildOrderData[orderIndex];
-                const position = nodePositions.get(u);
-                if (!position) {
+                const position = nodePositions.get(u);                if (!position) {
                     orderIndex++;
-                    QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 50);
+                    QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
                     return;
                 }
 
@@ -253,18 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.opacity = '0';
                 nodeDiv.style.transform = 'translateY(-10px)';
                 treeVisual.appendChild(nodeDiv);
-                QueryVisualizerState.domNodeElements.set(u, nodeDiv);
-
-                setTimeout(() => {
+                QueryVisualizerState.domNodeElements.set(u, nodeDiv);                setTimeout(() => {
                     nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
                     nodeDiv.style.opacity = '1';
                     nodeDiv.style.transform = 'translateY(0)';
-                }, 50);
-
-                orderIndex++;
-                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 100);
+                }, getBuildAnimationDelay());orderIndex++;
+                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getBuildAnimationDelay());
             }
-            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 500);
+            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay());
         } else {
             requestAnimationFrame(() => {
                 QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
@@ -384,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
                     console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
                     updateNodeDisplaySafe(u, tl, tr);
-                }, index * 200);
+                }, index * (getBuildAnimationDelay() * 2));
             }
         });
 
@@ -409,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultDiv.remove();
                 });
                 container.appendChild(resultDiv);
-            }, affectedNodes.length * 200 + 500);
+            }, affectedNodes.length * (getBuildAnimationDelay() * 2) + getAnimationDelay());
         }
     }    // 步进查询
     function performRangeQueryStep(queryL, queryR, container) {
@@ -602,9 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="node-info">lazy:${lazyDisplay} max:${displayMax}</div>
         `;
         console.log(`🔄 更新节点 u=${u} [${tl},${tr}] 显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}, lazy=${lazyDisplay}`);
-    }
-
-    // 显示错误
+    }    // 显示错误
     function showError(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -612,8 +604,8 @@ document.addEventListener('DOMContentLoaded', () => {
         errorDiv.style.margin = '10px';
         errorDiv.textContent = message;
         QueryVisualizerState.lastBuiltContainer?.prepend(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-    }    // 防止重复初始化的标记
+        setTimeout(() => errorDiv.remove(), getAnimationDelay() * 6);
+    }// 防止重复初始化的标记
     let isInitialized = false;
 
     // 初始化

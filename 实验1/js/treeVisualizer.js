@@ -227,13 +227,11 @@ function buildTreeVisualization(n, container, isResizeUpdate = false) {
         nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
         nodeDiv.style.opacity = '1';
         nodeDiv.style.transform = 'translateY(0)';
-      }, 50);
-
-      orderIndex++;
+      }, 50);      orderIndex++;
       const animationDelay = getAnimationDelay();
       activeBuildAnimationTimeout = setTimeout(renderNextNode, animationDelay / 6);
     }
-    activeBuildAnimationTimeout = setTimeout(renderNextNode, 500); // Initial call for animation
+    activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay()); // Initial call for animation
   } else {
     // This is a resize update: update existing DOM elements
     domNodeElements.forEach((nodeDiv, u) => {

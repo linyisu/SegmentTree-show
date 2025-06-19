@@ -635,7 +635,6 @@
     `;
     console.log(`🔄 更新节点 u=${u} [${tl},${tr}] 显示: sum=${displaySum}, min=${displayMin}, max=${displayMax}, lazy=${lazyDisplay}`);
   }
-
   // 显示错误
   function showError(message) {
     const errorDiv = document.createElement('div');
@@ -644,7 +643,7 @@
     errorDiv.style.margin = '10px';
     errorDiv.textContent = message;
     ModifyVisualizerState.lastBuiltContainer.prepend(errorDiv);
-    setTimeout(() => errorDiv.remove(), 3000);
+    setTimeout(() => errorDiv.remove(), getAnimationDelay() * 6);
   }
 
   // 初始化
