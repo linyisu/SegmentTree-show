@@ -2,7 +2,7 @@
 #custom-tree-visualizer-host {
     width: 100% !important;
     max-width: 100% !important;
-    overflow: hidden !important; /* 强制隐藏超出部分 */
+    overflow: hidden !important;
     box-sizing: border-box !important;
     position: relative !important;
 }
@@ -129,14 +129,12 @@
 }
 
 .tree-node:hover {
-    /* 移除transform效果，只保留阴影变化 */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .tree-node.active {
-    /* 移除transform效果，只保留其他视觉效果 */
-    box-shadow: 0 0 20px rgba(255, 235, 59, 0.8) !important;
-    border-color: #ffeb3b !important;
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.8) !important;
+    border-color: #27ae60 !important;
     animation: pulse 0.6s ease-in-out;
 }
 
@@ -154,7 +152,7 @@
 
 /* 懒标记特殊样式 */
 .tree-node .lazy-tag {
-    background: rgba(255, 235, 59, 0.2);
+    background: rgba(46, 204, 113, 0.2);
     border-radius: 4px;
     padding: 1px 4px;
     margin-top: 2px;
@@ -162,13 +160,13 @@
 
 /* 不同主题下的懒标记颜色 */
 .dark .tree-node .lazy-tag {
-    color: #ffeb3b;
-    background: rgba(255, 235, 59, 0.15);
+    color: #27ae60;
+    background: rgba(46, 204, 113, 0.15);
 }
 
 .eye-care .tree-node .lazy-tag {
-    color: #ffc107;
-    background: rgba(255, 193, 7, 0.15);
+    color: #2ecc71;
+    background: rgba(46, 204, 113, 0.15);
 }
 
 /* 确保每层容器和主容器严格控制边界 */
@@ -287,6 +285,16 @@
     }
 }
 
+/* 查询结果容器样式 */
+.query-result {
+    margin: 10px !important;
+    padding: 10px !important;
+    background: #e8f4f8 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    animation: slideInFromTop 0.4s ease-out !important;
+}
+
 /* 步进进度条动画和样式 */
 #step-progress-container {
     backdrop-filter: blur(10px);
@@ -308,9 +316,9 @@
 }
 
 #step-progress-bar {
-    background: linear-gradient(90deg, #28a745, #20c997, #17a2b8) !important;
+    background: linear-gradient(90deg, #2ecc71, #27ae60, #17a2b8) !important;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4) !important;
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.4) !important;
     position: relative;
     overflow: hidden;
 }
@@ -347,15 +355,15 @@
 }
 
 #btn-next-step {
-    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
     transition: all 0.3s ease !important;
     transform: scale(1);
 }
 
 #btn-next-step:hover {
-    background: linear-gradient(135deg, #0056b3, #004085) !important;
+    background: linear-gradient(135deg, #27ae60, #219653) !important;
     transform: scale(1.05) !important;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4) !important;
 }
 
 #btn-next-step:active {
@@ -363,13 +371,13 @@
 }
 
 #btn-step-complete {
-    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
     transition: all 0.3s ease !important;
 }
 
 #btn-step-complete:hover {
-    background: linear-gradient(135deg, #20c997, #17a2b8) !important;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4) !important;
+    background: linear-gradient(135deg, #27ae60, #17a2b8) !important;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4) !important;
 }
 
 /* 步进进度信息动画 */
@@ -383,7 +391,35 @@
 }
 
 #step-percentage {
-    color: #007bff !important;
+    color: #2ecc71 !important;
     font-weight: bold !important;
     font-size: 13px !important;
+}
+
+/* 错误提示样式 */
+.error-message {
+    color: red !important;
+    margin: 10px !important;
+    font-size: 14px !important;
+}
+
+/* 按钮基本样式 */
+.btn {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 10px 20px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #5a6268, #4b5156) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn:active {
+    transform: scale(0.98) !important;
 }
