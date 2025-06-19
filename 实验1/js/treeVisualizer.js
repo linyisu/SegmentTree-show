@@ -348,18 +348,11 @@ function initTreeVisualizer() {
   if (treeContainer) {
     initializeTreeContainer(treeContainer);
   }
-  
   if (btnBuild && treeContainer) {
     btnBuild.addEventListener('click', () => {
       const n = parseInt(inputN?.value || '8'); // Default to 8 if input is empty
       if (n >= 1 && n <= 8) {
-         // Check if the container is visible before building
-        const containerStyle = window.getComputedStyle(treeContainer);
-        if (containerStyle.display !== 'none' && treeContainer.offsetParent !== null) {
-            buildTreeVisualization(n, treeContainer, false); // false for initial build
-        } else {
-            alert("请先切换到\"基本操作\"选项卡并确保其可见，然后再构建树。");
-        }
+        buildTreeVisualization(n, treeContainer, false); // false for initial build
       } else {
         alert('请输入1到8之间的数组长度。');
       }
