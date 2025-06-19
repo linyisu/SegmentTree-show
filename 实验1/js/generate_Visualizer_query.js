@@ -372,17 +372,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!document.querySelector('.query-result')) {
-            setTimeout(() => {
-                const resultDiv = document.createElement('div');
+            setTimeout(() => {                const resultDiv = document.createElement('div');
                 resultDiv.className = 'query-result';
                 resultDiv.style.margin = '10px';
                 resultDiv.style.padding = '15px';
-                resultDiv.style.background = '#e8f4f8';
+                resultDiv.style.background = '#fff3cd';
                 resultDiv.style.borderRadius = '8px';
-                resultDiv.style.border = '1px solid #bee5eb';
+                resultDiv.style.border = '1px solid #ffeaa7';
                 resultDiv.style.position = 'relative';
                 resultDiv.innerHTML = `
-                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">×</button>
+                    <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
                     <strong>查询结果 [${queryL}, ${queryR}]:</strong><br>
                     总和: ${result.sum}<br>
                     最大值: ${result.max}<br>
@@ -498,14 +497,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('✅ 所有步进步骤完成');
             stepQueryState.resultDisplayed = true;
-            
-            const resultDiv = document.createElement('div');
+              const resultDiv = document.createElement('div');
             resultDiv.className = 'query-result';
             resultDiv.style.margin = '10px';
             resultDiv.style.padding = '15px';
-            resultDiv.style.background = '#e8f4f8';
+            resultDiv.style.background = '#fff3cd';
             resultDiv.style.borderRadius = '8px';
-            resultDiv.style.border = '1px solid #bee5eb';
+            resultDiv.style.border = '1px solid #ffeaa7';
             resultDiv.style.position = 'relative';
             resultDiv.innerHTML = `
                 <button class="close-btn" style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;" title="关闭">&times;</button>
