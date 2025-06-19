@@ -26,9 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const scheme = colorSchemes[theme] || colorSchemes.light;
         return scheme[depth] || scheme[0];
-    }
-
-    // 计算节点深度
+    }    // 计算节点深度
     function calculateNodeDepth(nodeIndex, totalNodes) {
         if (totalNodes <= 1) return 0;
         
@@ -41,6 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         return Math.min(depth, 3); // 最大深度为3
+    }
+
+    // 获取动画延迟时间（根据设置中的动画速度）
+    function getAnimationDelay(baseDelay = 100) {
+        const speed = window.animationSpeed || 'normal';
+        const speedMultipliers = {
+            'slow': 2.0,    // 慢速：2倍时间
+            'normal': 1.0,  // 正常：基础时间
+            'fast': 0.5     // 快速：0.5倍时间
+        };
+        return Math.round(baseDelay * (speedMultipliers[speed] || 1.0));
     }
 
     // 状态管理
@@ -281,18 +290,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 nodeDiv.style.opacity = '0';
                 nodeDiv.style.transform = 'translateY(-10px)';
                 treeVisual.appendChild(nodeDiv);
-                QueryVisualizerState.domNodeElements.set(u, nodeDiv);
-
-                setTimeout(() => {
+                QueryVisualizerState.domNodeElements.set(u, nodeDiv);                setTimeout(() => {
                     nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
                     nodeDiv.style.opacity = '1';
                     nodeDiv.style.transform = 'translateY(0)';
-                }, 50);
+                }, getAnimationDelay(50));
 
                 orderIndex++;
-                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 100);
+                QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(100));
             }
-            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 500);
+            QueryVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(500));
         } else {
             requestAnimationFrame(() => {
                 QueryVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
@@ -412,11 +419,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     nodeDiv.style.boxShadow = isFullyContained ? '0 2px 12px rgba(192, 57, 43, 0.3)' : '0 2px 12px rgba(230, 126, 34, 0.3)';
                     console.log(`🟢 高亮查询节点 u=${u} [${tl},${tr}]${isFullyContained ? ' (全包含-红色)' : ' (部分包含-橙色)'}`);
                     updateNodeDisplaySafe(u, tl, tr);
-                }, index * 200);
+                }, index * getAnimationDelay(200));
             }
-        });
-
-        if (!document.querySelector('.query-result')) {
+        });        if (!document.querySelector('.query-result')) {
             setTimeout(() => {                const resultDiv = document.createElement('div');
                 resultDiv.className = 'query-result';
                 resultDiv.style.margin = '10px';
@@ -435,9 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const closeBtn = resultDiv.querySelector('.close-btn');
                 closeBtn.addEventListener('click', () => {
                     resultDiv.remove();
-                });
-                container.appendChild(resultDiv);
-            }, affectedNodes.length * 200 + 500);
+                });                container.appendChild(resultDiv);
+            }, affectedNodes.length * getAnimationDelay(200) + getAnimationDelay(500));
         }
     }    // 步进查询
     function performRangeQueryStep(queryL, queryR, container) {

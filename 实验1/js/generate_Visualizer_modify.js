@@ -29,7 +29,6 @@
     const scheme = colorSchemes[theme] || colorSchemes.light;
     return scheme[depth] || scheme[0];
   }
-
   // 计算节点深度
   function calculateNodeDepth(nodeIndex, totalNodes) {
     if (totalNodes <= 1) return 0;
@@ -43,6 +42,17 @@
     }
     
     return Math.min(depth, 3); // 最大深度为3
+  }
+
+  // 获取动画延迟时间（根据设置中的动画速度）
+  function getAnimationDelay(baseDelay = 100) {
+    const speed = window.animationSpeed || 'normal';
+    const speedMultipliers = {
+      'slow': 2.0,    // 慢速：2倍时间
+      'normal': 1.0,  // 正常：基础时间
+      'fast': 0.5     // 快速：0.5倍时间
+    };
+    return Math.round(baseDelay * (speedMultipliers[speed] || 1.0));
   }
 
   // --- 状态管理 ---
@@ -236,13 +246,12 @@
       generateBuildOrder(1, n, 1);
 
       let orderIndex = 0;
-      function renderNextNode() {
-        if (orderIndex >= ModifyVisualizerState.currentTreeBuildOrderData.length) {
+      function renderNextNode() {        if (orderIndex >= ModifyVisualizerState.currentTreeBuildOrderData.length) {
           ModifyVisualizerState.activeBuildAnimationTimeout = null;
           setTimeout(() => {
             ModifyVisualizerState.isTreeRendered = true;
             console.log('🎉 线段树渲染完成');
-          }, 1000);
+          }, getAnimationDelay(1000));
           return;
         }
 
@@ -250,7 +259,7 @@
         const position = nodePositions.get(u);
         if (!position) {
           orderIndex++;
-          ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 50);
+          ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(50));
           return;
         }
 
@@ -289,18 +298,16 @@
         nodeDiv.style.opacity = '0';
         nodeDiv.style.transform = 'translateY(-10px)';
         treeVisual.appendChild(nodeDiv);
-        ModifyVisualizerState.domNodeElements.set(u, nodeDiv);
-
-        setTimeout(() => {
+        ModifyVisualizerState.domNodeElements.set(u, nodeDiv);        setTimeout(() => {
           nodeDiv.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
           nodeDiv.style.opacity = '1';
           nodeDiv.style.transform = 'translateY(0)';
-        }, 50);
+        }, getAnimationDelay(50));
 
         orderIndex++;
-        ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 100);
+        ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(100));
       }
-      ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, 500);
+      ModifyVisualizerState.activeBuildAnimationTimeout = setTimeout(renderNextNode, getAnimationDelay(500));
     } else {
       requestAnimationFrame(() => {
         ModifyVisualizerState.domNodeElements.forEach((nodeDiv, u) => {
@@ -465,7 +472,7 @@
               currentU = Math.floor(currentU / 2);
             }
           }
-        }, index * 200);
+        }, index * getAnimationDelay(200));
       }
     });
   }

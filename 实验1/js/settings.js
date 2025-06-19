@@ -203,11 +203,12 @@ function initSettings() {
   if (DOM.lineHeightSlider) {
     DOM.lineHeightSlider.addEventListener('input', debounce(e => changeLineHeight(e.target.value), 100));
   }
-  
-  if (DOM.animationSpeed) {
+    if (DOM.animationSpeed) {
     DOM.animationSpeed.addEventListener('change', () => {
       animationSpeed = DOM.animationSpeed.value;
+      window.animationSpeed = animationSpeed; // 确保全局变量更新
       Settings.save();
+      console.log('🎬 动画速度已更新为:', animationSpeed);
     });
   }
   
